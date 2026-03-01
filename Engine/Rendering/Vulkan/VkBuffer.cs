@@ -12,64 +12,45 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         
         public unsafe void Create(in Span<T> data, BufferUsage usage, BufferMemoryUsage memoryUsage)
         {
+            if (data.Length == 0)
+            {
+                Debug.Warning($"Buffer of type {typeof(T).Name} created with no data, skipping creation (Will be Null)");
+                return;
+            }
+            
             BufferUsageFlags bufferUsage = BufferUsageFlags.StorageBufferBit;
             switch (usage)
             {
                 case BufferUsage.Vertex:
                 {
-                    switch (memoryUsage)
-                    {
-                        case BufferMemoryUsage.Cpu:
-                        {
-                            //if we are on cpu this buffer will always act as a source buffer
-                            bufferUsage = BufferUsageFlags.VertexBufferBit | BufferUsageFlags.TransferSrcBit;
-                            break;
-                        }
-                        case BufferMemoryUsage.Gpu:
-                        {
-                            //if we are on gpu this buffer will always be able to be written too
-                            bufferUsage = BufferUsageFlags.VertexBufferBit | BufferUsageFlags.TransferDstBit;
-                            break;
-                        }
-                    }
+                    bufferUsage = BufferUsageFlags.VertexBufferBit;
                     break;
                 }
                 case BufferUsage.Index:
                 {
-                    switch (memoryUsage)
-                    {
-                        case BufferMemoryUsage.Cpu:
-                        {
-                            //if we are on cpu this buffer will always act as a source buffer
-                            bufferUsage = BufferUsageFlags.IndexBufferBit | BufferUsageFlags.TransferSrcBit;
-                            break;
-                        }
-                        case BufferMemoryUsage.Gpu:
-                        {
-                            //if we are on gpu this buffer will always be able to be written too
-                            bufferUsage = BufferUsageFlags.IndexBufferBit | BufferUsageFlags.TransferDstBit;
-                            break;
-                        }
-                    }
+                    bufferUsage = BufferUsageFlags.IndexBufferBit;
                     break;
                 }
                 case BufferUsage.Storage:
                 {
-                    switch (memoryUsage)
-                    {
-                        case BufferMemoryUsage.Cpu:
-                        {
-                            //if we are on cpu this buffer will always act as a source buffer
-                            bufferUsage = BufferUsageFlags.StorageBufferBit | BufferUsageFlags.TransferSrcBit;
-                            break;
-                        }
-                        case BufferMemoryUsage.Gpu:
-                        {
-                            //if we are on gpu this buffer will always be able to be written too
-                            bufferUsage = BufferUsageFlags.StorageBufferBit | BufferUsageFlags.TransferDstBit;
-                            break;
-                        }
-                    }
+
+                    bufferUsage = BufferUsageFlags.StorageBufferBit;
+                    break;
+                }
+            }
+            
+            switch (memoryUsage)
+            {
+                case BufferMemoryUsage.Cpu:
+                {
+                    //if we are on cpu this buffer will always act as a source buffer
+                    bufferUsage |= BufferUsageFlags.TransferSrcBit;
+                    break;
+                }
+                case BufferMemoryUsage.Gpu:
+                {
+                    //if we are on gpu this buffer will always be able to be written too
+                    bufferUsage |= BufferUsageFlags.TransferDstBit;
                     break;
                 }
             }
@@ -148,59 +129,34 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             {
                 case BufferUsage.Vertex:
                 {
-                    switch (memoryUsage)
-                    {
-                        case BufferMemoryUsage.Cpu:
-                        {
-                            //if we are on cpu this buffer will always act as a source buffer
-                            bufferUsage = BufferUsageFlags.VertexBufferBit | BufferUsageFlags.TransferSrcBit;
-                            break;
-                        }
-                        case BufferMemoryUsage.Gpu:
-                        {
-                            //if we are on gpu this buffer will always be able to be written too
-                            bufferUsage = BufferUsageFlags.VertexBufferBit | BufferUsageFlags.TransferDstBit;
-                            break;
-                        }
-                    }
+                    bufferUsage = BufferUsageFlags.VertexBufferBit;
                     break;
                 }
                 case BufferUsage.Index:
                 {
-                    switch (memoryUsage)
-                    {
-                        case BufferMemoryUsage.Cpu:
-                        {
-                            //if we are on cpu this buffer will always act as a source buffer
-                            bufferUsage = BufferUsageFlags.IndexBufferBit | BufferUsageFlags.TransferSrcBit;
-                            break;
-                        }
-                        case BufferMemoryUsage.Gpu:
-                        {
-                            //if we are on gpu this buffer will always be able to be written too
-                            bufferUsage = BufferUsageFlags.IndexBufferBit | BufferUsageFlags.TransferDstBit;
-                            break;
-                        }
-                    }
+                    bufferUsage = BufferUsageFlags.IndexBufferBit;
                     break;
                 }
                 case BufferUsage.Storage:
                 {
-                    switch (memoryUsage)
-                    {
-                        case BufferMemoryUsage.Cpu:
-                        {
-                            //if we are on cpu this buffer will always act as a source buffer
-                            bufferUsage = BufferUsageFlags.StorageBufferBit | BufferUsageFlags.TransferSrcBit;
-                            break;
-                        }
-                        case BufferMemoryUsage.Gpu:
-                        {
-                            //if we are on gpu this buffer will always be able to be written too
-                            bufferUsage = BufferUsageFlags.StorageBufferBit | BufferUsageFlags.TransferDstBit;
-                            break;
-                        }
-                    }
+
+                    bufferUsage = BufferUsageFlags.StorageBufferBit;
+                    break;
+                }
+            }
+            
+            switch (memoryUsage)
+            {
+                case BufferMemoryUsage.Cpu:
+                {
+                    //if we are on cpu this buffer will always act as a source buffer
+                    bufferUsage |= BufferUsageFlags.TransferSrcBit;
+                    break;
+                }
+                case BufferMemoryUsage.Gpu:
+                {
+                    //if we are on gpu this buffer will always be able to be written too
+                    bufferUsage |= BufferUsageFlags.TransferDstBit;
                     break;
                 }
             }

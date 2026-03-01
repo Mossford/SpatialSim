@@ -8,9 +8,12 @@ namespace SpatialSim.Engine.Rendering
         public void Clean();
 
         public void BindVertexBuffers<T>(IBufferDevice<T> bufferDevice) where T : unmanaged;
+        public void BindIndexBuffers<T>(IBufferDevice<T> bufferDevice) where T : unmanaged;
         public void BeginCommandBuffer();
         public void EndCommandBuffer();
-        public void BeginRenderPass();
+        public void BeginRenderPass(int frame);
+        public void BindPipeLine(Pipeline pipeline);
+        public void Draw(int indexCount);
         public void EndRenderPass();
     }
 
@@ -20,7 +23,7 @@ namespace SpatialSim.Engine.Rendering
         
         public void Create()
         {
-            commandBuffer = AppState.appContext.renderer.CreateCommandBufferDevice();
+            commandBuffer = AppState.appContext.DeviceFactory.CreateCommandBufferDevice();
         }
 
         public void Clean()
@@ -38,19 +41,32 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer?.EndCommandBuffer();
         }
 
-        public void BeginRenderPass()
+        public void BeginRenderPass(int frame)
         {
-            commandBuffer?.BeginRenderPass();
+            commandBuffer?.BeginRenderPass(frame);
         }
 
-        public void BindPipeLine()
+        public void BindPipeLine(Pipeline pipeline)
         {
-            
+            commandBuffer?.BindPipeLine(pipeline);
         }
 
+        /// <summary>
+        /// Should only be used with type Vertex
+        /// </summary>
         public void BindVertexBuffers<T>(IBufferDevice<T> bufferDevice) where T : unmanaged
         {
             commandBuffer?.BindVertexBuffers(bufferDevice);   
+        }
+        
+        public void BindIndexBuffers<T>(IBufferDevice<T> bufferDevice) where T : unmanaged
+        {
+            commandBuffer?.BindIndexBuffers(bufferDevice);   
+        }
+
+        public void Draw(int indexCount)
+        {
+            commandBuffer?.Draw(indexCount);
         }
 
         public void EndRenderPass()

@@ -8,5 +8,10 @@ namespace SpatialSim.Engine.Rendering
         public int id { get; set; } = -1;
 
         public int materialId;
+
+        public void Dispose()
+        {
+            
+        }
     }
 }

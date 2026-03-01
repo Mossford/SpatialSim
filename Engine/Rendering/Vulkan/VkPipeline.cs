@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Silk.NET.Core.Native;
 using Silk.NET.Vulkan;
 using SpatialSim.Engine.Core;
@@ -34,12 +36,52 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 fragShaderStageInfo
             };
 
-            PipelineVertexInputStateCreateInfo vertexInputInfo = new()
+            // TODO move this out of here
+
+            VertexInputBindingDescription bindingDescription = new()
             {
-                SType = StructureType.PipelineVertexInputStateCreateInfo,
-                VertexBindingDescriptionCount = 0,
-                VertexAttributeDescriptionCount = 0,
+                Binding = 0,
+                Stride = (uint)Unsafe.SizeOf<Vertex>(),
+                InputRate = VertexInputRate.Vertex,
             };
+            
+            VertexInputAttributeDescription[] attributeDescriptions = new[]
+            {
+                new VertexInputAttributeDescription()
+                {
+                    Binding = 0,
+                    Location = 0,
+                    Format = Format.R32G32B32Sfloat,
+                    Offset = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.position)),
+                },
+                new VertexInputAttributeDescription()
+                {
+                    Binding = 0,
+                    Location = 1,
+                    Format = Format.R32G32B32Sfloat,
+                    Offset = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.normal)),
+                },
+                new VertexInputAttributeDescription()
+                {
+                    Binding = 0,
+                    Location = 2,
+                    Format = Format.R32G32Sfloat,
+                    Offset = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.uv)),
+                }
+            };
+
+            PipelineVertexInputStateCreateInfo vertexInputInfo;
+            fixed (VertexInputAttributeDescription* attributeDescriptionsPtr = attributeDescriptions)
+            {
+                vertexInputInfo = new()
+                {
+                    SType = StructureType.PipelineVertexInputStateCreateInfo,
+                    VertexBindingDescriptionCount = 1,
+                    VertexAttributeDescriptionCount = (uint)attributeDescriptions.Length,
+                    PVertexBindingDescriptions = &bindingDescription,
+                    PVertexAttributeDescriptions = attributeDescriptionsPtr,
+                };
+            }
 
             PipelineInputAssemblyStateCreateInfo inputAssembly = new()
             {

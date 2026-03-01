@@ -28,7 +28,7 @@ namespace SpatialSim.Engine.Rendering
                 return;
             }
             
-            shader = AppState.appContext.renderer.CreateShaderDevice(settings, GLSLToSpirv(settings.type));
+            shader = AppState.appContext.DeviceFactory.CreateShaderDevice(settings, GLSLToSpirv(settings.type));
         }
 
         public void Clean()

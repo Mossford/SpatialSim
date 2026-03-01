@@ -31,8 +31,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static Fence[] imagesInFlight;
         public static int currentFrame = 0;
 
-        static VkCommandBuffer commandPool;
-        public static VkCommandBuffer[] commandBuffers;
+        static CommandBuffer commandPool;
+        public static CommandBuffer[] commandBuffers;
         
         public const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -164,13 +164,15 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public static void CreateSwapChainCommandBuffers()
         {
-            commandPool = new VkCommandBuffer();
-            commandPool.CreateCommandPool();
-            commandBuffers = new VkCommandBuffer[swapChainImages.Length];
+            commandPool = new CommandBuffer();
+            commandPool.commandBuffer = new VkCommandBuffer();
+            ((VkCommandBuffer)commandPool.commandBuffer!).CreateCommandPool();
+            commandBuffers = new CommandBuffer[swapChainImages.Length];
             for (int i = 0; i < commandBuffers.Length; i++)
             {
-                commandBuffers[i] = new VkCommandBuffer();
-                commandBuffers[i].Create(commandPool.commandPool);
+                commandBuffers[i] = new CommandBuffer();
+                commandBuffers[i].commandBuffer = new VkCommandBuffer();
+                ((VkCommandBuffer)commandBuffers[i].commandBuffer!).Create(((VkCommandBuffer)commandPool.commandBuffer!).commandPool);
             }
         }
         
@@ -195,7 +197,10 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             for (int i = 0; i < commandBuffers.Length; i++)
             {
-                AppState.appContext.GetContext<VkContext>().vk.FreeCommandBuffers(VkDevices.device, commandPool.commandPool, 1, ref commandBuffers[i].commandBuffer);
+                AppState.appContext.GetContext<VkContext>().vk.FreeCommandBuffers(
+                    VkDevices.device, 
+                    ((VkCommandBuffer)commandPool.commandBuffer!).commandPool, 1, 
+                    ref ((VkCommandBuffer)commandBuffers[i].commandBuffer!).commandBuffer);
             }
 
             AppState.appContext.defaultPipeline.Clean();
@@ -221,7 +226,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             for (int i = 0; i < commandBuffers.Length; i++)
             {
-                commandBuffers[i].Create(commandPool.commandPool);
+                ((VkCommandBuffer)commandBuffers[i].commandBuffer!).Create(((VkCommandBuffer)commandPool.commandBuffer!).commandPool);
             }
             
             imagesInFlight = new Fence[swapChainImages.Length];
@@ -252,7 +257,10 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 AppState.appContext.GetContext<VkContext>().vk.DestroyFence(VkDevices.device, inFlightFences[i], null);
             }
             
-            AppState.appContext.GetContext<VkContext>().vk.DestroyCommandPool(VkDevices.device, commandPool.commandPool, null);
+            AppState.appContext.GetContext<VkContext>().vk.DestroyCommandPool(
+                VkDevices.device, 
+                ((VkCommandBuffer)commandPool.commandBuffer!).commandPool, 
+                null);
             
             for (int i = 0; i < swapChainImages.Length; i++)
             {

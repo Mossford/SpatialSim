@@ -41,7 +41,7 @@ namespace SpatialSim.Engine.Rendering
         {
             this.usage = usage;
             this.memoryUsage = memoryUsage;
-            buffer = AppState.appContext.renderer.CreateBufferDevice(data, usage, memoryUsage);
+            buffer = AppState.appContext.DeviceFactory.CreateBufferDevice(data, usage, memoryUsage);
             size = (ulong)(data.Length * sizeof(T));
         }
 
@@ -52,7 +52,7 @@ namespace SpatialSim.Engine.Rendering
         {
             this.usage = usage;
             this.memoryUsage = memoryUsage;
-            buffer = AppState.appContext.renderer.CreateBufferDevice<T>(dataLength, usage, memoryUsage);
+            buffer = AppState.appContext.DeviceFactory.CreateBufferDevice<T>(dataLength, usage, memoryUsage);
             size = (ulong)(dataLength * sizeof(T));
         }
 

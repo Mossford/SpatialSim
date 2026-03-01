@@ -22,7 +22,7 @@ namespace SpatialSim.Engine.Core
 
             EcsComponentType[] types = (EcsComponentType[])Enum.GetValuesAsUnderlyingType<EcsComponentType>();
             //remove the empty component type
-            for (int i = 1; i < types.Length; i++)
+            for (int i = 0; i < types.Length - 1; i++)
             {
                 Debug.LogInfo($"Created {types[i]} ECS component pool");
                 componentPools.Add(new ComponentPool() with
@@ -37,6 +37,26 @@ namespace SpatialSim.Engine.Core
         public static void Update()
         {
             
+        }
+
+        public static void Render(CommandBuffer commandBuffer)
+        {
+            for (int i = 0; i < componentPools[EcsComponentType.MeshRenderer.GetId()].components.ValueCount; i++)
+            {
+                MeshRenderer renderer = (MeshRenderer)componentPools[EcsComponentType.MeshRenderer.GetId()].components.Get(i);
+                renderer.Draw(commandBuffer);
+            }
+        }
+
+        public static void Clean()
+        {
+            for (int i = 0; i < componentPools.Count; i++)
+            {
+                for (int j = 0; j < componentPools[i].components.ValueCount; j++)
+                {
+                    componentPools[i].components.Get(j).Dispose();
+                }
+            }
         }
 
         public static Entity AddEntity()
@@ -66,16 +86,16 @@ namespace SpatialSim.Engine.Core
         {
             int poolId = component.type.GetId();
             int id = componentPools[poolId].components.Add(component);
-            componentPools[poolId].components[^1].id = id;
+            componentPools[poolId].components[id].id = id;
             Debug.LogInfo($"Added component of type {component.type}");
+            
+            totalComponents++;
             return new EcsComponentRef() with
             {
                 type = component.type,
                 id = id,
                 entity = entityId
             };
-
-            totalComponents++;
         }
 
         public static bool RemoveComponent(in EcsComponentRef componentRef)
@@ -103,7 +123,7 @@ namespace SpatialSim.Engine.Core
             if (id < 0 || id >= componentPools[poolId].components.Count)
                 return new EmptyComponent();
 
-            return componentPools[poolId].components[poolId];
+            return componentPools[poolId].components[id];
         }
     }
 }

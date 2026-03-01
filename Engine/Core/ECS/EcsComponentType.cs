@@ -2,18 +2,20 @@ namespace SpatialSim.Engine.Core
 {
     public enum EcsComponentType
     {
-        Empty,
         Pipeline,
         Mesh,
         MeshRenderer,
-        Material
+        Material,
+        
+        //always keep last
+        Empty,
     }
 
     public static class EcsComponentTypeExtensions
     {
         public static int GetId(this EcsComponentType type)
         {
-            return (int)type - 1;
+            return (int)type;
         }
     }
 }

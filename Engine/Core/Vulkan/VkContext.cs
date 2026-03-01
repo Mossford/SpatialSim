@@ -18,10 +18,12 @@ namespace SpatialSim.Engine.Core.Vulkan
         public Instance instance;
         
         public GraphicsAPI graphicsApi { get; set; }
-        public IRenderer renderer { get; set; }
+        public IDeviceFactory DeviceFactory { get; set; }
         public Pipeline defaultPipeline { get; set; }
         public RenderPass renderPass { get; set; }
         public VkImGuiController imGuiController;
+
+        public Entity meshTest;
         
         const float ResizeDelay = 0.05f;
         int currentSwapChainRecreations;
@@ -39,7 +41,7 @@ namespace SpatialSim.Engine.Core.Vulkan
             swapChainRecreationCounter = 0f;
             currentlyResizing = false;
             
-            renderer = new VkRenderer();
+            DeviceFactory = new VkDeviceFactory();
             
             VkCreation.CreateInstance();
             VkValidationLayers.SetupDebugMessenger();
@@ -62,6 +64,11 @@ namespace SpatialSim.Engine.Core.Vulkan
             VkSwapChain.CreateSwapChainCommandBuffers();
             
             VkCreation.CreateImGui();
+
+            meshTest = EcsManager.AddEntity();
+            meshTest.AddComponent(new MeshRenderer(
+                meshTest.AddComponent(new Mesh(MeshGeneration.Create2DTriangle())),
+                meshTest.AddComponent(new Material())));
             
             Debug.LogInfo("Successful vulkan context creation");
         }
@@ -110,11 +117,15 @@ namespace SpatialSim.Engine.Core.Vulkan
                 vk!.WaitForFences(VkDevices.device, 1, in VkSwapChain.imagesInFlight[imageIndex], true, ulong.MaxValue);
             }
             VkSwapChain.imagesInFlight[imageIndex] = VkSwapChain.inFlightFences[VkSwapChain.currentFrame];
-
+            
             //render
-            CommandBuffer vkcommandBuffer = VkSwapChain.commandBuffers[imageIndex].commandBuffer;
+            CommandBuffer vkcommandBuffer = ((VkCommandBuffer)VkSwapChain.commandBuffers[imageIndex].commandBuffer!).commandBuffer;
             VkSwapChain.commandBuffers[imageIndex].BeginCommandBuffer();
-            VkSwapChain.commandBuffers[imageIndex].CreateDrawCommandBuffer((int)imageIndex);
+            
+            VkSwapChain.commandBuffers[imageIndex].BeginRenderPass((int)imageIndex);
+            VkSwapChain.commandBuffers[imageIndex].BindPipeLine(defaultPipeline);
+            EcsManager.Render(VkSwapChain.commandBuffers[imageIndex]);
+            VkSwapChain.commandBuffers[imageIndex].EndRenderPass();
             
             imGuiController.Render(vkcommandBuffer, VkSwapChain.swapChainFramebuffers[imageIndex], VkSwapChain.swapChainExtent);
             

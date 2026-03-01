@@ -34,12 +34,12 @@ namespace SpatialSim.Engine.Rendering
                    continue;
 
                 Mesh mesh = ((Mesh)EcsManager.GetComponent(meshes[i].mesh));
-                vertexSize += mesh.meshData.vertices.Length;
+                vertexSize += mesh.meshData.vertexData.vertices.Length;
                 indiceSize += mesh.meshData.indices.Length;
                 meshCount++;
             }
             
-            meshData.vertices = new Vector3[vertexSize];
+            meshData.vertexData.vertices = new Vector3[vertexSize];
             meshData.indices = new int[indiceSize];
             
             int countV = 0;
@@ -50,11 +50,11 @@ namespace SpatialSim.Engine.Rendering
                 Mesh mesh = ((Mesh)EcsManager.GetComponent(meshes[i].mesh));
                 modelMats[count] = mesh.modelMat;
                 
-                for (int j = 0; j < mesh.meshData.vertices.Length; j++)
+                for (int j = 0; j < mesh.meshData.vertexData.vertices.Length; j++)
                 {
-                    meshData.vertices[countV] = mesh.meshData.vertices[j];
-                    meshData.normals[countV] = mesh.meshData.normals[j];
-                    meshData.uvs[countV] = mesh.meshData.uvs[j];
+                    meshData.vertexData.vertices[countV] = mesh.meshData.vertexData.vertices[j];
+                    meshData.vertexData.normals[countV] = mesh.meshData.vertexData.normals[j];
+                    meshData.vertexData.uvs[countV] = mesh.meshData.vertexData.uvs[j];
                     countV++;
                 }
                 
@@ -106,12 +106,12 @@ namespace SpatialSim.Engine.Rendering
                     continue;
 
                 Mesh mesh = ((Mesh)EcsManager.GetComponent(meshes[i].mesh));
-                vertexSize += mesh.meshData.vertices.Length;
+                vertexSize += mesh.meshData.vertexData.vertices.Length;
                 indiceSize += mesh.meshData.indices.Length;
                 meshCount++;
             }
             
-            meshData.vertices = new Vector3[vertexSize];
+            meshData.vertexData.vertices = new Vector3[vertexSize];
             meshData.indices = new int[indiceSize];
             
             int countV = 0;
@@ -125,11 +125,11 @@ namespace SpatialSim.Engine.Rendering
                 Mesh mesh = ((Mesh)EcsManager.GetComponent(meshes[i].mesh));
                 modelMats[count] = mesh.modelMat;
                 
-                for (int j = 0; j < mesh.meshData.vertices.Length; j++)
+                for (int j = 0; j < mesh.meshData.vertexData.vertices.Length; j++)
                 {
-                    meshData.vertices[countV] = mesh.meshData.vertices[j];
-                    meshData.normals[countV] = mesh.meshData.normals[j];
-                    meshData.uvs[countV] = mesh.meshData.uvs[j];
+                    meshData.vertexData.vertices[countV] = mesh.meshData.vertexData.vertices[j];
+                    meshData.vertexData.normals[countV] = mesh.meshData.vertexData.normals[j];
+                    meshData.vertexData.uvs[countV] = mesh.meshData.vertexData.uvs[j];
                     countV++;
                 }
                 
@@ -194,7 +194,7 @@ namespace SpatialSim.Engine.Rendering
                     continue;
                 
                 Mesh mesh = ((Mesh)EcsManager.GetComponent(meshes[i].mesh));
-                offset += mesh.meshData.vertices.Length;
+                offset += mesh.meshData.vertexData.vertices.Length;
                 offsetByte += mesh.meshData.indices.Length;
             }
             

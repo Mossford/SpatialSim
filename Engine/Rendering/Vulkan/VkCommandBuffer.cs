@@ -56,43 +56,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             Debug.LogInfo("Successful command buffer creation");
         }
-
-        /// <summary>
-        /// Just for testing
-        /// </summary>
-        public unsafe void CreateDrawCommandBuffer(int frame)
-        {
-            RenderPassBeginInfo renderPassInfo = new()
-            {
-                SType = StructureType.RenderPassBeginInfo,
-                RenderPass = ((VkRenderPass)AppState.appContext.renderPass).renderPass,
-                Framebuffer = VkSwapChain.swapChainFramebuffers[frame],
-                RenderArea =
-                {
-                    Offset = { X = 0, Y = 0 },
-                    Extent = VkSwapChain.swapChainExtent,
-                }
-            };
-
-            ClearValue clearColor = new()
-            {
-                Color = new()
-                {
-                    Float32_0 = 0, 
-                    Float32_1 = 0, 
-                    Float32_2 = 0, 
-                    Float32_3 = 1
-                },
-            };
-
-            renderPassInfo.ClearValueCount = 1;
-            renderPassInfo.PClearValues = &clearColor;
-
-            AppState.appContext.GetContext<VkContext>().vk.CmdBeginRenderPass(commandBuffer, &renderPassInfo, SubpassContents.Inline);
-            AppState.appContext.GetContext<VkContext>().vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, ((VkPipeline)AppState.appContext.defaultPipeline.pipeline!).pipeline);
-            AppState.appContext.GetContext<VkContext>().vk.CmdDraw(commandBuffer, 3, 1, 0, 0);
-            AppState.appContext.GetContext<VkContext>().vk.CmdEndRenderPass(commandBuffer);
-        }
         
         public unsafe void Clean()
         {
@@ -118,6 +81,16 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 {
                     AppState.appContext.GetContext<VkContext>().vk.CmdBindVertexBuffers(commandBuffer, 0, 1, bufferPtr, offsetsPtr);
                 }
+            }
+        }
+        
+        public unsafe void BindIndexBuffers<T>(IBufferDevice<T> bufferDevice) where T : unmanaged
+        {
+            ulong[] offsets = new ulong[] { 0 };
+
+            fixed (ulong* offsetsPtr = offsets)
+            {
+                AppState.appContext.GetContext<VkContext>().vk.CmdBindIndexBuffer(commandBuffer, ((VkBuffer<T>)bufferDevice).buffer, 0, IndexType.Uint32);
             }
         }
 
@@ -163,13 +136,13 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
         }
 
-        public unsafe void BeginRenderPass()
+        public unsafe void BeginRenderPass(int frame)
         {
             RenderPassBeginInfo renderPassInfo = new()
             {
                 SType = StructureType.RenderPassBeginInfo,
                 RenderPass = ((VkRenderPass)AppState.appContext.renderPass).renderPass,
-                Framebuffer = VkSwapChain.swapChainFramebuffers[VkSwapChain.currentFrame],
+                Framebuffer = VkSwapChain.swapChainFramebuffers[frame],
                 RenderArea =
                 {
                     Offset = { X = 0, Y = 0 },
@@ -177,7 +150,31 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 }
             };
             
+            ClearValue clearColor = new()
+            {
+                Color = new()
+                {
+                    Float32_0 = 0, 
+                    Float32_1 = 0, 
+                    Float32_2 = 0, 
+                    Float32_3 = 1
+                },
+            };
+
+            renderPassInfo.ClearValueCount = 1;
+            renderPassInfo.PClearValues = &clearColor;
+            
             AppState.appContext.GetContext<VkContext>().vk.CmdBeginRenderPass(commandBuffer, &renderPassInfo, SubpassContents.Inline);
+        }
+
+        public void BindPipeLine(Pipeline pipeline)
+        {
+            AppState.appContext.GetContext<VkContext>().vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, ((VkPipeline)pipeline.pipeline!).pipeline);
+        }
+
+        public void Draw(int indexCount)
+        {
+            AppState.appContext.GetContext<VkContext>().vk.CmdDrawIndexed(commandBuffer, (uint)indexCount, 1, 0, 0, 0);
         }
 
         public void EndRenderPass()

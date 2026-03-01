@@ -7,7 +7,7 @@ namespace SpatialSim.Engine.Core
     public interface AppContext
     {
         public GraphicsAPI graphicsApi { get; set; }
-        public IRenderer renderer { get; }
+        public IDeviceFactory DeviceFactory { get; }
 
         //should be removed into a pipeline manager
         public Pipeline defaultPipeline { get; set; }

@@ -2,7 +2,7 @@
 
 namespace SpatialSim.Engine.Rendering.Vulkan
 {
-    public class VkRenderer : IRenderer
+    public class VkDeviceFactory : IDeviceFactory
     {
         public IShaderDevice CreateShaderDevice(ShaderSettings settings, in byte[] code)
         {
@@ -38,6 +38,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             VkBuffer<T> buffer = new VkBuffer<T>();
             buffer.Create(dataLength, usage, memoryUsage);
             return buffer;
+        }
+
+        public void DrawMesh(in CommandBuffer commandBuffer, in Pipeline pipeline, Buffer<Vertex> vertexBuffer, Buffer<int> indexBuffer)
+        {
+            
         }
     }
 }

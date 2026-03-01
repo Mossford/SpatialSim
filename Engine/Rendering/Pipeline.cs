@@ -20,7 +20,7 @@ namespace SpatialSim.Engine.Rendering
 
         public void Create(in Shader vertex, in Shader fragment)
         {
-            pipeline = AppState.appContext.renderer.CreatePipelineDevice(vertex, fragment);
+            pipeline = AppState.appContext.DeviceFactory.CreatePipelineDevice(vertex, fragment);
         }
 
         public void Bind()

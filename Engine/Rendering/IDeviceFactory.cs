@@ -4,7 +4,7 @@ namespace SpatialSim.Engine.Rendering
     /// <summary>
     /// Methods to perform api agnostic functions on shit like shaders and whatever the hell
     /// </summary>
-    public interface IRenderer
+    public interface IDeviceFactory
     {
         public IShaderDevice CreateShaderDevice(ShaderSettings settings, in byte[] code);
         public IPipelineDevice CreatePipelineDevice(in Shader vertex, in Shader fragment);
