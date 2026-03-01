@@ -53,7 +53,11 @@ namespace SpatialSim.Engine.Core
             GlfwWindowing.Use();
             
             AppState.window = Silk.NET.Windowing.Window.Create(options);
-            Debug.LogInfo("Running on Api " + AppState.window.API.API + " " + AppState.window.API.Version.MajorVersion + "." + AppState.window.API.Version.MinorVersion);
+            
+            AppState.Api = AppState.window.API.API + " " + AppState.window.API.Version.MajorVersion + "." +
+                           AppState.window.API.Version.MinorVersion;
+            
+            Debug.LogInfo("Running on Api " + AppState.Api);
             Debug.LogInfo("Running on Windowing Backend " + AppState.window.GetType().Name);
             
             AppState.window.Load += Load;
@@ -74,6 +78,8 @@ namespace SpatialSim.Engine.Core
             
             AppState.appContext.Init();
             
+            MainImgui.SetImGuiStyle();
+            
             AppState.window.WindowState = WindowState.Fullscreen;
             maxSize = (Vector2)AppState.window.GetFullSize();
             AppState.window.WindowState = WindowState.Normal;
@@ -84,6 +90,7 @@ namespace SpatialSim.Engine.Core
 
         static void Update(double delta)
         {
+            AppState.deltaTime = (float)delta;
             AppState.totalTime += (ulong)(delta * 1000000);
             
             Input.Update();
@@ -108,6 +115,7 @@ namespace SpatialSim.Engine.Core
 
         static void Render(double delta)
         {
+            MainImgui.MainMenu();
             AppState.appContext.Render();
         }
 

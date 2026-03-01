@@ -87,8 +87,6 @@ namespace SpatialSim.Engine.Core.Vulkan
 
         public unsafe void Render()
         {
-            ImGuiNET.ImGui.ShowDemoWindow();
-            
             //wait for the current frame to complete
             vk.WaitForFences(VkDevices.device, 1, in VkSwapChain.inFlightFences[VkSwapChain.currentFrame], true, ulong.MaxValue);
 

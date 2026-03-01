@@ -12,6 +12,8 @@ namespace SpatialSim.Engine.Core
     {
         public static List<ComponentPool> componentPools;
         public static StableList<Entity> entities;
+
+        public static int totalComponents;
         
         public static void Init()
         {
@@ -72,6 +74,8 @@ namespace SpatialSim.Engine.Core
                 id = id,
                 entity = entityId
             };
+
+            totalComponents++;
         }
 
         public static bool RemoveComponent(in EcsComponentRef componentRef)
@@ -82,6 +86,8 @@ namespace SpatialSim.Engine.Core
                 return false;
             
             componentPools[poolId].components.RemoveAt(id);
+
+            totalComponents--;
 
             return true;
         }

@@ -14,6 +14,8 @@ namespace SpatialSim.Engine.Core
         #region Information
 
         public const string Version = "0.02";
+        public static string gpuDeviceName;
+        public static string Api;
 
         #endregion
         
@@ -29,9 +31,11 @@ namespace SpatialSim.Engine.Core
         #region State
 
         public static ulong totalTime;
+        public static float deltaTime;
         public static double GetSeconds() => totalTime / 1000000.0f;
         public static ulong GetMillis() => totalTime / 1000;
         public static ulong GetMicro() => totalTime;
+        public static float GetDelta() => deltaTime;
 
         #endregion
 

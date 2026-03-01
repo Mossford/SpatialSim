@@ -295,7 +295,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         {
             foreach (var availableFormat in availableFormats)
             {
-                if (availableFormat.Format == Format.B8G8R8A8Srgb && availableFormat.ColorSpace == ColorSpaceKHR.SpaceSrgbNonlinearKhr)
+                //Imgui uses B8G8R8A8Unorm
+                if (availableFormat.Format == Format.B8G8R8A8Unorm && availableFormat.ColorSpace == ColorSpaceKHR.SpaceSrgbNonlinearKhr)
                 {
                     return availableFormat;
                 }

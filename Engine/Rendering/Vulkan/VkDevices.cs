@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using Silk.NET.Core;
 using Silk.NET.Core.Native;
 using Silk.NET.Vulkan;
@@ -32,7 +33,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
         }
         
-        public static void PickPhysicalDevice()
+        public static unsafe void PickPhysicalDevice()
         {
             IReadOnlyCollection<PhysicalDevice> devices = AppState.appContext.GetContext<VkContext>().vk.GetPhysicalDevices(AppState.appContext.GetContext<VkContext>().instance);
             
@@ -50,6 +51,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 Debug.Error("Failed to find a suitable GPU");
                 throw new Exception("Failed to find a suitable GPU");
             }
+            
+            AppState.appContext.GetContext<VkContext>().vk.GetPhysicalDeviceProperties(physicalDevice, out PhysicalDeviceProperties properties);
+            AppState.gpuDeviceName = Encoding.UTF8.GetString(properties.DeviceName, (int)Vk.MaxPhysicalDeviceNameSize);
             
             Debug.LogInfo("Successful physical device creation");
         }
