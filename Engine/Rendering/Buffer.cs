@@ -9,6 +9,7 @@ namespace SpatialSim.Engine.Rendering
         public void BindVertexBuffer(ICommandBufferDevice commandBufferDevice);
         public void BindBuffer(ICommandBufferDevice commandBufferDevice);
         public void CopyTo(IBufferDevice<T> dest);
+        public void UpdateData(in Span<T> data);
         public void Clean();
     }
 
@@ -16,7 +17,8 @@ namespace SpatialSim.Engine.Rendering
     {
         Vertex,
         Index,
-        Storage
+        Storage,
+        Uniform
     }
 
     public enum BufferMemoryUsage
@@ -64,6 +66,11 @@ namespace SpatialSim.Engine.Rendering
         public void CopyTo(Buffer<T> dest)
         {
             
+        }
+
+        public void UpdateData(in Span<T> data)
+        {
+            buffer?.UpdateData(data);
         }
 
         public void Clean()

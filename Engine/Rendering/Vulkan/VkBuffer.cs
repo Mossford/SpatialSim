@@ -37,6 +37,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     bufferUsage = BufferUsageFlags.StorageBufferBit;
                     break;
                 }
+                case BufferUsage.Uniform:
+                {
+                    bufferUsage = BufferUsageFlags.UniformBufferBit;
+                    break;
+                }
             }
             
             switch (memoryUsage)
@@ -143,6 +148,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     bufferUsage = BufferUsageFlags.StorageBufferBit;
                     break;
                 }
+                case BufferUsage.Uniform:
+                {
+                    bufferUsage = BufferUsageFlags.UniformBufferBit;
+                    break;
+                }
             }
             
             switch (memoryUsage)
@@ -241,7 +251,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             };
 
             VkCommandBuffer vkCommandBuffer = (VkCommandBuffer)commandBuffer.commandBuffer!;
-            AppState.appContext.GetContext<VkContext>().vk.BeginCommandBuffer(vkCommandBuffer.commandBuffer, in beginInfo);
+            commandBuffer.BeginCommandBuffer();
 
             BufferCopy copyRegion = new()
             {
@@ -250,7 +260,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             AppState.appContext.GetContext<VkContext>().vk.CmdCopyBuffer(vkCommandBuffer.commandBuffer, buffer, ((VkBuffer<T>)dest).buffer, 1, in copyRegion);
 
-            AppState.appContext.GetContext<VkContext>().vk.EndCommandBuffer(vkCommandBuffer.commandBuffer);
+            commandBuffer.EndCommandBuffer();
 
             SubmitInfo submitInfo;
             fixed (Silk.NET.Vulkan.CommandBuffer* cmdBufPtr = &vkCommandBuffer.commandBuffer)
@@ -263,6 +273,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 };
             }
 
+            // TODO Check if this should be in the graphics queue
             AppState.appContext.GetContext<VkContext>().vk.QueueSubmit(VkDevices.graphicsQueue, 1, in submitInfo, default);
             AppState.appContext.GetContext<VkContext>().vk.QueueWaitIdle(VkDevices.graphicsQueue);
 
@@ -286,6 +297,20 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             throw new Exception($"Failed to find suitable memory type for type {typeof(T).Name}");
         }
 
+        public unsafe void UpdateData(in Span<T> data)
+        {
+            if (data.Length >= (int)size / sizeof(T))
+            {
+                Debug.Warning($"Could not upload type {typeof(T).Name} array to buffer, past maximum allocated size of {(int)size / sizeof(T)}");
+                return;
+            }
+            
+            void* bufferData;
+            AppState.appContext.GetContext<VkContext>().vk.MapMemory(VkDevices.device, bufferMemory, 0,  (uint)data.Length, 0, &bufferData);
+            data.CopyTo(new Span<T>(bufferData, data.Length));
+            AppState.appContext.GetContext<VkContext>().vk.UnmapMemory(VkDevices.device, bufferMemory);
+        }
+
         public void Bind()
         {
             throw new NotImplementedException();
@@ -296,7 +321,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.GetContext<VkContext>().vk.DestroyBuffer(VkDevices.device, buffer, null);
             AppState.appContext.GetContext<VkContext>().vk.FreeMemory(VkDevices.device, bufferMemory, null);
             
-            Debug.LogInfo("Cleaned up Buffer");
+            Debug.LogInfo($"Cleaned up Buffer of type {typeof(T).Name}");
         }
     }
 }

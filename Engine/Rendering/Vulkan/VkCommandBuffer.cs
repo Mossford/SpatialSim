@@ -172,6 +172,19 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.GetContext<VkContext>().vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, ((VkPipeline)pipeline.pipeline!).pipeline);
         }
 
+        public unsafe void BindUniforms(Pipeline pipeline, int frame)
+        {
+            AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
+                commandBuffer, 
+                PipelineBindPoint.Graphics, 
+                ((VkPipeline)pipeline.pipeline!).pipelineLayout, 
+                0, 
+                1, 
+                in ((VkPipeline)pipeline.pipeline!).descriptorSets[frame], 
+                0, 
+                null);
+        }
+
         public void Draw(int indexCount)
         {
             AppState.appContext.GetContext<VkContext>().vk.CmdDrawIndexed(commandBuffer, (uint)indexCount, 1, 0, 0, 0);

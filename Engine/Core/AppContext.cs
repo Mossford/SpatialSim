@@ -17,7 +17,8 @@ namespace SpatialSim.Engine.Core
         public void Update(float delta);
         public void Render();
         public void WindowResize();
-        public unsafe void Clean();
+        public unsafe void CleanObjects();
+        public unsafe void CleanContext();
         
         public T GetContext<T>() where T : VkContext;
     }

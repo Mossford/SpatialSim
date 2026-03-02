@@ -61,6 +61,11 @@ namespace SpatialSim.Engine.Rendering
             this.meshData = meshData;
         }
 
+        public void CreateModelMatrix()
+        {
+            
+        }
+
         public Vertex[] GetVertexes()
         {
             Vertex[] vertexes = new Vertex[meshData.vertexData.vertices.Length];

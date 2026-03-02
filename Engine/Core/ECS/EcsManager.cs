@@ -57,6 +57,8 @@ namespace SpatialSim.Engine.Core
                     componentPools[i].components.Get(j).Dispose();
                 }
             }
+            
+            Debug.LogInfo("Cleaned all ECS and entity instances");
         }
 
         public static Entity AddEntity()

@@ -8,6 +8,7 @@ namespace SpatialSim.Engine.Rendering
     {
         public void Create(in Shader vertex, in Shader fragment);
         public void Bind();
+        public void UpdateUniforms(in Shader shader, int frame);
         public void Clean();
     }
 
@@ -23,6 +24,12 @@ namespace SpatialSim.Engine.Rendering
             pipeline = AppState.appContext.DeviceFactory.CreatePipelineDevice(vertex, fragment);
         }
 
+        public void UpdateUniforms(in Shader shader, int frame)
+        {
+            pipeline?.UpdateUniforms(shader, frame);
+            shader.uniformData.Clear();
+        }
+        
         public void Bind()
         {
             

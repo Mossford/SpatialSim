@@ -121,10 +121,11 @@ namespace SpatialSim.Engine.Core
 
         static unsafe void Clean()
         {
-            EcsManager.Clean();
             ShaderManager.Clean();
             Input.Clean();
-            AppState.appContext.Clean();
+            AppState.appContext.CleanObjects();
+            EcsManager.Clean();
+            AppState.appContext.CleanContext();
             AppState.window.Dispose();
         }
     }

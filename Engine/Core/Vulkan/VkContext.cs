@@ -1,3 +1,4 @@
+using System.Numerics;
 using Silk.NET.Vulkan;
 using Silk.NET.Windowing;
 using SpatialSim.Engine.Rendering;
@@ -65,10 +66,13 @@ namespace SpatialSim.Engine.Core.Vulkan
             
             VkCreation.CreateImGui();
 
-            meshTest = EcsManager.AddEntity();
-            meshTest.AddComponent(new MeshRenderer(
-                meshTest.AddComponent(new Mesh(MeshGeneration.Create2DTriangle())),
-                meshTest.AddComponent(new Material())));
+            for (int i = 0; i < 10; i++)
+            {
+                meshTest = EcsManager.AddEntity();
+                meshTest.AddComponent(new MeshRenderer(
+                    meshTest.AddComponent(new Mesh(MeshGeneration.CreateSpikerMesh(1, 0))),
+                    meshTest.AddComponent(new Material())));
+            }
             
             Debug.LogInfo("Successful vulkan context creation");
         }
@@ -119,11 +123,18 @@ namespace SpatialSim.Engine.Core.Vulkan
             VkSwapChain.imagesInFlight[imageIndex] = VkSwapChain.inFlightFences[VkSwapChain.currentFrame];
             
             //render
+            
             CommandBuffer vkcommandBuffer = ((VkCommandBuffer)VkSwapChain.commandBuffers[imageIndex].commandBuffer!).commandBuffer;
             VkSwapChain.commandBuffers[imageIndex].BeginCommandBuffer();
             
             VkSwapChain.commandBuffers[imageIndex].BeginRenderPass((int)imageIndex);
             VkSwapChain.commandBuffers[imageIndex].BindPipeLine(defaultPipeline);
+            Shader vertexShader = ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Vertex, "base.vert"));
+            vertexShader.AddMat4(Matrix4x4.Identity * Matrix4x4.CreateTranslation(new Vector3(0)));
+            vertexShader.AddMat4(Matrix4x4.CreateLookAt(new Vector3(MathF.Sin((float)AppState.GetSeconds()), 4, MathF.Cos((float)AppState.GetSeconds())), new Vector3(0, 0, 0), new Vector3(0, 1, 0)));
+            vertexShader.AddMat4(Matrix4x4.CreatePerspectiveFieldOfView(45 * MathF.PI / 180.0f, Window.size.X / Window.size.Y, 0.01f, 10.0f));
+            defaultPipeline.UpdateUniforms(vertexShader, (int)imageIndex);
+            VkSwapChain.commandBuffers[imageIndex].BindUniforms(defaultPipeline, (int)imageIndex);
             EcsManager.Render(VkSwapChain.commandBuffers[imageIndex]);
             VkSwapChain.commandBuffers[imageIndex].EndRenderPass();
             
@@ -199,7 +210,7 @@ namespace SpatialSim.Engine.Core.Vulkan
             swapChainRecreationCounter = 0f;
         }
 
-        public unsafe void Clean()
+        public unsafe void CleanObjects()
         {
             vk.DeviceWaitIdle(VkDevices.device);
          
@@ -207,6 +218,14 @@ namespace SpatialSim.Engine.Core.Vulkan
             
             VkSwapChain.CleanSwapChain();
             
+            Debug.LogInfo("Cleaned vulkan windowing resources");
+        }
+
+        /// <summary>
+        /// Should be called after all objects have been cleaned
+        /// </summary>
+        public unsafe void CleanContext()
+        {
             vk.DestroyDevice(VkDevices.device, null);
 
             if (AppState.EnableVkValidationLayers)
@@ -216,10 +235,11 @@ namespace SpatialSim.Engine.Core.Vulkan
             }
             
             VkSurface.khrSurface.DestroySurface(instance, VkSurface.surface, null);
+            
             vk.DestroyInstance(instance, null);
             vk.Dispose();
             
-            Debug.LogInfo("Cleaned all vulkan resources");
+            Debug.LogInfo("Cleaned all vulkan instances");
         }
 
         T AppContext.GetContext<T>()

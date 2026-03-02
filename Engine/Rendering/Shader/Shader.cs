@@ -1,3 +1,4 @@
+using System.Numerics;
 using Glslang.NET;
 using SpatialSim.Engine.Core;
 
@@ -18,9 +19,18 @@ namespace SpatialSim.Engine.Rendering
         /// </summary>
         public IShaderDevice? shader;
 
+        /// <summary>
+        /// Max uniform size of 256 bytes
+        /// 4 matrices
+        /// </summary>
+        public const int MaxUniformMemory = 256;
+
+        public List<byte> uniformData;
+
         public void Create(ShaderSettings settings)
         {
             this.settings = settings;
+            uniformData = new List<byte>();
             
             if (!File.Exists(Resources.ShaderPath + settings.file))
             {
@@ -134,9 +144,101 @@ namespace SpatialSim.Engine.Rendering
             program.GenerateSPIRV(out uint[] words, input.stage);
             
             shaderProgram = new byte[words.Length * 4];
-            System.Buffer.BlockCopy(words, 0, shaderProgram, 0, words.Length * 4);
+            Buffer.BlockCopy(words, 0, shaderProgram, 0, words.Length * 4);
 
             return shaderProgram;
+        }
+        
+        public void AddBool(bool value)
+        {
+            byte[] data = BitConverter.GetBytes(value);
+            if (uniformData.Count + data.Length > MaxUniformMemory)
+            {
+                Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                return;
+            }
+            uniformData.AddRange(data);
+        }
+
+        public void AddInt(int value)
+        {
+            byte[] data = BitConverter.GetBytes(value);
+            if (uniformData.Count + data.Length > MaxUniformMemory)
+            {
+                Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                return;
+            }
+            uniformData.AddRange(data);
+        }
+
+        public void AddFloat(float value)
+        {
+            byte[] data = BitConverter.GetBytes(value);
+            if (uniformData.Count + data.Length > MaxUniformMemory)
+            {
+                Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                return;
+            }
+            uniformData.AddRange(data);
+        }
+
+        public void AddVec2(Vector2 value)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                byte[] data = BitConverter.GetBytes(value[i]);
+                if (uniformData.Count + data.Length > MaxUniformMemory)
+                {
+                    Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                    return;
+                }
+                uniformData.AddRange(data);
+            }
+        }
+
+        public void AddVec3(Vector3 value)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                byte[] data = BitConverter.GetBytes(value[i]);
+                if (uniformData.Count + data.Length > MaxUniformMemory)
+                {
+                    Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                    return;
+                }
+                uniformData.AddRange(data);
+            }
+        }
+
+        public void AddVec4(Vector4 value)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                byte[] data = BitConverter.GetBytes(value[i]);
+                if (uniformData.Count + data.Length > MaxUniformMemory)
+                {
+                    Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                    return;
+                }
+                uniformData.AddRange(data);
+            }
+        }
+
+        public void AddMat4(Matrix4x4 value)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    byte[] data = BitConverter.GetBytes(value[i][j]);
+                    if (uniformData.Count + data.Length > MaxUniformMemory)
+                    {
+                        Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                        return;
+                    }
+                    uniformData.AddRange(data);
+                }
+            }
         }
 
         public void Dispose()
