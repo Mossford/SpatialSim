@@ -17,4 +17,23 @@
       <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.23.0" />
     </ItemGroup>
 
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+        <MakeDir Directories="$(TargetDir)res" />
+        <ItemGroup>
+            <FilesToCopy Include="Src\res\**\*" />
+        </ItemGroup>
+        <Copy
+                SourceFiles="@(FilesToCopy)"
+                DestinationFiles="@(FilesToCopy->'$(TargetDir)res\%(RecursiveDir)%(Filename)%(Extension)')" />
+    </Target>
+    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+        <MakeDir Directories="$(TargetDir)res" />
+        <ItemGroup>
+            <FilesToCopy Include="Src\res\**\*" />
+        </ItemGroup>
+        <Copy
+                SourceFiles="@(FilesToCopy)"
+                DestinationFiles="@(FilesToCopy->'$(TargetDir)res\%(RecursiveDir)%(Filename)%(Extension)')" />
+    </Target>
+
 </Project>
