@@ -25,6 +25,7 @@ namespace SpatialSim.Engine.Core.Vulkan
         public VkImGuiController imGuiController;
 
         public Entity meshTest;
+        public Entity camera;
         
         const float ResizeDelay = 0.05f;
         int currentSwapChainRecreations;
@@ -66,9 +67,13 @@ namespace SpatialSim.Engine.Core.Vulkan
             
             VkCreation.CreateImGui();
 
-            for (int i = -10; i <= 10; i++)
+            camera = EcsManager.AddEntity();
+            camera.AddComponent(new Camera(
+                camera.AddComponent(new Transform(new Vector3(0f), Quaternion.Identity, new Vector3(1.0f))), 60));
+
+            for (int i = -15; i <= 15; i++)
             {
-                for (int j = -10; j <= 10; j++)
+                for (int j = -15; j <= 15; j++)
                 {
                     meshTest = EcsManager.AddEntity();
                 
@@ -133,6 +138,8 @@ namespace SpatialSim.Engine.Core.Vulkan
             
             CommandBuffer vkcommandBuffer = ((VkCommandBuffer)VkSwapChain.commandBuffers[imageIndex].commandBuffer!).commandBuffer;
             VkSwapChain.commandBuffers[imageIndex].BeginCommandBuffer();
+            
+            ((Camera)camera.GetFirstComponentOfType(EcsComponentType.Camera)).GenerateTransforms();
             
             EcsManager.Render(VkSwapChain.commandBuffers[imageIndex], (int)imageIndex);
             

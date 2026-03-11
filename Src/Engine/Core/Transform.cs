@@ -10,6 +10,7 @@ namespace SpatialSim.Engine.Core
         public Vector3 position;
         public Quaternion rotation;
         public Vector3 scale;
+        public Matrix4x4 modelMat;
 
         public Transform()
         {
@@ -23,6 +24,14 @@ namespace SpatialSim.Engine.Core
             this.position = position;
             this.rotation = rotation;
             this.scale = scale;
+        }
+
+        public Matrix4x4 GetModelMat()
+        {
+            modelMat = Matrix4x4.Identity * Matrix4x4.CreateScale(scale) *
+                       Matrix4x4.CreateTranslation(position) *
+                       Matrix4x4.CreateFromQuaternion(rotation);
+            return modelMat;
         }
         
         public void Dispose()

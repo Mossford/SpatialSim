@@ -137,5 +137,26 @@ namespace SpatialSim.Engine.Core
 
             return componentPools[poolId].components[id];
         }
+        
+        public static T GetComponent<T>(in EcsComponentRef componentRef) where T : IComponent
+        {
+            if (componentRef.type == EcsComponentType.Empty)
+            {
+                Debug.Error("Get Component type was empty on auto cast");
+                throw new InvalidCastException("Get Component type was empty on auto cast");
+            }
+            
+            int poolId = componentRef.type.GetId();
+            int id = componentRef.id;
+
+            if (id < 0 || id >= componentPools[poolId].components.Count)
+            {
+                int range = id < 0 ? 0 : componentPools[poolId].components.Count;
+                Debug.Error($"Get Component id:{id} was not in range [0,{range - 1}]");
+                throw new IndexOutOfRangeException($"Get Component id:{id} was not in range [0,{range - 1}]");
+            }
+
+            return (T)componentPools[poolId].components[id];
+        }
     }
 }

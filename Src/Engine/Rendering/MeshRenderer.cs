@@ -1,5 +1,6 @@
 using System.Numerics;
 using SpatialSim.Engine.Core;
+using SpatialSim.Engine.Core.Vulkan;
 
 namespace SpatialSim.Engine.Rendering
 {
@@ -42,13 +43,13 @@ namespace SpatialSim.Engine.Rendering
         {
             commandBuffer.BindVertexBuffers(vertexBuffer.buffer!);
             commandBuffer.BindIndexBuffers(indexBuffer.buffer!);
-            Mesh meshComp = ((Mesh)EcsManager.GetComponent(mesh));
-            meshComp.CreateModelMatrix();
+            Mesh meshComp = EcsManager.GetComponent<Mesh>(mesh);
             Shader vertexShader = ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Vertex, "base.vert"));
-            // TODO Add support so that this is referenced without needing to shove it in here
-            vertexShader.AddMat4(Matrix4x4.CreateLookAt(new Vector3(MathF.Sin((float)AppState.GetSeconds()) * 13, 3, MathF.Cos((float)AppState.GetSeconds()) * 13), new Vector3(0, 0, 0), new Vector3(0, -1, 0)));
-            vertexShader.AddMat4(Matrix4x4.CreatePerspectiveFieldOfView(45 * MathF.PI / 180.0f, Window.size.X / Window.size.Y, 0.01f, 20.0f));
-            vertexShader.AddMat4(meshComp.modelMat);
+            Camera camera = (Camera)AppState.appContext.GetContext<VkContext>().camera
+                .GetFirstComponentOfType(EcsComponentType.Camera);
+            vertexShader.AddMat4(camera.view);
+            vertexShader.AddMat4(camera.proj);
+            vertexShader.AddMat4(EcsManager.GetComponent<Transform>(meshComp.transform).GetModelMat());
             AppState.appContext.defaultPipeline.UpdateUniforms(vertexShader, frame);
             commandBuffer.BindUniforms(AppState.appContext.defaultPipeline);
             commandBuffer.Draw(meshComp.meshData.indices.Length);

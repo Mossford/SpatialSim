@@ -50,7 +50,6 @@ namespace SpatialSim.Engine.Rendering
 
         public EcsComponentRef transform;
         public MeshData meshData;
-        public Matrix4x4 modelMat;
         
         public Mesh()
         {
@@ -62,14 +61,6 @@ namespace SpatialSim.Engine.Rendering
             transform.CheckComponent(EcsComponentType.Transform);
             this.meshData = meshData;
             this.transform = transform;
-        }
-
-        public void CreateModelMatrix()
-        {
-            Transform transComp = (Transform)EcsManager.GetComponent(transform);
-            modelMat = Matrix4x4.Identity * Matrix4x4.CreateScale(transComp.scale) *
-                       Matrix4x4.CreateTranslation(transComp.position) *
-                       Matrix4x4.CreateFromQuaternion(transComp.rotation);
         }
 
         public Vertex[] GetVertexes()

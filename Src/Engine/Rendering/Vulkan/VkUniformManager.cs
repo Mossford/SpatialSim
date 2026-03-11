@@ -194,7 +194,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
                 if (currentBuffer >= VkSettings.MaxUniformsPerStage)
                 {
-                    Debug.Warning("Run out of buffer space wrapping around");
+                    Debug.Warning("Run out of buffer space, wrapping around");
                     currentBuffer = 0;
                 }
                 

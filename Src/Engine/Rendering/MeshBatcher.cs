@@ -47,8 +47,8 @@ namespace SpatialSim.Engine.Rendering
             int count = 0;
             for (int i = countBE; i < countTO; i++)
             {
-                Mesh mesh = ((Mesh)EcsManager.GetComponent(meshes[i].mesh));
-                modelMats[count] = mesh.modelMat;
+                Mesh mesh = EcsManager.GetComponent<Mesh>(meshes[i].mesh);
+                modelMats[count] = EcsManager.GetComponent<Transform>(mesh.transform).modelMat;
                 
                 for (int j = 0; j < mesh.meshData.vertexData.vertices.Length; j++)
                 {
@@ -122,8 +122,8 @@ namespace SpatialSim.Engine.Rendering
                 if(meshes[i].mesh.id == -1 || meshes[i].material.id == -1 || ((Material)EcsManager.GetComponent(meshes[i].material)).materialId != materialId)
                     continue;
                 
-                Mesh mesh = ((Mesh)EcsManager.GetComponent(meshes[i].mesh));
-                modelMats[count] = mesh.modelMat;
+                Mesh mesh = EcsManager.GetComponent<Mesh>(meshes[i].mesh);
+                modelMats[count] = EcsManager.GetComponent<Transform>(mesh.transform).modelMat;
                 
                 for (int j = 0; j < mesh.meshData.vertexData.vertices.Length; j++)
                 {
@@ -169,7 +169,8 @@ namespace SpatialSim.Engine.Rendering
                 if(meshes[i].mesh.id == -1 || meshes[i].material.id == -1 || ((Material)EcsManager.GetComponent(meshes[i].material)).materialId != materialId)
                     continue;
                 
-                modelMats[count] = ((Mesh)EcsManager.GetComponent(meshes[i].mesh)).modelMat;
+                Mesh mesh = EcsManager.GetComponent<Mesh>(meshes[i].mesh);
+                modelMats[count] = EcsManager.GetComponent<Transform>(mesh.transform).modelMat;
                 count++;
             }
             

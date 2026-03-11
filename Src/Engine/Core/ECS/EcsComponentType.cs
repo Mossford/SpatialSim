@@ -7,6 +7,7 @@ namespace SpatialSim.Engine.Core
         MeshRenderer,
         Material,
         Transform,
+        Camera,
         
         //always keep last
         Empty,
