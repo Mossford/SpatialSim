@@ -1,6 +1,7 @@
 using System.Numerics;
 using Glslang.NET;
 using SpatialSim.Engine.Core;
+using SpatialSim.Engine.Rendering.Vulkan;
 
 namespace SpatialSim.Engine.Rendering
 {
@@ -18,11 +19,6 @@ namespace SpatialSim.Engine.Rendering
         /// Stores the api shader information
         /// </summary>
         public IShaderDevice? shader;
-
-        /// <summary>
-        /// Max uniform section size of 4096 bytes
-        /// </summary>
-        public const int MaxBlockUniformMemory = 1 << 12;
 
         public List<byte> uniformData;
 
@@ -154,9 +150,9 @@ namespace SpatialSim.Engine.Rendering
         public void AddBool(bool value)
         {
             byte[] data = BitConverter.GetBytes(value);
-            if (uniformData.Count + data.Length > MaxBlockUniformMemory)
+            if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
             {
-                Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                Debug.Warning("Tried to push uniform data past max block memory limit");
                 return;
             }
             uniformData.AddRange(data);
@@ -165,9 +161,9 @@ namespace SpatialSim.Engine.Rendering
         public void AddInt(int value)
         {
             byte[] data = BitConverter.GetBytes(value);
-            if (uniformData.Count + data.Length > MaxBlockUniformMemory)
+            if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
             {
-                Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                Debug.Warning("Tried to push uniform data past max block memory limit");
                 return;
             }
             uniformData.AddRange(data);
@@ -176,9 +172,9 @@ namespace SpatialSim.Engine.Rendering
         public void AddFloat(float value)
         {
             byte[] data = BitConverter.GetBytes(value);
-            if (uniformData.Count + data.Length > MaxBlockUniformMemory)
+            if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
             {
-                Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                Debug.Warning("Tried to push uniform data past max block memory limit");
                 return;
             }
             uniformData.AddRange(data);
@@ -189,9 +185,9 @@ namespace SpatialSim.Engine.Rendering
             for (int i = 0; i < 2; i++)
             {
                 byte[] data = BitConverter.GetBytes(value[i]);
-                if (uniformData.Count + data.Length > MaxBlockUniformMemory)
+                if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
                 {
-                    Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                    Debug.Warning("Tried to push uniform data past max block memory limit");
                     return;
                 }
                 uniformData.AddRange(data);
@@ -203,9 +199,9 @@ namespace SpatialSim.Engine.Rendering
             for (int i = 0; i < 3; i++)
             {
                 byte[] data = BitConverter.GetBytes(value[i]);
-                if (uniformData.Count + data.Length > MaxBlockUniformMemory)
+                if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
                 {
-                    Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                    Debug.Warning("Tried to push uniform data past max block memory limit");
                     return;
                 }
                 uniformData.AddRange(data);
@@ -217,9 +213,9 @@ namespace SpatialSim.Engine.Rendering
             for (int i = 0; i < 4; i++)
             {
                 byte[] data = BitConverter.GetBytes(value[i]);
-                if (uniformData.Count + data.Length > MaxBlockUniformMemory)
+                if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
                 {
-                    Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                    Debug.Warning("Tried to push uniform data past max block memory limit");
                     return;
                 }
                 uniformData.AddRange(data);
@@ -233,9 +229,9 @@ namespace SpatialSim.Engine.Rendering
                 for (int j = 0; j < 4; j++)
                 {
                     byte[] data = BitConverter.GetBytes(value[i][j]);
-                    if (uniformData.Count + data.Length > MaxBlockUniformMemory)
+                    if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
                     {
-                        Debug.Warning("Tried to push uniform data past max allowed memory limit");
+                        Debug.Warning("Tried to push uniform data past max block memory limit");
                         return;
                     }
                     uniformData.AddRange(data);

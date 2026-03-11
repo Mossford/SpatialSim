@@ -163,12 +163,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             colorBlending.BlendConstants[3] = 0;
 
             PipelineLayoutCreateInfo pipelineLayoutInfo;
-            fixed (DescriptorSetLayout* layoutPtr = &uniformManager.descriptorSetLayout)
+            fixed (DescriptorSetLayout* layoutPtr = uniformManager.descriptorSetLayouts)
             {
                 pipelineLayoutInfo = new()
                 {
                     SType = StructureType.PipelineLayoutCreateInfo,
-                    SetLayoutCount = 1,
+                    SetLayoutCount = (uint)uniformManager.descriptorSetLayouts.Length,
                     PushConstantRangeCount = 0,
                     PSetLayouts = layoutPtr
                 };
@@ -206,6 +206,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             SilkMarshal.Free((nint)vertShaderStageInfo.PName);
             SilkMarshal.Free((nint)fragShaderStageInfo.PName);
 
+            // TODO This is recreated on each swapchain recreation but does not need to be
             uniformManager.CreateUniformBuffers();
             uniformManager.CreateDescriptorSets();
             
@@ -214,7 +215,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public void UpdateUniforms(in Shader shader, int frame)
         {
-            uniformManager.uniformBuffers[0].UpdateUniformData(new Span<byte>(shader.uniformData.ToArray()));
+            uniformManager.GetBuffer(shader.uniformData.Count)
+                .UpdateUniformData(new Span<byte>(shader.uniformData.ToArray()));
         }
 
         public void Bind()
@@ -228,7 +230,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             AppState.appContext.GetContext<VkContext>().vk.DestroyPipeline(VkDevices.device, pipeline, null);
             AppState.appContext.GetContext<VkContext>().vk.DestroyPipelineLayout(VkDevices.device, pipelineLayout, null);
-            AppState.appContext.GetContext<VkContext>().vk.DestroyDescriptorSetLayout(VkDevices.device, uniformManager.descriptorSetLayout, null);
             Debug.LogInfo("Cleaned up Pipeline");
         }
     }    

@@ -127,6 +127,8 @@ namespace SpatialSim.Engine.Core
             EcsManager.Clean();
             AppState.appContext.CleanContext();
             AppState.window.Dispose();
+            
+            Debug.CompressLog();
         }
     }
 }

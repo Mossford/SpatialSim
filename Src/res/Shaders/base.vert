@@ -1,6 +1,6 @@
 #version 450
 
-layout(binding = 0) uniform UniformBufferObject
+layout(set = 0) uniform UniformBufferObject
 {
     mat4 view;
     mat4 proj;
@@ -18,7 +18,7 @@ layout(location = 2) out vec3 aUvO;
 void main()
 {
     aPosO = aPos;
-    aNormalO = mat3(transpose(inverse(ubo.model))) * aNormal;
+    aNormalO = aNormal;
     aUvO = aUv;
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4(aPos, 1.0);
 }

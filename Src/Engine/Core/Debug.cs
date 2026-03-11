@@ -1,9 +1,14 @@
+using System.IO.Compression;
+using System.Text;
+using System.Text.Unicode;
+
 namespace SpatialSim.Engine.Core
 {
     public static class Debug
     {
         static bool createdLogFile;
         static string logFile;
+        static ulong offset;
 
         public static void Init()
         {
@@ -11,8 +16,11 @@ namespace SpatialSim.Engine.Core
             CreateLogFile();
         }
         
-        public static void LogDebug(string msg)
+        public static void LogDebug(in string msg)
         {
+            if(!AppState.EnableDebugLogging)
+                return;
+            
             string[] msgs = msg.Split('\n');
             string timeStamp = '[' + DateTime.Now.ToString("HH:mm:ss") + ']';
             string msgType = timeStamp + " [DEBUG]: ";
@@ -22,7 +30,7 @@ namespace SpatialSim.Engine.Core
             {
                 for (int i = 0; i < msgs.Length; i++)
                 {
-                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.ResetColor();
                     Console.WriteLine((i == 0 ? msgType : msgType + indent) + msgs[i]);
                 }
             }
@@ -32,12 +40,12 @@ namespace SpatialSim.Engine.Core
                 CreateLogFile();
                 for (int i = 0; i < msgs.Length; i++)
                 {
-                    File.AppendAllLines(logFile, [(i == 0 ? msgType : msgType + indent) + msgs[i]]);
+                    WriteToLog((i == 0 ? msgType : msgType + indent) + msgs[i]);
                 }
             }
         }
         
-        public static void LogInfo(string msg)
+        public static void LogInfo(in string msg)
         {
             string[] msgs = msg.Split('\n');
             string timeStamp = '[' + DateTime.Now.ToString("HH:mm:ss") + ']';
@@ -58,12 +66,12 @@ namespace SpatialSim.Engine.Core
                 CreateLogFile();
                 for (int i = 0; i < msgs.Length; i++)
                 {
-                    File.AppendAllLines(logFile, [(i == 0 ? msgType : msgType + indent) + msgs[i]]);
+                    WriteToLog((i == 0 ? msgType : msgType + indent) + msgs[i]);
                 }
             }
         }
         
-        public static void Warning(string msg)
+        public static void Warning(in string msg)
         {
             string[] msgs = msg.Split('\n');
             string timeStamp = '[' + DateTime.Now.ToString("HH:mm:ss") + ']';
@@ -84,12 +92,12 @@ namespace SpatialSim.Engine.Core
                 CreateLogFile();
                 for (int i = 0; i < msgs.Length; i++)
                 {
-                    File.AppendAllLines(logFile, [(i == 0 ? msgType : msgType + indent) + msgs[i]]);
+                    WriteToLog((i == 0 ? msgType : msgType + indent) + msgs[i]);
                 }
             }
         }
         
-        public static void Error(string msg)
+        public static void Error(in string msg)
         {
             string[] msgs = msg.Split('\n');
             string timeStamp = '[' + DateTime.Now.ToString("HH:mm:ss") + ']';
@@ -110,7 +118,7 @@ namespace SpatialSim.Engine.Core
                 CreateLogFile();
                 for (int i = 0; i < msgs.Length; i++)
                 {
-                    File.AppendAllLines(logFile, [(i == 0 ? msgType : msgType + indent) + msgs[i]]);
+                    WriteToLog((i == 0 ? msgType : msgType + indent) + msgs[i]);
                 }
             }
         }
@@ -128,16 +136,17 @@ namespace SpatialSim.Engine.Core
             if (!createdLogFile)
             {
                 string date = DateTime.Now.ToString("yyyy-MM-dd");
-                string file = Resources.LogPath + date + ".log";
+                string file = Resources.LogPath + date + ".zip";
                 if (File.Exists(file))
                 {
-                    String[] files = Directory.GetFiles(Resources.LogPath, date + "*.log");
-                    File.Create(Resources.LogPath + date + $"({files.Length + 1}).log").Close();
-                    logFile = Resources.LogPath + date + $"({files.Length + 1}).log";
+                    String[] files = Directory.GetFiles(Resources.LogPath, date + "*.zip");
+                    file = Resources.LogPath + date + $"({files.Length + 1}).zip";
+                    File.Create(Resources.LogPath + "log.txt").Close();
+                    logFile = file;
                 }
                 else
                 {
-                    File.Create(Resources.LogPath + date + ".log").Close();
+                    File.Create(Resources.LogPath + "log.txt").Close();
                     logFile = file;
                 }
             }
@@ -145,6 +154,18 @@ namespace SpatialSim.Engine.Core
             createdLogFile = true;
 
             LogInfo("Time: " + DateTime.Now);
+        }
+
+        static void WriteToLog(string msg)
+        {
+            File.AppendAllText(Resources.LogPath + "log.txt", msg + "\n");
+        }
+
+        public static void CompressLog()
+        {
+            ZipArchive archive = ZipFile.Open(logFile, ZipArchiveMode.Create);
+            archive.CreateEntryFromFile(Resources.LogPath + "log.txt", "log.txt");
+            archive.Dispose();
         }
     }
 }

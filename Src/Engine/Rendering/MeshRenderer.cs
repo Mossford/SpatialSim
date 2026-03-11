@@ -46,7 +46,7 @@ namespace SpatialSim.Engine.Rendering
             meshComp.CreateModelMatrix();
             Shader vertexShader = ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Vertex, "base.vert"));
             // TODO Add support so that this is referenced without needing to shove it in here
-            vertexShader.AddMat4(Matrix4x4.CreateLookAt(new Vector3(MathF.Sin((float)AppState.GetSeconds()) * 7, 2, MathF.Cos((float)AppState.GetSeconds()) * 7), new Vector3(0, 0, 0), new Vector3(0, -1, 0)));
+            vertexShader.AddMat4(Matrix4x4.CreateLookAt(new Vector3(MathF.Sin((float)AppState.GetSeconds()) * 13, 3, MathF.Cos((float)AppState.GetSeconds()) * 13), new Vector3(0, 0, 0), new Vector3(0, -1, 0)));
             vertexShader.AddMat4(Matrix4x4.CreatePerspectiveFieldOfView(45 * MathF.PI / 180.0f, Window.size.X / Window.size.Y, 0.01f, 20.0f));
             vertexShader.AddMat4(meshComp.modelMat);
             AppState.appContext.defaultPipeline.UpdateUniforms(vertexShader, frame);

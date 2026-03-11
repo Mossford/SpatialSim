@@ -325,8 +325,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         
         public void UpdateUniformData(in Span<T> data)
         {
-            uint blockSize = VkUniformManager.PadUniformSize((uint)data.Length);
-            if (blockSize + memoryOffset > (int)size / sizeof(T))
+            uint blockSize = VkUniformManager.PadUniformSize((uint)(data.Length * sizeof(T)));
+            if (blockSize + memoryOffset > (int)size)
             {
                 Debug.Warning($"Could not upload type {typeof(T).Name} array to buffer, past maximum allocated size of {(int)size / sizeof(T)}");
                 return;

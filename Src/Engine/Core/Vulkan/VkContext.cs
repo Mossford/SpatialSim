@@ -66,15 +66,15 @@ namespace SpatialSim.Engine.Core.Vulkan
             
             VkCreation.CreateImGui();
 
-            for (int i = -5; i <= 5; i++)
+            for (int i = -10; i <= 10; i++)
             {
-                for (int j = -5; j <= 5; j++)
+                for (int j = -10; j <= 10; j++)
                 {
                     meshTest = EcsManager.AddEntity();
                 
                     EcsComponentRef mesh = meshTest.AddComponent(
                         new Mesh(
-                            MeshGeneration.CreateSpikerMesh(1, 2), 
+                            MeshGeneration.CreateSpikerMesh(1, 0), 
                             meshTest.AddComponent(new Transform(new Vector3(i * 0.5f, 0, j * 0.5f), Quaternion.Identity, new Vector3(0.2f)))));
                 
                     meshTest.AddComponent(new MeshRenderer(mesh, meshTest.AddComponent(new Material())));
@@ -107,7 +107,7 @@ namespace SpatialSim.Engine.Core.Vulkan
         {
             //wait for the current frame to complete
             vk.WaitForFences(VkDevices.device, 1, in VkSwapChain.inFlightFences[VkSwapChain.currentFrame], true, ulong.MaxValue);
-
+            
             //grab an image to render to at the image index
             uint imageIndex = 0;
             Result result = VkSwapChain.khrSwapChain!.AcquireNextImage(VkDevices.device, VkSwapChain.swapChain, ulong.MaxValue, VkSwapChain.imageAvailableSemaphores[VkSwapChain.currentFrame], default, ref imageIndex);
@@ -137,7 +137,7 @@ namespace SpatialSim.Engine.Core.Vulkan
             EcsManager.Render(VkSwapChain.commandBuffers[imageIndex], (int)imageIndex);
             
             imGuiController.Render(vkcommandBuffer, VkSwapChain.swapChainFramebuffers[imageIndex], VkSwapChain.swapChainExtent);
-            
+
             VkSwapChain.commandBuffers[imageIndex].EndCommandBuffer();
             VkSwapChain.commandBuffers[imageIndex].ResetPipeLine(defaultPipeline);
             

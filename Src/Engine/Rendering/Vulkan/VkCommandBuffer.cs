@@ -171,27 +171,19 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         {
             VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
             
-            // TODO Should be made to hold both the vertex shader and fragment shader
-            uint[] dynamicOffsets = new uint[vkPipeLine.uniformManager.uniformBuffers.Count];
-            for (int i = 0; i < dynamicOffsets.Length; i++)
-            {
-                dynamicOffsets[i] =
-                    ((VkBuffer<byte>)vkPipeLine.uniformManager.uniformBuffers[0].buffer!)
-                    .drawOffset;
-            }
+            DescriptorSet set = vkPipeLine.uniformManager.GetDescriptorSet();
+            uint dynamicOffset = ((VkBuffer<byte>)vkPipeLine.uniformManager.uniformBuffers[vkPipeLine.uniformManager.currentBuffer].buffer!).drawOffset;
 
-            fixed (uint* dynOffsets = dynamicOffsets)
-            {
-                AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
-                    commandBuffer, 
-                    PipelineBindPoint.Graphics, 
-                    vkPipeLine.pipelineLayout, 
-                    0, 
-                    1, 
-                    in vkPipeLine.uniformManager.descriptorSet, 
-                    (uint)dynamicOffsets.Length, 
-                    dynOffsets);
-            }
+            //bind only the descriptor set with the one buffer attached vulkan will auto increment
+            AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
+                commandBuffer,
+                PipelineBindPoint.Graphics,
+                vkPipeLine.pipelineLayout,
+                0,
+                1,
+                &set,
+                1,
+                &dynamicOffset);
         }
 
         /// <summary>
@@ -202,9 +194,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
             for (int i = 0; i < vkPipeLine.uniformManager.uniformBuffers.Count; i++)
             {
-                ((VkBuffer<byte>)vkPipeLine.uniformManager.uniformBuffers[0].buffer!).drawOffset = 0;
-                ((VkBuffer<byte>)vkPipeLine.uniformManager.uniformBuffers[0].buffer!).memoryOffset = 0;
+                ((VkBuffer<byte>)vkPipeLine.uniformManager.uniformBuffers[i].buffer!).drawOffset = 0;
+                ((VkBuffer<byte>)vkPipeLine.uniformManager.uniformBuffers[i].buffer!).memoryOffset = 0;
             }
+
+            vkPipeLine.uniformManager.currentBuffer = 0;
         }
 
         public void Draw(int indexCount)
