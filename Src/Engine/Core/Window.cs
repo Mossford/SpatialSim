@@ -78,6 +78,8 @@ namespace SpatialSim.Engine.Core
             
             AppState.appContext.Init();
             
+            //TextureManager.Init();
+            
             MainImgui.SetImGuiStyle();
             
             AppState.window.WindowState = WindowState.Fullscreen;

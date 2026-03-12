@@ -14,6 +14,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
     {
         public static PhysicalDevice physicalDevice;
         public static Device device;
+        //meant for graphics commands
         public static Queue graphicsQueue;
         public static uint graphicsFamilyIndex;
         public static PhysicalDeviceProperties properties;
@@ -146,6 +147,48 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
 
             return indices.IsComplete() && extensionsSupported && swapChainAdequate;
+        }
+        
+        public static uint FindMemoryType(uint typeFilter, MemoryPropertyFlags selProperties)
+        {
+            AppState.appContext.GetContext<VkContext>().vk.GetPhysicalDeviceMemoryProperties(physicalDevice, out PhysicalDeviceMemoryProperties memProperties);
+
+            for (int i = 0; i < memProperties.MemoryTypeCount; i++)
+            {
+                if ((typeFilter & (1 << i)) != 0 && (memProperties.MemoryTypes[i].PropertyFlags & selProperties) == selProperties)
+                {
+                    return (uint)i;
+                }
+            }
+
+            Debug.Error($"Failed to find suitable memory type {selProperties}");
+            throw new Exception($"Failed to find suitable memory type {selProperties}");
+        }
+
+        
+        public static Format FindSupportedFormat(IEnumerable<Format> candidates, ImageTiling tiling, FormatFeatureFlags features)
+        {
+            foreach (Format format in candidates)
+            {
+                AppState.appContext.GetContext<VkContext>().vk.GetPhysicalDeviceFormatProperties(physicalDevice, format, out FormatProperties props);
+
+                if (tiling == ImageTiling.Linear && (props.LinearTilingFeatures & features) == features)
+                {
+                    return format;
+                }
+                else if (tiling == ImageTiling.Optimal && (props.OptimalTilingFeatures & features) == features)
+                {
+                    return format;
+                }
+            }
+
+            foreach (Format format in candidates)
+            {
+                Debug.Error($"Failed to find supported format {format}");
+                throw new Exception($"Failed to find supported format {format}");
+            }
+            
+            throw new Exception($"Failed to find supported format");
         }
         
         /// <summary>

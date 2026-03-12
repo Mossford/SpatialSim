@@ -3,6 +3,7 @@
 using System.Numerics;
 using ImGuiNET;
 using SpatialSim.Engine.Core;
+using SpatialSim.Engine.Rendering.ImGui;
 
 namespace SpatialSim.Engine.Rendering
 {
@@ -19,12 +20,12 @@ namespace SpatialSim.Engine.Rendering
         {
             float curTime = (float)AppState.GetSeconds();
 
-            const ImGuiWindowFlags window_flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.MenuBar;
+            const ImGuiWindowFlags window_flags = ImGuiWindowFlags.MenuBar;
             
             if(!ShowMainWindow)
                 return;
 
-            if(!ImGuiNET.ImGui.Begin("SpatialSim", ref ShowMainWindow))
+            if(!ImGuiNET.ImGui.Begin("SpatialSim", ref ShowMainWindow, window_flags))
             {
                 ImGuiNET.ImGui.End();
             }
@@ -60,12 +61,19 @@ namespace SpatialSim.Engine.Rendering
                 {
                     if (ImGuiNET.ImGui.BeginMenu("Menus"))
                     {
+                        ImGuiNET.ImGui.MenuItem("VkTicks", null, ref TicksMenu.show);
+                        
                         ImGuiNET.ImGui.EndMenu();
                     }
                     ImGuiNET.ImGui.EndMenuBar();
                 }
 
-                ImGuiNET.ImGui.End();    
+                ImGuiNET.ImGui.End();
+            }
+
+            if (TicksMenu.show)
+            {
+                TicksMenu.Show();
             }
             
         }

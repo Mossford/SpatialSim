@@ -51,6 +51,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     bufferUsage = BufferUsageFlags.UniformBufferBit;
                     break;
                 }
+                case BufferUsage.Transfer:
+                {
+                    bufferUsage = BufferUsageFlags.TransferSrcBit;
+                    break;
+                }
             }
             
             switch (memoryUsage)
@@ -131,7 +136,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 AppState.appContext.GetContext<VkContext>().vk.MapMemory(VkDevices.device, bufferMemory, 0,  (ulong)(sizeof(T) * data.Length), 0, ref ptr);
                 memoryMap = (byte*)ptr;
                 data.CopyTo(new Span<T>(memoryMap, data.Length));
-                AppState.appContext.GetContext<VkContext>().vk.UnmapMemory(VkDevices.device, bufferMemory);
             }
         }
         
@@ -236,9 +240,14 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             AppState.appContext.GetContext<VkContext>().vk.BindBufferMemory(VkDevices.device, buffer, bufferMemory, 0);
             
-            void* ptr = memoryMap;
-            AppState.appContext.GetContext<VkContext>().vk.MapMemory(VkDevices.device, bufferMemory, 0,  (ulong)(sizeof(T) * dataLength), 0, ref ptr);
-            memoryMap = (byte*)ptr;
+            //only copy if on cpu
+            if (memoryUsage == BufferMemoryUsage.Cpu)
+            {
+                void* ptr = memoryMap;
+                AppState.appContext.GetContext<VkContext>().vk.MapMemory(VkDevices.device, bufferMemory, 0,  (ulong)(sizeof(T) * dataLength), 0, ref ptr);
+                memoryMap = (byte*)ptr;
+                //AppState.appContext.GetContext<VkContext>().vk.UnmapMemory(VkDevices.device, bufferMemory);
+            }
         }
 
         public void BindVertexBuffer(ICommandBufferDevice commandBufferDevice)
@@ -290,6 +299,41 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.GetContext<VkContext>().vk.QueueWaitIdle(VkDevices.graphicsQueue);
 
             commandBuffer.Clean();
+        }
+
+        public void CopyToTexture(ITextureDevice dest, in TextureData destData)
+        {
+            CommandBuffer commandBuffer = new CommandBuffer();
+            commandBuffer.Create();
+            commandBuffer.BeginCommandBuffer();
+
+            BufferImageCopy region = new()
+            {
+                BufferOffset = 0,
+                BufferRowLength = 0,
+                BufferImageHeight = 0,
+                ImageSubresource =
+                {
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    MipLevel = 0,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                },
+                ImageOffset = new Offset3D(0, 0, 0),
+                ImageExtent = new Extent3D(destData.width, destData.height, 1),
+
+            };
+
+            AppState.appContext.GetContext<VkContext>().vk.CmdCopyBufferToImage(
+                ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
+                buffer,
+                ((VkTexture)dest).image,
+                ImageLayout.TransferDstOptimal,
+                1,
+                in region);
+
+            commandBuffer.EndCommandBuffer();
+            commandBuffer.SubmitCommandBuffer();
         }
 
         uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)
@@ -346,6 +390,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public void Clean()
         {
+            //if this buffer is visible to the cpu unmap the pointer to the memory
+            if(memoryUsage == BufferMemoryUsage.Cpu)
+                AppState.appContext.GetContext<VkContext>().vk.UnmapMemory(VkDevices.device, bufferMemory);
             AppState.appContext.GetContext<VkContext>().vk.DestroyBuffer(VkDevices.device, buffer, null);
             AppState.appContext.GetContext<VkContext>().vk.FreeMemory(VkDevices.device, bufferMemory, null);
         }

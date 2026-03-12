@@ -24,7 +24,7 @@ namespace SpatialSim.Engine.Core
         public static IWindow window;
         public static AppContext appContext;
         public static string WindowTitle = "Spatial Sim - " + Version;
-        public static Vector2 WindowStartSize = new Vector2(1280, 720);
+        public static Vector2 WindowStartSize = new Vector2(1920, 1080);
 
         #endregion
 

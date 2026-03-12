@@ -2,32 +2,6 @@ using SpatialSim.Engine.Core;
 
 namespace SpatialSim.Engine.Rendering
 {
-    public interface IBufferDevice<T> where T : unmanaged
-    {
-        public void Create(in Span<T> data, BufferUsage usage, BufferMemoryUsage memoryUsage);
-        public void Create(uint dataLength, BufferUsage usage, BufferMemoryUsage memoryUsage);
-        public void BindVertexBuffer(ICommandBufferDevice commandBufferDevice);
-        public void BindBuffer(ICommandBufferDevice commandBufferDevice);
-        public void CopyTo(IBufferDevice<T> dest);
-        public void UpdateData(in Span<T> data);
-        public void UpdateUniformData(in Span<T> data);
-        public void Clean();
-    }
-
-    public enum BufferUsage
-    {
-        Vertex,
-        Index,
-        Storage,
-        Uniform
-    }
-
-    public enum BufferMemoryUsage
-    {
-        Cpu,
-        Gpu
-    }
-
     // TODO Make a function that will copy to gpu memory or not as, high frequency changes should use cpu memory, but static be gpu memory
     /// <summary>
     /// By default will store memory on the cpu side
@@ -48,6 +22,7 @@ namespace SpatialSim.Engine.Rendering
             size = (ulong)(data.Length * sizeof(T));
             
             Debug.LogDebug($"Created buffer of type {typeof(T).Name} of size {sizeof(T) * data.Length}");
+            Ticks.bufferCount++;
         }
 
         /// <summary>
@@ -61,6 +36,7 @@ namespace SpatialSim.Engine.Rendering
             size = (ulong)(dataLength * sizeof(T));
             
             Debug.LogDebug($"Created buffer of type {typeof(T).Name} of size {sizeof(T) * dataLength}");
+            Ticks.bufferCount++;
         }
 
         public void Bind(in CommandBuffer commandBuffer)
@@ -70,7 +46,12 @@ namespace SpatialSim.Engine.Rendering
 
         public void CopyTo(Buffer<T> dest)
         {
-            
+            buffer?.CopyTo(dest.buffer!);
+        }
+
+        public void CopyToTexture(ITextureDevice dest, in TextureData destData)
+        {
+            buffer?.CopyToTexture(dest, in destData);
         }
 
         public void UpdateData(in Span<T> data)
@@ -87,6 +68,7 @@ namespace SpatialSim.Engine.Rendering
         {
             buffer?.Clean();
             Debug.LogDebug($"Cleaned up Buffer of type {typeof(T).Name}");
+            Ticks.bufferCount--;
         }
         
         public void Dispose()

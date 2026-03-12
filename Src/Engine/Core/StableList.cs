@@ -138,5 +138,10 @@ namespace SpatialSim.Engine.Core
             data.RemoveAt(lastIndex);
             dataIdNonStable.RemoveAt(lastIndex);
         }
+
+        public T[] ToArray()
+        {
+            return data.ToArray();
+        }
     }
 }

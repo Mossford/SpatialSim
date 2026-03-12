@@ -22,7 +22,13 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         /// <summary>
         /// Max uniform section size of 4096 bytes
         /// </summary>
-        public const int MaxBlockUniformMemory = 1 << 12;
+        public const uint MaxBlockUniformMemory = 1 << 12;
+
+        #endregion
+
+        #region Descriptors
+
+        public const int MaxDescriptorsInPool = 1000;
 
         #endregion
     }

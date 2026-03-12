@@ -163,12 +163,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             colorBlending.BlendConstants[3] = 0;
 
             PipelineLayoutCreateInfo pipelineLayoutInfo;
-            fixed (DescriptorSetLayout* layoutPtr = uniformManager.descriptorSetLayouts)
+            fixed (DescriptorSetLayout* layoutPtr = VkDescriptor.setLayouts.ToArray())
             {
                 pipelineLayoutInfo = new()
                 {
                     SType = StructureType.PipelineLayoutCreateInfo,
-                    SetLayoutCount = (uint)uniformManager.descriptorSetLayouts.Length,
+                    SetLayoutCount = (uint)VkDescriptor.setLayouts.ValueCount,
                     PushConstantRangeCount = 0,
                     PSetLayouts = layoutPtr
                 };
@@ -205,10 +205,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             SilkMarshal.Free((nint)vertShaderStageInfo.PName);
             SilkMarshal.Free((nint)fragShaderStageInfo.PName);
-
-            // TODO This is recreated on each swapchain recreation but does not need to be
-            uniformManager.CreateUniformBuffers();
-            uniformManager.CreateDescriptorSets();
             
             Debug.LogInfo("Successful pipeline creation");
         }

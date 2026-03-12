@@ -7,12 +7,14 @@ namespace SpatialSim.Engine.Core
         public static string BasePath;
         public static string ShaderPath;
         public static string LogPath;
+        public static string ImagePath;
 
         public static void Init()
         {
             BasePath = Sdl.GetApi().GetBasePathS() + "res/";
             ShaderPath = BasePath + "Shaders/";
             LogPath = BasePath + "Logs/";
+            ImagePath = BasePath + "Images/";
         }
     }
 }

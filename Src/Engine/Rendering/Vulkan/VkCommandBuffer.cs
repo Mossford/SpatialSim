@@ -131,6 +131,24 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
         }
 
+        public unsafe void SubmitCommandBuffer()
+        {
+            fixed (Silk.NET.Vulkan.CommandBuffer* cmdPtr = &commandBuffer)
+            {
+                SubmitInfo submitInfo = new()
+                {
+                    SType = StructureType.SubmitInfo,
+                    CommandBufferCount = 1,
+                    PCommandBuffers = cmdPtr,
+                };
+                
+                AppState.appContext.GetContext<VkContext>().vk.QueueSubmit(VkDevices.graphicsQueue, 1, in submitInfo, default);
+                AppState.appContext.GetContext<VkContext>().vk.QueueWaitIdle(VkDevices.graphicsQueue);
+
+                AppState.appContext.GetContext<VkContext>().vk.FreeCommandBuffers(VkDevices.device, commandPool, 1, in commandBuffer);
+            }
+        }
+
         public unsafe void BeginRenderPass(int frame)
         {
             RenderPassBeginInfo renderPassInfo = new()

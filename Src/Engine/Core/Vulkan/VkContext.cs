@@ -27,7 +27,7 @@ namespace SpatialSim.Engine.Core.Vulkan
         public Entity meshTest;
         public Entity camera;
         
-        const float ResizeDelay = 0.05f;
+        const float ResizeDelay = 0.1f;
         int currentSwapChainRecreations;
         float swapChainRecreationCounter;
         bool currentlyResizing;
@@ -71,9 +71,9 @@ namespace SpatialSim.Engine.Core.Vulkan
             camera.AddComponent(new Camera(
                 camera.AddComponent(new Transform(new Vector3(0f), Quaternion.Identity, new Vector3(1.0f))), 60));
 
-            for (int i = -15; i <= 15; i++)
+            for (int i = -10; i <= 10; i++)
             {
-                for (int j = -15; j <= 15; j++)
+                for (int j = -10; j <= 10; j++)
                 {
                     meshTest = EcsManager.AddEntity();
                 
@@ -100,6 +100,7 @@ namespace SpatialSim.Engine.Core.Vulkan
                 if (swapChainRecreationCounter >= ResizeDelay)
                 {
                     VkSwapChain.RecreateSwapChain();
+                    Ticks.swapchainRecreations++;
 
                     currentlyResizing = false;
                     swapChainRecreationCounter = 0f;
@@ -124,8 +125,8 @@ namespace SpatialSim.Engine.Core.Vulkan
             }
             else if (result != Result.Success && result != Result.SuboptimalKhr)
             {
-                Debug.Error("Failed to acquire swap chain image");
-                throw new Exception("Failed to acquire swap chain image");
+                Debug.Error($"Failed to acquire swap chain image {result}");
+                throw new Exception($"Failed to acquire swap chain image {result}");
             }
 
             if (VkSwapChain.imagesInFlight[imageIndex].Handle != 0)
@@ -174,11 +175,12 @@ namespace SpatialSim.Engine.Core.Vulkan
             };
 
             vk.ResetFences(VkDevices.device, 1, in VkSwapChain.inFlightFences[VkSwapChain.currentFrame]);
-
-            if (vk.QueueSubmit(VkDevices.graphicsQueue, 1, in submitInfo, VkSwapChain.inFlightFences[VkSwapChain.currentFrame]) != Result.Success)
+            result = vk.QueueSubmit(VkDevices.graphicsQueue, 1, in submitInfo,
+                VkSwapChain.inFlightFences[VkSwapChain.currentFrame]);
+            if (result != Result.Success)
             {
-                Debug.Error("Failed to submit draw command buffer");
-                throw new Exception("Failed to submit draw command buffer");
+                Debug.Error($"Failed to submit draw command buffer {result}");
+                throw new Exception($"Failed to submit draw command buffer {result}");
             }
 
             SwapchainKHR* swapChains = stackalloc[] { VkSwapChain.swapChain };
@@ -203,8 +205,8 @@ namespace SpatialSim.Engine.Core.Vulkan
             }
             else if (result != Result.Success)
             {
-                Debug.Error("Failed to present swap chain image");
-                throw new Exception("Failed to present swap chain image");
+                Debug.Error($"Failed to present swap chain image {result}");
+                throw new Exception($"Failed to present swap chain image {result}");
             }
 
             VkSwapChain.currentFrame = (VkSwapChain.currentFrame + 1) % VkSwapChain.MAX_FRAMES_IN_FLIGHT;
@@ -232,6 +234,8 @@ namespace SpatialSim.Engine.Core.Vulkan
         /// </summary>
         public unsafe void CleanContext()
         {
+            VkDescriptor.CleanPool();
+            
             vk.DestroyDevice(VkDevices.device, null);
 
             if (AppState.EnableVkValidationLayers)

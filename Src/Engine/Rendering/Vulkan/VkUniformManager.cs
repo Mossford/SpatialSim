@@ -17,48 +17,19 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public DescriptorPool descriptorPool;
         //store the blocks of each shaders sections
         public List<Buffer<byte>> uniformBuffers;
-        //this matches with the buffer count
-        public DescriptorSet[] descriptorSets;
-        public DescriptorSetLayout[] descriptorSetLayouts;
+        public List<VkDescriptor> descriptors;
         public int currentBuffer;
         
         public unsafe void Init()
         {
             // TODO Make the shader provide this information
-            descriptorSetLayouts = new DescriptorSetLayout[VkSettings.MaxUniformsPerStage];
-            
-            for (int i = 0; i < descriptorSetLayouts.Length; i++)
-            {
-                DescriptorSetLayoutBinding uboLayoutBindings = new()
-                {
-                    Binding = 0,
-                    DescriptorCount = 1,
-                    DescriptorType = DescriptorType.UniformBufferDynamic,
-                    PImmutableSamplers = null,
-                    StageFlags = ShaderStageFlags.VertexBit,
-                };
-
-                DescriptorSetLayoutCreateInfo layoutInfo = new()
-                {
-                    SType = StructureType.DescriptorSetLayoutCreateInfo,
-                    BindingCount = 1,
-                    PBindings = &uboLayoutBindings,
-                };
-
-                fixed (DescriptorSetLayout* descriptorSetLayoutPtr = &descriptorSetLayouts[i])
-                {
-                    if (AppState.appContext.GetContext<VkContext>().vk.CreateDescriptorSetLayout(VkDevices.device, in layoutInfo, null, descriptorSetLayoutPtr) != Result.Success)
-                    {
-                        Debug.Error("Failed to create descriptor set layout");
-                        throw new Exception("Failed to create descriptor set layout");
-                    }
-                }
-            }
+            CreateUniformBuffers();
+            CreateDescriptorSets();
 
             currentBuffer = 0;
         }
         
-        public void CreateUniformBuffers()
+        void CreateUniformBuffers()
         {
             //create a copy for each swapchain we have
             uniformBuffers = new List<Buffer<byte>>();
@@ -67,59 +38,17 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 uniformBuffers.Add(new Buffer<byte>());
                 uniformBuffers[i].Create(VkSettings.MaxUniformSize, BufferUsage.Uniform, BufferMemoryUsage.Cpu);
             }
-            
         }
         
-        public unsafe void CreateDescriptorSets()
+        void CreateDescriptorSets()
         {
-            DescriptorPoolSize poolSize = new()
+            descriptors = new List<VkDescriptor>();
+            for (int i = 0; i < VkSettings.MaxUniformsPerStage; i++)
             {
-                Type = DescriptorType.UniformBufferDynamic,
-                DescriptorCount = VkSettings.MaxUniformsPerStage
-            };
-
-            DescriptorPoolCreateInfo poolInfo = new()
-            {
-                SType = StructureType.DescriptorPoolCreateInfo,
-                PoolSizeCount = 1,
-                PPoolSizes = &poolSize,
-                MaxSets = VkSettings.MaxUniformsPerStage,
-            };
-
-            fixed (DescriptorPool* descriptorPoolPtr = &descriptorPool)
-            {
-                if (AppState.appContext.GetContext<VkContext>().vk.CreateDescriptorPool(
-                        VkDevices.device, in poolInfo, null, descriptorPoolPtr) != Result.Success)
-                {
-                    Debug.Error("Failed to create descriptor pool");
-                    throw new Exception("Failed to create descriptor pool");
-                }
-
+                descriptors.Add(new VkDescriptor());
+                descriptors[i].Create(0);
             }
             
-            descriptorSets = new DescriptorSet[VkSettings.MaxUniformsPerStage];
-
-            fixed (DescriptorSetLayout* layoutsPtr = descriptorSetLayouts)
-            {
-                DescriptorSetAllocateInfo allocateInfo = new()
-                {
-                    SType = StructureType.DescriptorSetAllocateInfo,
-                    DescriptorPool = descriptorPool,
-                    DescriptorSetCount = (uint)descriptorSets.Length,
-                    PSetLayouts = layoutsPtr,
-                };
-                
-                fixed (DescriptorSet* descriptorSetsPtr = descriptorSets)
-                {
-                    if (AppState.appContext.GetContext<VkContext>().vk.AllocateDescriptorSets(
-                            VkDevices.device, in allocateInfo, descriptorSetsPtr) != Result.Success)
-                    {
-                        Debug.Error("Failed to allocate descriptor sets");
-                        throw new Exception("Failed to allocate descriptor sets");
-                    }
-                }
-            }
-
             SetBuffersToDescriptorSet();
         }
 
@@ -142,7 +71,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     descriptorWrites[i] = new()
                     {
                         SType = StructureType.WriteDescriptorSet,
-                        DstSet = descriptorSets[i],
+                        DstSet = descriptors[i].descriptorSet,
                         //SdlGpu has the binding as i and the array element as 0 look into why
                         DstBinding = 0,
                         DstArrayElement = 0,
@@ -164,12 +93,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 uniformBuffers[i].Clean();
             }
 
-            for (int i = 0; i < descriptorSetLayouts.Length; i++)
+            for (int i = 0; i < descriptors.Count; i++)
             {
-                AppState.appContext.GetContext<VkContext>().vk.DestroyDescriptorSetLayout(VkDevices.device, descriptorSetLayouts[i], null);
+                descriptors[i].Clean();
             }
-            
-            AppState.appContext.GetContext<VkContext>().vk.DestroyDescriptorPool(VkDevices.device, descriptorPool, null);
+
+            VkDescriptor.CleanPool();
         }
         
         public static uint PadUniformSize(uint originalSize)
@@ -208,7 +137,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public DescriptorSet GetDescriptorSet()
         {
-            return descriptorSets[currentBuffer];
+            return descriptors[currentBuffer].descriptorSet;
         }
 
     }

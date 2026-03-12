@@ -40,9 +40,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             return buffer;
         }
 
-        public void DrawMesh(in CommandBuffer commandBuffer, in Pipeline pipeline, Buffer<Vertex> vertexBuffer, Buffer<int> indexBuffer)
+        public ITextureDevice CreateTextureDevice(in TextureData data)
         {
-            
+            VkTexture texture = new VkTexture();
+            texture.Create(data);
+            return texture;
         }
     }
 }
