@@ -334,6 +334,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             commandBuffer.EndCommandBuffer();
             commandBuffer.SubmitCommandBuffer();
+            commandBuffer.Clean();
         }
 
         uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)

@@ -13,10 +13,13 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public DescriptorSet descriptorSet;
         public int layoutIndex;
         public int binding;
+        public VkDescriptorUsage[] usage;
 
-        public unsafe void Create(int binding)
+        //allow for multiple usages
+        public unsafe void Create(int binding, in VkDescriptorUsage[] usage)
         {
             this.binding = binding;
+            this.usage = usage;
             
             if (!createdPool)
             {
@@ -48,6 +51,37 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 
                 createdPool = true;
                 setLayouts = new StableList<DescriptorSetLayout>();
+            }
+            
+            ShaderStageFlags stageFlags = ShaderStageFlags.None;
+            switch (usage[0])
+            {
+                case VkDescriptorUsage.Vertex:
+                {
+                    stageFlags = ShaderStageFlags.VertexBit;
+                    break;
+                }
+                case VkDescriptorUsage.Fragment:
+                {
+                    stageFlags = ShaderStageFlags.FragmentBit;
+                    break;
+                }
+            }
+            for (int i = 1; i < usage.Length; i++)
+            {
+                switch (usage[i])
+                {
+                    case VkDescriptorUsage.Vertex:
+                    {
+                        stageFlags |= ShaderStageFlags.VertexBit;
+                        break;
+                    }
+                    case VkDescriptorUsage.Fragment:
+                    {
+                        stageFlags |= ShaderStageFlags.FragmentBit;
+                        break;
+                    }
+                }
             }
             
             DescriptorSetLayoutBinding uboLayoutBindings = new()

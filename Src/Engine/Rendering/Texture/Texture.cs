@@ -18,17 +18,20 @@ namespace SpatialSim.Engine.Rendering
                 data.data = MissingTextureData.pixels;
                 data.width = (uint)MissingTextureData.size;
                 data.height = (uint)MissingTextureData.size;
-                data.format = TextureFormat.R8G8B8Unorm;
+                data.format = TextureFormat.R8G8B8A8Uint;
                 data.usage = TextureUsage.Sampler;
                 data.memoryUsage = TextureMemoryUsage.gpu;
             }
             
             texture = AppState.appContext.DeviceFactory.CreateTextureDevice(data);
+            
+            Debug.LogDebug($"Loaded texture at {file}");
         }
 
         public void Clean()
         {
             texture?.Clean();
+            Debug.LogDebug($"Cleaned texture");
         }
 
         public void Dispose()

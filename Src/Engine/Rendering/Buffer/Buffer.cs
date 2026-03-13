@@ -22,7 +22,8 @@ namespace SpatialSim.Engine.Rendering
             size = (ulong)(data.Length * sizeof(T));
             
             Debug.LogDebug($"Created buffer of type {typeof(T).Name} of size {sizeof(T) * data.Length}");
-            Ticks.bufferCount++;
+            Ticks.bufferCount.created++;
+            Ticks.gpuMemoryAllocation.created += size;
         }
 
         /// <summary>
@@ -36,7 +37,8 @@ namespace SpatialSim.Engine.Rendering
             size = (ulong)(dataLength * sizeof(T));
             
             Debug.LogDebug($"Created buffer of type {typeof(T).Name} of size {sizeof(T) * dataLength}");
-            Ticks.bufferCount++;
+            Ticks.bufferCount.created++;
+            Ticks.gpuMemoryAllocation.created += size;
         }
 
         public void Bind(in CommandBuffer commandBuffer)
@@ -68,7 +70,8 @@ namespace SpatialSim.Engine.Rendering
         {
             buffer?.Clean();
             Debug.LogDebug($"Cleaned up Buffer of type {typeof(T).Name}");
-            Ticks.bufferCount--;
+            Ticks.bufferCount.deleted++;
+            Ticks.gpuMemoryAllocation.deleted += size;
         }
         
         public void Dispose()

@@ -66,6 +66,8 @@ namespace SpatialSim.Engine.Rendering
             {
                 shaders[i].Clean();
             }
+            
+            Debug.LogInfo("Cleaned up shader manager");
         }
     }
 }

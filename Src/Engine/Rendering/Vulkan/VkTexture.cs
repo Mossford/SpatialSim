@@ -29,9 +29,14 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     format = Format.R8G8B8A8Srgb;
                     break;
                 }
-                case TextureFormat.R8G8B8Unorm:
+                case TextureFormat.R8G8B8Uint:
                 {
-                    format = Format.R8G8B8Unorm;
+                    format = Format.R8G8B8Uint;
+                    break;
+                }
+                case TextureFormat.R8G8B8A8Uint:
+                {
+                    format = Format.R8G8B8A8Uint;
                     break;
                 }
             }
@@ -96,9 +101,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             fixed (Image* imagePtr = &image)
             {
-                if (AppState.appContext.GetContext<VkContext>().vk.CreateImage(VkDevices.device, in imageInfo, null, imagePtr) != Result.Success)
+                Result result = AppState.appContext.GetContext<VkContext>().vk
+                    .CreateImage(VkDevices.device, in imageInfo, null, imagePtr);
+                if (result != Result.Success)
                 {
-                    throw new Exception("failed to create image!");
+                    Debug.Error($"Failed to create image {result}");
+                    throw new Exception($"Failed to create image {result}");
                 }
             }
 
@@ -113,9 +121,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             fixed (DeviceMemory* imageMemoryPtr = &memory)
             {
-                if (AppState.appContext.GetContext<VkContext>().vk.AllocateMemory(VkDevices.device, in allocInfo, null, imageMemoryPtr) != Result.Success)
+                Result result = AppState.appContext.GetContext<VkContext>().vk
+                    .AllocateMemory(VkDevices.device, in allocInfo, null, imageMemoryPtr);
+                if (result != Result.Success)
                 {
-                    throw new Exception("failed to allocate image memory!");
+                    Debug.Error($"Failed to allocate image memory {result}");
+                    throw new Exception($"Failed to allocate image memory {result}");
                 }
             }
 
@@ -196,6 +207,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             commandBuffer.EndCommandBuffer();
             commandBuffer.SubmitCommandBuffer();
+            commandBuffer.Clean();
         }
 
         public unsafe void Clean()

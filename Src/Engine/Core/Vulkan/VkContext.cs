@@ -71,16 +71,16 @@ namespace SpatialSim.Engine.Core.Vulkan
             camera.AddComponent(new Camera(
                 camera.AddComponent(new Transform(new Vector3(0f), Quaternion.Identity, new Vector3(1.0f))), 60));
 
-            for (int i = -10; i <= 10; i++)
+            for (int i = -5; i <= 5; i++)
             {
-                for (int j = -10; j <= 10; j++)
+                for (int j = -5; j <= 5; j++)
                 {
                     meshTest = EcsManager.AddEntity();
                 
                     EcsComponentRef mesh = meshTest.AddComponent(
                         new Mesh(
                             MeshGeneration.CreateSpikerMesh(1, 0), 
-                            meshTest.AddComponent(new Transform(new Vector3(i * 0.5f, 0, j * 0.5f), Quaternion.Identity, new Vector3(0.2f)))));
+                            meshTest.AddComponent(new Transform(new Vector3(new Random().NextSingle() * 2 - 1, new Random().NextSingle() * 2 - 1, new Random().NextSingle() * 2 - 1) * 5, Quaternion.Identity, new Vector3(0.2f)))));
                 
                     meshTest.AddComponent(new MeshRenderer(mesh, meshTest.AddComponent(new Material())));
                 }
@@ -100,13 +100,15 @@ namespace SpatialSim.Engine.Core.Vulkan
                 if (swapChainRecreationCounter >= ResizeDelay)
                 {
                     VkSwapChain.RecreateSwapChain();
-                    Ticks.swapchainRecreations++;
+                    Ticks.swapchainRecreations.created++;
 
                     currentlyResizing = false;
                     swapChainRecreationCounter = 0f;
                     currentSwapChainRecreations = 0;
                 }
             }
+            
+            
         }
 
         public unsafe void Render()
@@ -240,7 +242,6 @@ namespace SpatialSim.Engine.Core.Vulkan
 
             if (AppState.EnableVkValidationLayers)
             {
-                //DestroyDebugUtilsMessenger equivilant to method DestroyDebugUtilsMessengerEXT from original tutorial.
                 VkValidationLayers.debugUtils.DestroyDebugUtilsMessenger(instance, VkValidationLayers.debugMessenger, null);
             }
             

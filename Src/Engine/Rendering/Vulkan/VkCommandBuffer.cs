@@ -7,10 +7,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
     public class VkCommandBuffer : ICommandBufferDevice
     {
         public CommandPool commandPool;
+        bool ownsCommandPool;
         public Silk.NET.Vulkan.CommandBuffer commandBuffer;
         
         public unsafe void Create()
         {
+            CreateCommandPool();
             commandBuffer = new Silk.NET.Vulkan.CommandBuffer();
 
             CommandBufferAllocateInfo allocInfo = new()
@@ -23,18 +25,26 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             fixed (Silk.NET.Vulkan.CommandBuffer* commandBuffersPtr = &commandBuffer)
             {
-                if (AppState.appContext.GetContext<VkContext>().vk.AllocateCommandBuffers(VkDevices.device, in allocInfo, commandBuffersPtr) != Result.Success)
+                Result result = AppState.appContext.GetContext<VkContext>().vk
+                    .AllocateCommandBuffers(VkDevices.device, in allocInfo, commandBuffersPtr);
+                if (result != Result.Success)
                 {
-                    Debug.Error("Failed to allocate command buffers");
-                    throw new Exception("Failed to allocate command buffers");
+                    Debug.Error($"Failed to allocate command buffers {result}");
+                    throw new Exception($"Failed to allocate command buffers {result}");
                 }
             }
+
+            Ticks.commandBufferCount.created++;
+
+            ownsCommandPool = true;
         }
         
         public unsafe void Create(CommandPool commandPool)
         {
             commandBuffer = new Silk.NET.Vulkan.CommandBuffer();
 
+            this.commandPool = commandPool;
+
             CommandBufferAllocateInfo allocInfo = new()
             {
                 SType = StructureType.CommandBufferAllocateInfo,
@@ -45,25 +55,35 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             fixed (Silk.NET.Vulkan.CommandBuffer* commandBuffersPtr = &commandBuffer)
             {
-                if (AppState.appContext.GetContext<VkContext>().vk.AllocateCommandBuffers(VkDevices.device, in allocInfo, commandBuffersPtr) != Result.Success)
+                Result result = AppState.appContext.GetContext<VkContext>().vk
+                    .AllocateCommandBuffers(VkDevices.device, in allocInfo, commandBuffersPtr);
+                if (result != Result.Success)
                 {
-                    Debug.Error("Failed to allocate command buffers");
-                    throw new Exception("Failed to allocate command buffers");
+                    Debug.Error($"Failed to allocate command buffers {result}");
+                    throw new Exception($"Failed to allocate command buffers {result}");
                 }
             }
+            
+            Ticks.commandBufferCount.created++;
+
+            ownsCommandPool = false;
         }
         
         public unsafe void Clean()
         {
-            fixed (Silk.NET.Vulkan.CommandBuffer* commandBuffersPtr = &commandBuffer)
+            /*fixed (Silk.NET.Vulkan.CommandBuffer* commandBuffersPtr = &commandBuffer)
             {
                 AppState.appContext.GetContext<VkContext>().vk.FreeCommandBuffers(
-                    VkDevices.device, 
+                    VkDevices.device,
                     commandPool, 
                     1, 
                     commandBuffersPtr);
-            }
-            AppState.appContext.GetContext<VkContext>().vk.DestroyCommandPool(VkDevices.device, commandPool, null);
+            }*/
+            
+            if(ownsCommandPool)
+                AppState.appContext.GetContext<VkContext>().vk.DestroyCommandPool(VkDevices.device, commandPool, null);
+            
+            Ticks.commandBufferCount.deleted++;
         }
 
         public unsafe void BindVertexBuffers<T>(IBufferDevice<T> bufferDevice) where T : unmanaged
@@ -100,10 +120,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 Flags = CommandPoolCreateFlags.ResetCommandBufferBit
             };
 
-            if (AppState.appContext.GetContext<VkContext>().vk.CreateCommandPool(VkDevices.device, in poolInfo, null, out commandPool) != Result.Success)
+            Result result = AppState.appContext.GetContext<VkContext>().vk
+                .CreateCommandPool(VkDevices.device, in poolInfo, null, out commandPool);
+            if (result != Result.Success)
             {
-                Debug.Error("Failed to create command pool");
-                throw new Exception("Failed to create command pool");
+                Debug.Error($"Failed to create command pool {result}");
+                throw new Exception($"Failed to create command pool {result}");
             }
         }
 
@@ -114,20 +136,23 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 SType = StructureType.CommandBufferBeginInfo,
                 Flags = CommandBufferUsageFlags.SimultaneousUseBit
             };
-            
-            if (AppState.appContext.GetContext<VkContext>().vk.BeginCommandBuffer(commandBuffer, in beginInfo) != Result.Success)
+
+            Result result = AppState.appContext.GetContext<VkContext>().vk
+                .BeginCommandBuffer(commandBuffer, in beginInfo);
+            if (result != Result.Success)
             {
-                Debug.Error("Failed to begin recording command buffer");
-                throw new Exception("Failed to begin recording command buffer");
+                Debug.Error($"Failed to begin recording command buffer {result}");
+                throw new Exception($"Failed to begin recording command buffer {result}");
             }
         }
 
         public void EndCommandBuffer()
         {
-            if (AppState.appContext.GetContext<VkContext>().vk.EndCommandBuffer(commandBuffer) != Result.Success)
+            Result result = AppState.appContext.GetContext<VkContext>().vk.EndCommandBuffer(commandBuffer);
+            if (result != Result.Success)
             {
-                Debug.Error("Failed to record command buffer");
-                throw new Exception("Failed to record command buffer");
+                Debug.Error($"Failed to record command buffer {result}");
+                throw new Exception($"Failed to record command buffer {result}");
             }
         }
 
@@ -167,9 +192,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             {
                 Color = new()
                 {
-                    Float32_0 = 0, 
-                    Float32_1 = 0, 
-                    Float32_2 = 0, 
+                    Float32_0 = 1, 
+                    Float32_1 = 1,
+                    Float32_2 = 1, 
                     Float32_3 = 1
                 },
             };

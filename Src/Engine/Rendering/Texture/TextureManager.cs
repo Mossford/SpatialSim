@@ -59,5 +59,15 @@ namespace SpatialSim.Engine.Rendering
             //return a missing texture
             return missingTexture;
         }
+
+        public static void Clean()
+        {
+            for (int i = 0; i < textures.Count; i++)
+            {
+                textures[i].Clean();
+            }
+            
+            Debug.LogInfo("Cleaned up texture manager");
+        }
     }
 }

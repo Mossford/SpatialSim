@@ -14,7 +14,7 @@ namespace SpatialSim.Engine.Rendering
         public void Create(in Shader vertex, in Shader fragment)
         {
             pipeline = AppState.appContext.DeviceFactory.CreatePipelineDevice(vertex, fragment);
-            Ticks.pipelineCount++;
+            Ticks.pipelineCount.created++;
         }
 
         public void UpdateUniforms(in Shader shader, int frame)
@@ -31,7 +31,7 @@ namespace SpatialSim.Engine.Rendering
         public void Clean()
         {
             pipeline?.Clean();
-            Ticks.pipelineCount--;
+            Ticks.pipelineCount.deleted++;
         }
 
         public void Dispose()

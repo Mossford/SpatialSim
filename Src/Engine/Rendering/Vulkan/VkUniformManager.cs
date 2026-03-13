@@ -24,66 +24,54 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         {
             // TODO Make the shader provide this information
             CreateUniformBuffers();
-            CreateDescriptorSets();
 
             currentBuffer = 0;
+        }
+
+        void AddUniformBuffer()
+        {
+            uniformBuffers.Add(new Buffer<byte>());
+            uniformBuffers[^1].Create(VkSettings.MaxUniformSize, BufferUsage.Uniform, BufferMemoryUsage.Cpu);
+            descriptors.Add(new VkDescriptor());
+            descriptors[^1].Create(0, new [] { VkDescriptorUsage.Vertex });
+            
+            SetBufferToDescriptorSet();
         }
         
         void CreateUniformBuffers()
         {
             //create a copy for each swapchain we have
             uniformBuffers = new List<Buffer<byte>>();
-            for (int i = 0; i < VkSettings.MaxUniformsPerStage; i++)
-            {
-                uniformBuffers.Add(new Buffer<byte>());
-                uniformBuffers[i].Create(VkSettings.MaxUniformSize, BufferUsage.Uniform, BufferMemoryUsage.Cpu);
-            }
-        }
-        
-        void CreateDescriptorSets()
-        {
             descriptors = new List<VkDescriptor>();
             for (int i = 0; i < VkSettings.MaxUniformsPerStage; i++)
             {
-                descriptors.Add(new VkDescriptor());
-                descriptors[i].Create(0);
+                AddUniformBuffer();
             }
-            
-            SetBuffersToDescriptorSet();
         }
 
-        public unsafe void SetBuffersToDescriptorSet()
+        public unsafe void SetBufferToDescriptorSet()
         {
-            WriteDescriptorSet[] descriptorWrites = new WriteDescriptorSet[uniformBuffers.Count];
-            DescriptorBufferInfo[] bufferInfos = new DescriptorBufferInfo[uniformBuffers.Count];
-            for (int i = 0; i < uniformBuffers.Count; i++)
+            DescriptorBufferInfo bufferInfo = new()
             {
-                bufferInfos[i] = new()
-                {
-                    Buffer = ((VkBuffer<byte>)uniformBuffers[i].buffer!).buffer,
-                    Offset = 0,
-                    //Set the range to be the maximum block for a shader
-                    Range = VkSettings.MaxBlockUniformMemory,
-                };
-
-                fixed (DescriptorBufferInfo* bufPtr = &bufferInfos[i])
-                {
-                    descriptorWrites[i] = new()
-                    {
-                        SType = StructureType.WriteDescriptorSet,
-                        DstSet = descriptors[i].descriptorSet,
-                        //SdlGpu has the binding as i and the array element as 0 look into why
-                        DstBinding = 0,
-                        DstArrayElement = 0,
-                        DescriptorType = DescriptorType.UniformBufferDynamic,
-                        DescriptorCount = 1,
-                        PBufferInfo = bufPtr,
-                    };
-                }
-            }
+                Buffer = ((VkBuffer<byte>)uniformBuffers[^1].buffer!).buffer,
+                Offset = 0,
+                //Set the range to be the maximum block for a shader
+                Range = VkSettings.MaxBlockUniformMemory,
+            };
             
-            fixed(WriteDescriptorSet* ptr = descriptorWrites)
-                AppState.appContext.GetContext<VkContext>().vk.UpdateDescriptorSets(VkDevices.device, (uint)descriptorWrites.Length, ptr, 0, null);
+            WriteDescriptorSet descriptorWrite = new()
+            {
+                SType = StructureType.WriteDescriptorSet,
+                DstSet = descriptors[^1].descriptorSet,
+                //SdlGpu has the binding as i and the array element as 0 look into why
+                DstBinding = 0,
+                DstArrayElement = 0,
+                DescriptorType = DescriptorType.UniformBufferDynamic,
+                DescriptorCount = 1,
+                PBufferInfo = &bufferInfo,
+            };
+            
+            AppState.appContext.GetContext<VkContext>().vk.UpdateDescriptorSets(VkDevices.device, 1, in descriptorWrite, 0, null);
         }
 
         public unsafe void Clean()
@@ -121,10 +109,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             {
                 currentBuffer++;
 
-                if (currentBuffer >= VkSettings.MaxUniformsPerStage)
+                if (currentBuffer >= uniformBuffers.Count)
                 {
-                    Debug.Warning("Run out of buffer space, wrapping around");
-                    currentBuffer = 0;
+                    Debug.LogDebug("Run out of buffer space, creating new uniform buffer");
+                    AddUniformBuffer();
+                    currentBuffer = uniformBuffers.Count - 1;
                 }
                 
                 buff = (VkBuffer<byte>)uniformBuffers[currentBuffer].buffer!;

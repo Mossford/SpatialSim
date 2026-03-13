@@ -174,6 +174,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 commandBuffers[i].commandBuffer = new VkCommandBuffer();
                 ((VkCommandBuffer)commandBuffers[i].commandBuffer!).Create(((VkCommandBuffer)commandPool.commandBuffer!).commandPool);
             }
+            
+            Debug.LogInfo("Successful swapchain command buffers creation");
         }
         
         public static unsafe void RecreateSwapChain()
