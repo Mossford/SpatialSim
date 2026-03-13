@@ -21,7 +21,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public ICommandBufferDevice CreateCommandBufferDevice()
         {
             VkCommandBuffer commandBuffer = new VkCommandBuffer();
-            commandBuffer.CreateCommandPool();
             commandBuffer.Create();
             return commandBuffer;
         }

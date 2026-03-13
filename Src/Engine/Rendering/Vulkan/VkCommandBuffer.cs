@@ -9,6 +9,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public CommandPool commandPool;
         bool ownsCommandPool;
         public Silk.NET.Vulkan.CommandBuffer commandBuffer;
+        bool submittedCommandBuffer;
         
         public unsafe void Create()
         {
@@ -33,10 +34,10 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     throw new Exception($"Failed to allocate command buffers {result}");
                 }
             }
+            
+            ownsCommandPool = true;
 
             Ticks.commandBufferCount.created++;
-
-            ownsCommandPool = true;
         }
         
         public unsafe void Create(CommandPool commandPool)
@@ -71,14 +72,17 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         
         public unsafe void Clean()
         {
-            /*fixed (Silk.NET.Vulkan.CommandBuffer* commandBuffersPtr = &commandBuffer)
+            if (!submittedCommandBuffer)
             {
-                AppState.appContext.GetContext<VkContext>().vk.FreeCommandBuffers(
-                    VkDevices.device,
-                    commandPool, 
-                    1, 
-                    commandBuffersPtr);
-            }*/
+                fixed (Silk.NET.Vulkan.CommandBuffer* commandBuffersPtr = &commandBuffer)
+                {
+                    AppState.appContext.GetContext<VkContext>().vk.FreeCommandBuffers(
+                        VkDevices.device,
+                        commandPool, 
+                        1, 
+                        commandBuffersPtr);
+                }
+            }
             
             if(ownsCommandPool)
                 AppState.appContext.GetContext<VkContext>().vk.DestroyCommandPool(VkDevices.device, commandPool, null);
@@ -111,6 +115,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public unsafe void CreateCommandPool()
         {
+            ownsCommandPool = true;
+            
             VkDevices.QueueFamilyIndices queueFamiliyIndicies = VkDevices.FindQueueFamilies(VkDevices.physicalDevice);
 
             CommandPoolCreateInfo poolInfo = new()
@@ -158,6 +164,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public unsafe void SubmitCommandBuffer()
         {
+            submittedCommandBuffer = true;
+            
             fixed (Silk.NET.Vulkan.CommandBuffer* cmdPtr = &commandBuffer)
             {
                 SubmitInfo submitInfo = new()

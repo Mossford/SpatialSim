@@ -67,6 +67,8 @@ namespace SpatialSim.Engine.Rendering
                 textures[i].Clean();
             }
             
+            missingTexture.Clean();
+            
             Debug.LogInfo("Cleaned up texture manager");
         }
     }

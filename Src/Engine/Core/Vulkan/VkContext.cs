@@ -71,9 +71,9 @@ namespace SpatialSim.Engine.Core.Vulkan
             camera.AddComponent(new Camera(
                 camera.AddComponent(new Transform(new Vector3(0f), Quaternion.Identity, new Vector3(1.0f))), 60));
 
-            for (int i = -5; i <= 5; i++)
+            for (int i = 0; i < 1; i++)
             {
-                for (int j = -5; j <= 5; j++)
+                for (int j = 0; j < 1; j++)
                 {
                     meshTest = EcsManager.AddEntity();
                 

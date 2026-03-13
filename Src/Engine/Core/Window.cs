@@ -78,7 +78,7 @@ namespace SpatialSim.Engine.Core
             
             AppState.appContext.Init();
             
-            //TextureManager.Init();
+            TextureManager.Init();
             
             MainImgui.SetImGuiStyle();
             
@@ -124,7 +124,7 @@ namespace SpatialSim.Engine.Core
         static unsafe void Clean()
         {
             ShaderManager.Clean();
-            //TextureManager.Clean();
+            TextureManager.Clean();
             Input.Clean();
             AppState.appContext.CleanObjects();
             EcsManager.Clean();
