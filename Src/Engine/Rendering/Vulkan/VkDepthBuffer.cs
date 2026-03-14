@@ -1,22 +1,30 @@
 using Silk.NET.Vulkan;
+using SpatialSim.Engine.Core;
 
 namespace SpatialSim.Engine.Rendering.Vulkan
 {
     public static class VkDepthBuffer
     {
-        static Image depthImage;
-        static DeviceMemory depthImageMemory;
-        static ImageView depthImageView;
+        public static VkTexture texture;
 
         public static void CreateDepthBuffers()
         {
             Format depthFormat = FindDepthFormat();
 
-            //CreateImage(swapChainExtent.Width, swapChainExtent.Height, depthFormat, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachmentBit, MemoryPropertyFlags.DeviceLocalBit, ref depthImage, ref depthImageMemory);
-            //depthImageView = CreateImageView(depthImage, depthFormat, ImageAspectFlags.DepthBit);
+            texture = new VkTexture();
+            texture.Create(
+                VkSwapChain.swapChainExtent.Width, 
+                VkSwapChain.swapChainExtent.Height, 
+                FindDepthFormat(), 
+                ImageTiling.Optimal, 
+                ImageUsageFlags.DepthStencilAttachmentBit, 
+                MemoryPropertyFlags.DeviceLocalBit);
+            texture.CreateImageView(ImageAspectFlags.DepthBit);
+            
+            Debug.LogInfo("Successful vulkan depth buffer creation");
         }
         
-        static Format FindDepthFormat()
+        public static Format FindDepthFormat()
         {
             return VkDevices.FindSupportedFormat(
                 [
@@ -30,7 +38,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public static void Clean()
         {
-            
+            texture.Clean();
         }
     }
 }

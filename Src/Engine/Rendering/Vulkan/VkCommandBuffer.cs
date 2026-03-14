@@ -196,19 +196,31 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 }
             };
             
-            ClearValue clearColor = new()
+            ClearValue[] clearValues = new ClearValue[]
             {
-                Color = new()
+                new()
                 {
-                    Float32_0 = 0, 
-                    Float32_1 = 0,
-                    Float32_2 = 0, 
-                    Float32_3 = 1
+                    Color = new ()
+                    {
+                        Float32_0 = 0, 
+                        Float32_1 = 0, 
+                        Float32_2 = 0, 
+                        Float32_3 = 1
+                    },
                 },
+                new()
+                {
+                    DepthStencil = new ()
+                    {
+                        Depth = 1, 
+                        Stencil = 0
+                    }
+                }
             };
 
-            renderPassInfo.ClearValueCount = 1;
-            renderPassInfo.PClearValues = &clearColor;
+            renderPassInfo.ClearValueCount = (uint)clearValues.Length;
+            fixed (ClearValue* clearValuesPtr = clearValues)
+                renderPassInfo.PClearValues = clearValuesPtr;
             
             AppState.appContext.GetContext<VkContext>().vk.CmdBeginRenderPass(commandBuffer, &renderPassInfo, SubpassContents.Inline);
         }

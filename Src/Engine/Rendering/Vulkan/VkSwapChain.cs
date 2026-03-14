@@ -192,6 +192,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             AppState.appContext.GetContext<VkContext>().vk.DeviceWaitIdle(VkDevices.device);
 
+            VkDepthBuffer.Clean();
+            
             foreach (Framebuffer framebuffer in swapChainFramebuffers!)
             {
                 AppState.appContext.GetContext<VkContext>().vk.DestroyFramebuffer(VkDevices.device, framebuffer, null);
@@ -224,6 +226,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Vertex, [new ShaderDescriptorDef(0, 0, ShaderDescriptorUsage.Uniform)], "base.vert")), 
                 ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Fragment, [new ShaderDescriptorDef(1, 0, ShaderDescriptorUsage.Sampler)], "base.frag")));
             
+            VkDepthBuffer.CreateDepthBuffers();
             CreateFramebuffers();
             
             for (int i = 0; i < commandBuffers.Length; i++)
@@ -238,6 +241,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public static unsafe void CleanSwapChain()
         {
+            VkDepthBuffer.Clean();
+            
             foreach (Framebuffer framebuffer in swapChainFramebuffers!)
             {
                 AppState.appContext.GetContext<VkContext>().vk.DestroyFramebuffer(VkDevices.device, framebuffer, null);
@@ -278,23 +283,32 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             for (int i = 0; i < swapChainImageViews.Length; i++)
             {
-                var attachment = swapChainImageViews[i];
-
-                FramebufferCreateInfo framebufferInfo = new()
+                ImageView[] attachments = new []
                 {
-                    SType = StructureType.FramebufferCreateInfo,
-                    RenderPass = ((VkRenderPass)AppState.appContext.renderPass).renderPass,
-                    AttachmentCount = 1,
-                    PAttachments = &attachment,
-                    Width = swapChainExtent.Width,
-                    Height = swapChainExtent.Height,
-                    Layers = 1,
+                    swapChainImageViews[i], 
+                    VkDepthBuffer.texture.imageView
                 };
 
-                if (AppState.appContext.GetContext<VkContext>().vk.CreateFramebuffer(VkDevices.device, in framebufferInfo, null, out swapChainFramebuffers[i]) != Result.Success)
+                fixed (ImageView* attPtr = attachments)
                 {
-                    Debug.Error("Failed to create framebuffer");
-                    throw new Exception("Failed to create framebuffer");
+                    FramebufferCreateInfo framebufferInfo = new()
+                    {
+                        SType = StructureType.FramebufferCreateInfo,
+                        RenderPass = ((VkRenderPass)AppState.appContext.renderPass).renderPass,
+                        AttachmentCount = (uint)attachments.Length,
+                        PAttachments = attPtr,
+                        Width = swapChainExtent.Width,
+                        Height = swapChainExtent.Height,
+                        Layers = 1,
+                    };
+
+                    Result result = AppState.appContext.GetContext<VkContext>().vk.CreateFramebuffer(VkDevices.device,
+                        in framebufferInfo, null, out swapChainFramebuffers[i]);
+                    if (result != Result.Success)
+                    {
+                        Debug.Error($"Failed to create framebuffer {result}");
+                        throw new Exception($"Failed to create framebuffer {result}");
+                    }
                 }
             }
             

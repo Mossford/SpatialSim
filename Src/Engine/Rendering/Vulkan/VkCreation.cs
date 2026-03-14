@@ -99,7 +99,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 VkDevices.graphicsFamilyIndex,
                 VkSwapChain.swapChainImages.Length,
                 VkSwapChain.swapChainImageFormat,
-                null
+                VkDepthBuffer.FindDepthFormat()
             );
             
             ImGuiNET.ImGui.StyleColorsDark();

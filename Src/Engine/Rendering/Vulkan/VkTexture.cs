@@ -17,6 +17,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public Sampler sampler;
 
         public VkDescriptor descriptor;
+        bool hasDescriptor;
         
         public unsafe void Create(in TextureData data)
         {
@@ -85,60 +86,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     break;
                 }
             }
-            
-            ImageCreateInfo imageInfo = new()
-            {
-                SType = StructureType.ImageCreateInfo,
-                ImageType = ImageType.Type2D,
-                Extent =
-                {
-                    Width = data.width,
-                    Height = data.height,
-                    Depth = 1,
-                },
-                MipLevels = 1,
-                ArrayLayers = 1,
-                Format = format,
-                // TODO check what this does
-                Tiling = ImageTiling.Optimal,
-                InitialLayout = ImageLayout.Undefined,
-                Usage = usage,
-                Samples = SampleCountFlags.Count1Bit,
-                SharingMode = SharingMode.Exclusive,
-            };
 
-            fixed (Image* imagePtr = &image)
-            {
-                Result result = AppState.appContext.GetContext<VkContext>().vk
-                    .CreateImage(VkDevices.device, in imageInfo, null, imagePtr);
-                if (result != Result.Success)
-                {
-                    Debug.Error($"Failed to create image {result}");
-                    throw new Exception($"Failed to create image {result}");
-                }
-            }
-
-            AppState.appContext.GetContext<VkContext>().vk.GetImageMemoryRequirements(VkDevices.device, image, out MemoryRequirements memRequirements);
-
-            MemoryAllocateInfo allocInfo = new()
-            {
-                SType = StructureType.MemoryAllocateInfo,
-                AllocationSize = memRequirements.Size,
-                MemoryTypeIndex = VkDevices.FindMemoryType(memRequirements.MemoryTypeBits, memUsage),
-            };
-
-            fixed (DeviceMemory* imageMemoryPtr = &memory)
-            {
-                Result result = AppState.appContext.GetContext<VkContext>().vk
-                    .AllocateMemory(VkDevices.device, in allocInfo, null, imageMemoryPtr);
-                if (result != Result.Success)
-                {
-                    Debug.Error($"Failed to allocate image memory {result}");
-                    throw new Exception($"Failed to allocate image memory {result}");
-                }
-            }
-
-            AppState.appContext.GetContext<VkContext>().vk.BindImageMemory(VkDevices.device, image, memory, 0);
+            Create(data.width, data.height, format, ImageTiling.Optimal, usage, memUsage);
             
             //create the staging buffer
             Buffer<byte> stagingBuffer = new Buffer<byte>();
@@ -152,7 +101,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             stagingBuffer.Clean();
             
-            CreateImageView();
+            CreateImageView(ImageAspectFlags.ColorBit);
 
             filter = Filter.Linear;
             switch (data.filter)
@@ -175,6 +124,66 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             descriptor.Create(((VkPipeline)AppState.appContext.defaultPipeline.pipeline!), new ShaderDescriptorDef(1, 0, ShaderDescriptorUsage.Sampler));
 
             SetTextureToDescriptorSet();
+
+            hasDescriptor = true;
+        }
+
+        /// <summary>
+        /// Internal vulkan use
+        /// </summary>
+        public unsafe void Create(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties)
+        {
+            this.format = format;
+            
+            ImageCreateInfo imageInfo = new()
+            {
+                SType = StructureType.ImageCreateInfo,
+                ImageType = ImageType.Type2D,
+                Extent =
+                {
+                    Width = width,
+                    Height = height,
+                    Depth = 1,
+                },
+                MipLevels = 1,
+                ArrayLayers = 1,
+                Format = format,
+                Tiling = tiling,
+                InitialLayout = ImageLayout.Undefined,
+                Usage = usage,
+                Samples = SampleCountFlags.Count1Bit,
+                SharingMode = SharingMode.Exclusive,
+            };
+
+            fixed (Image* imagePtr = &image)
+            {
+                if (AppState.appContext.GetContext<VkContext>().vk.CreateImage(VkDevices.device, in imageInfo, null, imagePtr) != Result.Success)
+                {
+                    throw new Exception("failed to create image!");
+                }
+            }
+
+            AppState.appContext.GetContext<VkContext>().vk.GetImageMemoryRequirements(VkDevices.device, image, out MemoryRequirements memRequirements);
+
+            MemoryAllocateInfo allocInfo = new()
+            {
+                SType = StructureType.MemoryAllocateInfo,
+                AllocationSize = memRequirements.Size,
+                MemoryTypeIndex = VkDevices.FindMemoryType(memRequirements.MemoryTypeBits, properties),
+            };
+
+            fixed (DeviceMemory* imageMemoryPtr = &memory)
+            {
+                Result result = AppState.appContext.GetContext<VkContext>().vk
+                    .AllocateMemory(VkDevices.device, in allocInfo, null, imageMemoryPtr);
+                if (result != Result.Success)
+                {
+                    Debug.Error($"Failed to allocate image memory {result}");
+                    throw new Exception($"Failed to allocate image memory {result}");
+                }
+            }
+
+            AppState.appContext.GetContext<VkContext>().vk.BindImageMemory(VkDevices.device, image, memory, 0);
         }
 
         unsafe void TransitionImageLayout(ImageLayout oldLayout, ImageLayout newLayout)
@@ -242,7 +251,10 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             commandBuffer.Clean();
         }
 
-        public unsafe void CreateImageView()
+        /// <summary>
+        /// Internal vulkan use
+        /// </summary>
+        public unsafe void CreateImageView(ImageAspectFlags imageAspectFlags)
         {
             ImageViewCreateInfo createInfo = new()
             {
@@ -259,7 +271,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 },
                 SubresourceRange =
                 {
-                    AspectMask = ImageAspectFlags.ColorBit,
+                    AspectMask = imageAspectFlags,
                     BaseMipLevel = 0,
                     LevelCount = 1,
                     BaseArrayLayer = 0,
@@ -334,7 +346,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public unsafe void Clean()
         {
-            descriptor.Clean();
+            if(hasDescriptor)
+                descriptor.Clean();
             AppState.appContext.GetContext<VkContext>().vk.DestroySampler(VkDevices.device, sampler, null);
             AppState.appContext.GetContext<VkContext>().vk.DestroyImageView(VkDevices.device, imageView, null);
             AppState.appContext.GetContext<VkContext>().vk.DestroyImage(VkDevices.device, image, null);

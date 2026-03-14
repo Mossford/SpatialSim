@@ -178,7 +178,7 @@ namespace SpatialSim.Engine.Rendering.ImGui
                 depthAttachment.Format = depthBufferFormat.Value;
                 depthAttachment.Samples = SampleCountFlags.Count1Bit;
                 depthAttachment.LoadOp = AttachmentLoadOp.Load;
-                depthAttachment.StoreOp = AttachmentStoreOp.DontCare;
+                depthAttachment.StoreOp = AttachmentStoreOp.Store;
                 depthAttachment.StencilLoadOp = AttachmentLoadOp.DontCare;
                 depthAttachment.StencilStoreOp = AttachmentStoreOp.DontCare;
                 depthAttachment.InitialLayout = AttachmentLoadOp.Load == AttachmentLoadOp.Clear ? ImageLayout.Undefined : ImageLayout.DepthStencilAttachmentOptimal;
@@ -195,10 +195,10 @@ namespace SpatialSim.Engine.Rendering.ImGui
             var dependency = new SubpassDependency();
             dependency.SrcSubpass = Vk.SubpassExternal;
             dependency.DstSubpass = 0;
-            dependency.SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit;
+            dependency.SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.EarlyFragmentTestsBit;
             dependency.SrcAccessMask = 0;
-            dependency.DstStageMask = PipelineStageFlags.ColorAttachmentOutputBit;
-            dependency.DstAccessMask = AccessFlags.ColorAttachmentReadBit | AccessFlags.ColorAttachmentWriteBit;
+            dependency.DstStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.EarlyFragmentTestsBit;
+            dependency.DstAccessMask = AccessFlags.ColorAttachmentWriteBit | AccessFlags.DepthStencilAttachmentWriteBit | AccessFlags.ColorAttachmentReadBit;
 
             var renderPassInfo = new RenderPassCreateInfo();
             renderPassInfo.SType = StructureType.RenderPassCreateInfo;

@@ -21,10 +21,28 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 FinalLayout = ImageLayout.PresentSrcKhr,
             };
 
+            AttachmentDescription depthAttachment = new()
+            {
+                Format = VkDepthBuffer.FindDepthFormat(),
+                Samples = SampleCountFlags.Count1Bit,
+                LoadOp = AttachmentLoadOp.Clear,
+                StoreOp = AttachmentStoreOp.Store,
+                StencilLoadOp = AttachmentLoadOp.DontCare,
+                StencilStoreOp = AttachmentStoreOp.DontCare,
+                InitialLayout = ImageLayout.Undefined,
+                FinalLayout = ImageLayout.DepthStencilAttachmentOptimal,
+            };
+
             AttachmentReference colorAttachmentRef = new()
             {
                 Attachment = 0,
                 Layout = ImageLayout.ColorAttachmentOptimal,
+            };
+
+            AttachmentReference depthAttachmentRef = new()
+            {
+                Attachment = 1,
+                Layout = ImageLayout.DepthStencilAttachmentOptimal,
             };
 
             SubpassDescription subpass = new()
@@ -32,33 +50,45 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 PipelineBindPoint = PipelineBindPoint.Graphics,
                 ColorAttachmentCount = 1,
                 PColorAttachments = &colorAttachmentRef,
+                PDepthStencilAttachment = &depthAttachmentRef,
             };
-            
-            SubpassDependency dependency = new SubpassDependency
+
+            SubpassDependency dependency = new()
             {
                 SrcSubpass = Vk.SubpassExternal,
                 DstSubpass = 0,
-                SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit,
+                SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.EarlyFragmentTestsBit,
                 SrcAccessMask = 0,
-                DstStageMask = PipelineStageFlags.ColorAttachmentOutputBit,
-                DstAccessMask = AccessFlags.ColorAttachmentReadBit | AccessFlags.ColorAttachmentWriteBit
-            };
-            
-            RenderPassCreateInfo renderPassInfo = new()
-            {
-                SType = StructureType.RenderPassCreateInfo,
-                AttachmentCount = 1,
-                PAttachments = &colorAttachment,
-                SubpassCount = 1,
-                PSubpasses = &subpass,
-                DependencyCount = 1,
-                PDependencies = &dependency
+                DstStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.EarlyFragmentTestsBit,
+                DstAccessMask = AccessFlags.ColorAttachmentWriteBit | AccessFlags.DepthStencilAttachmentWriteBit | AccessFlags.ColorAttachmentReadBit
             };
 
-            if (AppState.appContext.GetContext<VkContext>().vk.CreateRenderPass(VkDevices.device, in renderPassInfo, null, out renderPass) != Result.Success)
+            AttachmentDescription[] attachments = new[]
             {
-                Debug.Error("Failed to create render pass");
-                throw new Exception("Failed to create render pass");
+                colorAttachment, 
+                depthAttachment
+            };
+            
+            fixed (AttachmentDescription* attachmentsPtr = attachments)
+            {
+                RenderPassCreateInfo renderPassInfo = new()
+                {
+                    SType = StructureType.RenderPassCreateInfo,
+                    AttachmentCount = (uint)attachments.Length,
+                    PAttachments = attachmentsPtr,
+                    SubpassCount = 1,
+                    PSubpasses = &subpass,
+                    DependencyCount = 1,
+                    PDependencies = &dependency,
+                };
+
+                Result result = AppState.appContext.GetContext<VkContext>().vk
+                    .CreateRenderPass(VkDevices.device, in renderPassInfo, null, out renderPass);
+                if (result != Result.Success)
+                {
+                    Debug.Error($"Failed to create render pass {result}");
+                    throw new Exception($"Failed to create render pass {result}");
+                }
             }
             
             Debug.LogInfo("Successful renderpass creation");

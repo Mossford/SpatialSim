@@ -191,6 +191,16 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 RasterizationSamples = SampleCountFlags.Count1Bit,
             };
 
+            PipelineDepthStencilStateCreateInfo depthStencil = new()
+            {
+                SType = StructureType.PipelineDepthStencilStateCreateInfo,
+                DepthTestEnable = true,
+                DepthWriteEnable = true,
+                DepthCompareOp = CompareOp.Less,
+                DepthBoundsTestEnable = false,
+                StencilTestEnable = false,
+            };
+            
             PipelineColorBlendAttachmentState colorBlendAttachment = new()
             {
                 ColorWriteMask = ColorComponentFlags.RBit | ColorComponentFlags.GBit | ColorComponentFlags.BBit | ColorComponentFlags.ABit,
@@ -241,6 +251,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 PRasterizationState = &rasterizer,
                 PMultisampleState = &multisampling,
                 PColorBlendState = &colorBlending,
+                PDepthStencilState = &depthStencil,
                 Layout = pipelineLayout,
                 RenderPass = ((VkRenderPass)AppState.appContext.renderPass).renderPass,
                 Subpass = 0,

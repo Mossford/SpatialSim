@@ -61,6 +61,7 @@ namespace SpatialSim.Engine.Core.Vulkan
                 ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Vertex, [new ShaderDescriptorDef(0, 0, ShaderDescriptorUsage.Uniform)], "base.vert")), 
                 ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Fragment, [new ShaderDescriptorDef(1, 0, ShaderDescriptorUsage.Sampler)], "base.frag")));
             
+            VkDepthBuffer.CreateDepthBuffers();
             VkSwapChain.CreateFramebuffers();
             VkSwapChain.CreateSyncObjects();
             VkSwapChain.CreateSwapChainCommandBuffers();
