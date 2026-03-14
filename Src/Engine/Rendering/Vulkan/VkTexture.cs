@@ -9,6 +9,14 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public Image image;
         public DeviceMemory memory;
         public Format format;
+        public Filter filter;
+        
+        //to be able to access the image
+        public ImageView imageView;
+        //to be able to sample texture in shader
+        public Sampler sampler;
+
+        public VkDescriptor descriptor;
         
         public unsafe void Create(in TextureData data)
         {
@@ -143,6 +151,30 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             TransitionImageLayout(ImageLayout.TransferDstOptimal, ImageLayout.ShaderReadOnlyOptimal);
             
             stagingBuffer.Clean();
+            
+            CreateImageView();
+
+            filter = Filter.Linear;
+            switch (data.filter)
+            {
+                case TextureFilter.Linear:
+                {
+                    filter = Filter.Linear;
+                    break;
+                }
+                case TextureFilter.Nearest:
+                {
+                    filter = Filter.Nearest;
+                    break;
+                }
+            }
+            
+            CreateSampler();
+
+            descriptor = new VkDescriptor();
+            descriptor.Create(((VkPipeline)AppState.appContext.defaultPipeline.pipeline!), new ShaderDescriptorDef(1, 0, ShaderDescriptorUsage.Sampler));
+
+            SetTextureToDescriptorSet();
         }
 
         unsafe void TransitionImageLayout(ImageLayout oldLayout, ImageLayout newLayout)
@@ -210,8 +242,101 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             commandBuffer.Clean();
         }
 
+        public unsafe void CreateImageView()
+        {
+            ImageViewCreateInfo createInfo = new()
+            {
+                SType = StructureType.ImageViewCreateInfo,
+                Image = image,
+                ViewType = ImageViewType.Type2D,
+                Format = format,
+                Components =
+                {
+                    R = ComponentSwizzle.Identity,
+                    G = ComponentSwizzle.Identity,
+                    B = ComponentSwizzle.Identity,
+                    A = ComponentSwizzle.Identity,
+                },
+                SubresourceRange =
+                {
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    BaseMipLevel = 0,
+                    LevelCount = 1,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                }
+
+            };
+
+            Result result = AppState.appContext.GetContext<VkContext>().vk
+                .CreateImageView(VkDevices.device, in createInfo, null, out imageView);
+            if (result != Result.Success)
+            {
+                Debug.Error($"Failed to create image view {result}");
+                throw new Exception($"Failed to create image view {result}");
+            }
+        }
+
+        public unsafe void CreateSampler()
+        {
+            SamplerCreateInfo samplerInfo = new()
+            {
+                SType = StructureType.SamplerCreateInfo,
+                MagFilter = filter,
+                MinFilter = filter,
+                AddressModeU = SamplerAddressMode.Repeat,
+                AddressModeV = SamplerAddressMode.Repeat,
+                AddressModeW = SamplerAddressMode.Repeat,
+                AnisotropyEnable = true,
+                MaxAnisotropy = VkDevices.properties.Limits.MaxSamplerAnisotropy,
+                BorderColor = BorderColor.IntOpaqueBlack,
+                UnnormalizedCoordinates = false,
+                CompareEnable = false,
+                CompareOp = CompareOp.Always,
+                MipmapMode = SamplerMipmapMode.Linear,
+            };
+
+            fixed (Sampler* textureSamplerPtr = &sampler)
+            {
+                Result result = AppState.appContext.GetContext<VkContext>().vk
+                    .CreateSampler(VkDevices.device, in samplerInfo, null, textureSamplerPtr);
+                if (result != Result.Success)
+                {
+                    Debug.Error($"Failed to create texture sampler {result}");
+                    throw new Exception($"Failed to create texture sampler {result}");
+                }
+            }
+        }
+
+        public unsafe void SetTextureToDescriptorSet()
+        {
+            DescriptorImageInfo imageInfo = new()
+            {
+                ImageLayout = ImageLayout.ShaderReadOnlyOptimal,
+                ImageView = imageView,
+                Sampler = sampler
+            };
+            
+            WriteDescriptorSet descriptorWrite = new()
+            {
+                SType = StructureType.WriteDescriptorSet,
+                DstSet = descriptor.descriptorSet,
+                //SdlGpu has the binding as i and the array element as 0 look into why
+                DstBinding = 0,
+                DstArrayElement = 0,
+                DescriptorType = DescriptorType.CombinedImageSampler,
+                DescriptorCount = 1,
+                PImageInfo = &imageInfo
+            };
+            
+            AppState.appContext.GetContext<VkContext>().vk.UpdateDescriptorSets(VkDevices.device, 1, in descriptorWrite, 0, null);
+        }
+
         public unsafe void Clean()
         {
+            descriptor.Clean();
+            AppState.appContext.GetContext<VkContext>().vk.DestroySampler(VkDevices.device, sampler, null);
+            AppState.appContext.GetContext<VkContext>().vk.DestroyImageView(VkDevices.device, imageView, null);
             AppState.appContext.GetContext<VkContext>().vk.DestroyImage(VkDevices.device, image, null);
             AppState.appContext.GetContext<VkContext>().vk.FreeMemory(VkDevices.device, memory, null);
         }

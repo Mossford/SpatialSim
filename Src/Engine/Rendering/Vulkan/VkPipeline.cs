@@ -12,17 +12,66 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public PipelineLayout pipelineLayout;
         public Silk.NET.Vulkan.Pipeline pipeline;
         public VkUniformManager uniformManager;
+
+        public Dictionary<ShaderDescriptorDef, DescriptorSetLayout> descriptorSetLayouts;
         
         public unsafe void Create(in Shader vertex, in Shader fragment)
         {
+            descriptorSetLayouts = new Dictionary<ShaderDescriptorDef, DescriptorSetLayout>();
+            for (int i = 0; i < vertex.settings.descriptorDef.Length; i++)
+            {
+                DescriptorType type = DescriptorType.UniformBufferDynamic;
+                switch (vertex.settings.descriptorDef[i].usage)
+                {
+                    case ShaderDescriptorUsage.Uniform:
+                    {
+                        type = DescriptorType.UniformBufferDynamic;
+                        break;
+                    }
+                    case ShaderDescriptorUsage.Sampler:
+                    {
+                        type = DescriptorType.CombinedImageSampler;
+                        break;
+                    }
+                }
+                
+                if (!descriptorSetLayouts.TryAdd(vertex.settings.descriptorDef[i], CreateDescriptorSetLayout(ShaderStageFlags.VertexBit, type, vertex.settings.descriptorDef[i].binding)))
+                {
+                    Debug.Warning($"Tried to add a descriptor set layout {vertex.settings.descriptorDef[i].set} {vertex.settings.descriptorDef[i].binding} {vertex.settings.descriptorDef[i].usage} that already exists, skipping");
+                }
+            }
+            
+            for (int i = 0; i < fragment.settings.descriptorDef.Length; i++)
+            {
+                DescriptorType type = DescriptorType.UniformBufferDynamic;
+                switch (fragment.settings.descriptorDef[i].usage)
+                {
+                    case ShaderDescriptorUsage.Uniform:
+                    {
+                        type = DescriptorType.UniformBufferDynamic;
+                        break;
+                    }
+                    case ShaderDescriptorUsage.Sampler:
+                    {
+                        type = DescriptorType.CombinedImageSampler;
+                        break;
+                    }
+                }
+                
+                if (!descriptorSetLayouts.TryAdd(fragment.settings.descriptorDef[i], CreateDescriptorSetLayout(ShaderStageFlags.FragmentBit, type, fragment.settings.descriptorDef[i].binding)))
+                {
+                    Debug.Warning($"Tried to add a descriptor set layout {fragment.settings.descriptorDef[i].set} {fragment.settings.descriptorDef[i].binding} {fragment.settings.descriptorDef[i].usage} that already exists, skipping");
+                }
+            }
+            
             uniformManager = new VkUniformManager();
-            uniformManager.Init();
+            uniformManager.Init(this);
             
             PipelineShaderStageCreateInfo vertShaderStageInfo = new()
             {
                 SType = StructureType.PipelineShaderStageCreateInfo,
                 Stage = ShaderStageFlags.VertexBit,
-                Module = ((VkShader)vertex.shader).program,
+                Module = ((VkShader)vertex.shader!).program,
                 PName = (byte*)SilkMarshal.StringToPtr("main")
             };
 
@@ -30,7 +79,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             {
                 SType = StructureType.PipelineShaderStageCreateInfo,
                 Stage = ShaderStageFlags.FragmentBit,
-                Module = ((VkShader)fragment.shader).program,
+                Module = ((VkShader)fragment.shader!).program,
                 PName = (byte*)SilkMarshal.StringToPtr("main")
             };
 
@@ -73,7 +122,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     Offset = (uint)Marshal.OffsetOf<Vertex>(nameof(Vertex.uv)),
                 }
             };
-
+            
             PipelineVertexInputStateCreateInfo vertexInputInfo;
             fixed (VertexInputAttributeDescription* attributeDescriptionsPtr = attributeDescriptions)
             {
@@ -163,12 +212,13 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             colorBlending.BlendConstants[3] = 0;
 
             PipelineLayoutCreateInfo pipelineLayoutInfo;
-            fixed (DescriptorSetLayout* layoutPtr = VkDescriptor.setLayouts.ToArray())
+            DescriptorSetLayout[] layouts = descriptorSetLayouts.Values.ToArray();
+            fixed (DescriptorSetLayout* layoutPtr = layouts)
             {
                 pipelineLayoutInfo = new()
                 {
                     SType = StructureType.PipelineLayoutCreateInfo,
-                    SetLayoutCount = (uint)VkDescriptor.setLayouts.ValueCount,
+                    SetLayoutCount = (uint)layouts.Length,
                     PushConstantRangeCount = 0,
                     PSetLayouts = layoutPtr
                 };
@@ -215,6 +265,35 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 .UpdateUniformData(new Span<byte>(shader.uniformData.ToArray()));
         }
 
+        unsafe DescriptorSetLayout CreateDescriptorSetLayout(ShaderStageFlags stage, DescriptorType type, int binding)
+        {
+            DescriptorSetLayoutBinding layoutBindings = new()
+            {
+                Binding = (uint)binding,
+                DescriptorCount = 1,
+                DescriptorType = type,
+                PImmutableSamplers = null,
+                StageFlags = stage,
+            };
+
+            DescriptorSetLayoutCreateInfo layoutInfo = new()
+            {
+                SType = StructureType.DescriptorSetLayoutCreateInfo,
+                BindingCount = 1,
+                PBindings = &layoutBindings,
+            };
+
+            Result result = AppState.appContext.GetContext<VkContext>().vk
+                .CreateDescriptorSetLayout(VkDevices.device, in layoutInfo, null, out DescriptorSetLayout layout);
+            if (result != Result.Success)
+            {
+                Debug.Error($"Failed to create descriptor set layout {result}");
+                throw new Exception($"Failed to create descriptor set layout {result}");
+            }
+
+            return layout;
+        }
+
         public void Bind()
         {
             
@@ -223,6 +302,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public unsafe void Clean()
         {
             uniformManager.Clean();
+            
+            DescriptorSetLayout[] layouts = descriptorSetLayouts.Values.ToArray();
+            for (int i = 0; i < layouts.Length; i++)
+            {
+                AppState.appContext.GetContext<VkContext>().vk.DestroyDescriptorSetLayout(VkDevices.device, layouts[i], null);
+            }
             
             AppState.appContext.GetContext<VkContext>().vk.DestroyPipeline(VkDevices.device, pipeline, null);
             AppState.appContext.GetContext<VkContext>().vk.DestroyPipelineLayout(VkDevices.device, pipelineLayout, null);

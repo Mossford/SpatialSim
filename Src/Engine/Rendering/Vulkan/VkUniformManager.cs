@@ -19,33 +19,35 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public List<Buffer<byte>> uniformBuffers;
         public List<VkDescriptor> descriptors;
         public int currentBuffer;
+        public VkPipeline currentPipeline;
         
-        public unsafe void Init()
+        public unsafe void Init(VkPipeline pipeline)
         {
+            this.currentPipeline = pipeline;
             // TODO Make the shader provide this information
-            CreateUniformBuffers();
+            CreateUniformBuffers(pipeline);
 
             currentBuffer = 0;
         }
 
-        void AddUniformBuffer()
+        void AddUniformBuffer(VkPipeline pipeline)
         {
             uniformBuffers.Add(new Buffer<byte>());
             uniformBuffers[^1].Create(VkSettings.MaxUniformSize, BufferUsage.Uniform, BufferMemoryUsage.Cpu);
             descriptors.Add(new VkDescriptor());
-            descriptors[^1].Create(0, new [] { VkDescriptorUsage.Vertex });
+            descriptors[^1].Create(pipeline, new ShaderDescriptorDef(0, 0, ShaderDescriptorUsage.Uniform));
             
             SetBufferToDescriptorSet();
         }
         
-        void CreateUniformBuffers()
+        void CreateUniformBuffers(VkPipeline pipeline)
         {
             //create a copy for each swapchain we have
             uniformBuffers = new List<Buffer<byte>>();
             descriptors = new List<VkDescriptor>();
             for (int i = 0; i < VkSettings.MaxUniformsPerStage; i++)
             {
-                AddUniformBuffer();
+                AddUniformBuffer(pipeline);
             }
         }
 
@@ -85,8 +87,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             {
                 descriptors[i].Clean();
             }
-
-            VkDescriptor.CleanPool();
         }
         
         public static uint PadUniformSize(uint originalSize)
@@ -112,7 +112,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 if (currentBuffer >= uniformBuffers.Count)
                 {
                     Debug.LogDebug("Run out of buffer space, creating new uniform buffer");
-                    AddUniformBuffer();
+                    AddUniformBuffer(currentPipeline);
                     currentBuffer = uniformBuffers.Count - 1;
                 }
                 

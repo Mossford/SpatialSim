@@ -27,7 +27,7 @@ namespace SpatialSim.Engine.Rendering
                 new Vector3(MathF.Sin((float)AppState.GetSeconds()) * 13, 3,
                     MathF.Cos((float)AppState.GetSeconds()) * 13), new Vector3(0, 0, 0), new Vector3(0, -1, 0));
             proj = Matrix4x4.CreatePerspectiveFieldOfView(fov * MathF.PI / 180.0f, Window.size.X / Window.size.Y, 0.01f,
-                20.0f);
+                40.0f);
         }
 
         public void Dispose()

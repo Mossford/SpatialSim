@@ -20,12 +20,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static PhysicalDeviceProperties properties;
         public static PhysicalDeviceProperties2 properties2;
         
-        public static readonly string[] deviceExtensions = new[]
-        {
-            KhrSwapchain.ExtensionName,
-            
-        };
-        
         public struct QueueFamilyIndices
         {
             public uint? GraphicsFamily { get; set; }
@@ -92,34 +86,39 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 };
             }
 
-            PhysicalDeviceFeatures deviceFeatures = new();
+            DeviceCreateInfo createInfo;
 
-            DeviceCreateInfo createInfo = new()
+            fixed (PhysicalDeviceFeatures* deviceFeatures = &VkSettings.physicalDeviceFeatures)
             {
-                SType = StructureType.DeviceCreateInfo,
-                QueueCreateInfoCount = (uint)uniqueQueueFamilies.Length,
-                PQueueCreateInfos = queueCreateInfos,
+                createInfo = new()
+                {
+                    SType = StructureType.DeviceCreateInfo,
+                    QueueCreateInfoCount = (uint)uniqueQueueFamilies.Length,
+                    PQueueCreateInfos = queueCreateInfos,
 
-                PEnabledFeatures = &deviceFeatures,
+                    PEnabledFeatures = deviceFeatures,
 
-                EnabledExtensionCount = (uint)deviceExtensions.Length,
-                PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(deviceExtensions)
-            };
+                    EnabledExtensionCount = (uint)VkSettings.deviceExtensions.Length,
+                    PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(VkSettings.deviceExtensions)
+                };
+            }
 
             if (AppState.EnableVkValidationLayers)
             {
-                createInfo.EnabledLayerCount = (uint)VkValidationLayers.validationLayers.Length;
-                createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(VkValidationLayers.validationLayers);
+                createInfo.EnabledLayerCount = (uint)VkSettings.validationLayers.Length;
+                createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(VkSettings.validationLayers);
             }
             else
             {
                 createInfo.EnabledLayerCount = 0;
             }
 
-            if (AppState.appContext.GetContext<VkContext>().vk.CreateDevice(physicalDevice, in createInfo, null, out device) != Result.Success)
+            Result result = AppState.appContext.GetContext<VkContext>().vk
+                .CreateDevice(physicalDevice, in createInfo, null, out device);
+            if (result != Result.Success)
             {
-                Debug.Error("Failed to create logical device");
-                throw new Exception("Failed to create logical device");
+                Debug.Error($"Failed to create logical device {result}");
+                throw new Exception($"Failed to create logical device {result}");
             }
 
             AppState.appContext.GetContext<VkContext>().vk.GetDeviceQueue(device, indices.GraphicsFamily!.Value, 0, out graphicsQueue);
@@ -146,7 +145,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 swapChainAdequate = swapChainSupport.Formats.Any() && swapChainSupport.PresentModes.Any();
             }
 
-            return indices.IsComplete() && extensionsSupported && swapChainAdequate;
+            return indices.IsComplete() && extensionsSupported && swapChainAdequate && CheckDeviceFeatureSupport(device);
         }
         
         public static uint FindMemoryType(uint typeFilter, MemoryPropertyFlags selProperties)
@@ -208,8 +207,21 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
 
             HashSet<string?> availableExtensionNames = availableExtensions.Select(extension => Marshal.PtrToStringAnsi((IntPtr)extension.ExtensionName)).ToHashSet();
+
+            return VkSettings.deviceExtensions.All(availableExtensionNames.Contains);
+        }
+
+        public static bool CheckDeviceFeatureSupport(PhysicalDevice device)
+        {
+            AppState.appContext.GetContext<VkContext>().vk
+                .GetPhysicalDeviceFeatures(device, out PhysicalDeviceFeatures features);
             
-            return deviceExtensions.All(availableExtensionNames.Contains);
+            if (features.SamplerAnisotropy)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public static unsafe QueueFamilyIndices FindQueueFamilies(PhysicalDevice device)

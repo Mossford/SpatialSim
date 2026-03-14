@@ -47,6 +47,11 @@ namespace SpatialSim.Engine.Rendering
         {
             commandBuffer?.BindUniforms(pipeline);
         }
+        
+        public void BindTexture(Pipeline pipeline, Texture texture)
+        {
+            commandBuffer?.BindTexture(pipeline, texture);
+        }
 
         /// <summary>
         /// Should only be used with type Vertex

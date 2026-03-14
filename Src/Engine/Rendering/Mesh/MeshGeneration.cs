@@ -37,7 +37,7 @@ namespace SpatialSim.Engine.Rendering
             return meshData;
         }
         
-        public static MeshData CreateSpikerMesh(float size, int sphereSubDivide = 2)
+        public static MeshData CreateSphereMesh(float size, int sphereSubDivide = 2)
         {
             MeshData meshData = new MeshData();
             meshData.vertexData = new MeshData.VertexData();
@@ -177,7 +177,10 @@ namespace SpatialSim.Engine.Rendering
             {
                 meshData.vertexData.vertices[i] = vertexes[i].position;
                 meshData.vertexData.normals[i] = vertexes[i].normal;
-                meshData.vertexData.uvs[i] = vertexes[i].uv;
+                meshData.vertexData.uvs[i] = new Vector2(
+                    0.5f + MathF.Atan2(vertexes[i].position.Z, vertexes[i].position.X) / (2.0f * MathF.PI),
+                    0.5f - MathF.Asin(vertexes[i].position.Y) / MathF.PI
+                );
             }
 
             for (int i = 0; i < indices.Length; i++)

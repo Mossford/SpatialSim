@@ -1,4 +1,5 @@
 using Silk.NET.Vulkan;
+using Silk.NET.Vulkan.Extensions.KHR;
 
 namespace SpatialSim.Engine.Rendering.Vulkan
 {
@@ -28,7 +29,39 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         #region Descriptors
 
-        public const int MaxDescriptorsInPool = 1000;
+        public const int MaxDescriptorsInPool = 100;
+
+        #endregion
+
+        #region Extensions and Features
+
+        public static readonly string[] deviceExtensions = new[]
+        {
+            KhrSwapchain.ExtensionName,
+        };
+        
+        public static readonly PhysicalDeviceFeatures physicalDeviceFeatures = new PhysicalDeviceFeatures() with
+        {
+            SamplerAnisotropy = true
+        };
+        
+        public static readonly string[] validationLayers = new[]
+        {
+            "VK_LAYER_KHRONOS_validation",
+        };
+        
+        public static readonly ValidationFeatureEnableEXT[] validationFeatures =
+        {
+            ValidationFeatureEnableEXT.BestPracticesExt,
+        };
+
+        #endregion
+
+        #region DescriptorSetBindings
+
+        public const int UniformSet = 0;
+        public const int SamplerSet = 1;
+        public const int TotalSetCount = 2;
 
         #endregion
     }

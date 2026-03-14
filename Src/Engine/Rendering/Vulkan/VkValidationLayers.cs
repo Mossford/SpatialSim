@@ -8,10 +8,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 {
     public static class VkValidationLayers
     {
-        public static readonly string[] validationLayers = new[]
-        {
-            "VK_LAYER_KHRONOS_validation"
-        };
         
         public static ExtDebugUtils debugUtils;
         public static DebugUtilsMessengerEXT debugMessenger;
@@ -28,7 +24,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             HashSet<string?> availableLayerNames = availableLayers.Select(layer => Marshal.PtrToStringAnsi((IntPtr)layer.LayerName)).ToHashSet();
 
-            return validationLayers.All(availableLayerNames.Contains);
+            return VkSettings.validationLayers.All(availableLayerNames.Contains);
         }
         
         public static unsafe void PopulateDebugMessengerCreateInfo(ref DebugUtilsMessengerCreateInfoEXT createInfo)
@@ -54,10 +50,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             DebugUtilsMessengerCreateInfoEXT createInfo = new();
             PopulateDebugMessengerCreateInfo(ref createInfo);
 
-            if (debugUtils!.CreateDebugUtilsMessenger(AppState.appContext.GetContext<VkContext>().instance, in createInfo, null, out debugMessenger) != Result.Success)
+            Result result = debugUtils!.CreateDebugUtilsMessenger(AppState.appContext.GetContext<VkContext>().instance,
+                in createInfo, null, out debugMessenger);
+            if (result != Result.Success)
             {
-                Debug.Error("Failed to set up vulkan debug messenger");
-                throw new Exception("Failed to set up vulkan debug messenger");
+                Debug.Error($"Failed to set up vulkan debug messenger {result}");
+                throw new Exception($"Failed to set up vulkan debug messenger {result}");
             }
         }
 

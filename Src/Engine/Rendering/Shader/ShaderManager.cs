@@ -5,12 +5,12 @@ namespace SpatialSim.Engine.Rendering
 {
     public static class ShaderManager
     {
-        public static Dictionary<ShaderSettings, int> shaderLocToIndex;
+        public static Dictionary<string, int> shaderLocToIndex;
         public static List<Shader> shaders;
         
         public static void Init()
         {
-            shaderLocToIndex = new Dictionary<ShaderSettings, int>();
+            shaderLocToIndex = new Dictionary<string, int>();
             shaders = new List<Shader>();
         }
 
@@ -19,7 +19,7 @@ namespace SpatialSim.Engine.Rendering
             if (!File.Exists(Resources.ShaderPath + settings.file))
                 return false;
             
-            if (shaderLocToIndex.TryAdd(settings, shaders.Count))
+            if (shaderLocToIndex.TryAdd(settings.file, shaders.Count))
             {
                 Shader shader = new Shader();
                 shader.Create(settings);
@@ -30,22 +30,34 @@ namespace SpatialSim.Engine.Rendering
             return false;
         }
 
-        public static Shader RetrieveShader(ShaderSettings shader)
+        public static Shader RetrieveShader(ShaderSettings settings)
         {
-            if (shaderLocToIndex.TryGetValue(shader, out int index))
+            if (shaderLocToIndex.TryGetValue(settings.file, out int index))
             {
                 return shaders[index];
             }
             else
             {
-                if (LoadShader(shader))
+                if (LoadShader(settings))
                 {
-                    return shaders[shaderLocToIndex[shader]];
+                    return shaders[shaderLocToIndex[settings.file]];
                 }
             }
 
             // TODO Add defualt shader
-            Debug.Warning("Shader " + shader.file + " not found");
+            Debug.Warning("Shader " + settings.file + " not found");
+            return null;
+        }
+        
+        public static Shader RetrieveShader(string file)
+        {
+            if (shaderLocToIndex.TryGetValue(file, out int index))
+            {
+                return shaders[index];
+            }
+
+            // TODO Add defualt shader
+            Debug.Warning("Shader " + file + " not found");
             return null;
         }
         

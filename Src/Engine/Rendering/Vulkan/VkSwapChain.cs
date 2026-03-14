@@ -221,8 +221,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.renderPass.Create();
             
             AppState.appContext.defaultPipeline.Create(
-                ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Vertex, "base.vert")), 
-                ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Fragment, "base.frag")));
+                ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Vertex, [new ShaderDescriptorDef(0, 0, ShaderDescriptorUsage.Uniform)], "base.vert")), 
+                ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Fragment, [new ShaderDescriptorDef(1, 0, ShaderDescriptorUsage.Sampler)], "base.frag")));
             
             CreateFramebuffers();
             
@@ -423,10 +423,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
                 };
 
-                if (AppState.appContext.GetContext<VkContext>().vk.CreateImageView(VkDevices.device, in createInfo, null, out swapChainImageViews[i]) != Result.Success)
+                Result result = AppState.appContext.GetContext<VkContext>().vk
+                    .CreateImageView(VkDevices.device, in createInfo, null, out swapChainImageViews[i]);
+                if (result != Result.Success)
                 {
-                    Debug.Error("Failed to create image views");
-                    throw new Exception("Failed to create image views");
+                    Debug.Error($"Failed to create image views {result}");
+                    throw new Exception($"Failed to create image views {result}");
                 }
             }
             

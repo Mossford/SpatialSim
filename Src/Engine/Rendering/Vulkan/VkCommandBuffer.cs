@@ -200,9 +200,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             {
                 Color = new()
                 {
-                    Float32_0 = 1, 
-                    Float32_1 = 1,
-                    Float32_2 = 1, 
+                    Float32_0 = 0, 
+                    Float32_1 = 0,
+                    Float32_2 = 0, 
                     Float32_3 = 1
                 },
             };
@@ -230,11 +230,30 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 commandBuffer,
                 PipelineBindPoint.Graphics,
                 vkPipeLine.pipelineLayout,
-                0,
+                VkSettings.UniformSet,
                 1,
                 &set,
                 1,
                 &dynamicOffset);
+        }
+        
+        public unsafe void BindTexture(Pipeline pipeline, Texture texture)
+        {
+            VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
+            VkTexture vkTexture = ((VkTexture)texture.texture);
+            
+            DescriptorSet set = vkTexture.descriptor.descriptorSet;
+
+            //bind only the descriptor set with the one buffer attached vulkan will auto increment
+            AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
+                commandBuffer,
+                PipelineBindPoint.Graphics,
+                vkPipeLine.pipelineLayout,
+                VkSettings.SamplerSet,
+                1,
+                &set,
+                0,
+                null);
         }
 
         /// <summary>

@@ -44,12 +44,24 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             if (AppState.EnableVkValidationLayers)
             {
-                createInfo.EnabledLayerCount = (uint)VkValidationLayers.validationLayers.Length;
-                createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(VkValidationLayers.validationLayers);
-
+                createInfo.EnabledLayerCount = (uint)VkSettings.validationLayers.Length;
+                createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(VkSettings.validationLayers);
+                
                 DebugUtilsMessengerCreateInfoEXT debugCreateInfo = new();
                 VkValidationLayers.PopulateDebugMessengerCreateInfo(ref debugCreateInfo);
+
+                fixed (ValidationFeatureEnableEXT* enablesPtr = VkSettings.validationFeatures)
+                {
+                    ValidationFeaturesEXT validationFeatures = new();
+                    validationFeatures.SType = StructureType.ValidationFeaturesExt;
+                    validationFeatures.EnabledValidationFeatureCount = (uint)VkSettings.validationFeatures.Length;
+                    validationFeatures.PEnabledValidationFeatures = enablesPtr;
+
+                    debugCreateInfo.PNext = &validationFeatures;
+                }
+
                 createInfo.PNext = &debugCreateInfo;
+                
             }
             else
             {
@@ -57,10 +69,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 createInfo.PNext = null;
             }
 
-            if (AppState.appContext.GetContext<VkContext>().vk.CreateInstance(in createInfo, null, out AppState.appContext.GetContext<VkContext>().instance) != Result.Success)
+            Result result = AppState.appContext.GetContext<VkContext>().vk.CreateInstance(in createInfo, null,
+                out AppState.appContext.GetContext<VkContext>().instance);
+            if (result != Result.Success)
             {
-                Debug.Error("Failed to create instance");
-                throw new Exception("Failed to create instance");
+                Debug.Error($"Failed to create instance {result}");
+                throw new Exception($"Failed to create instance {result}");
             }
 
             Marshal.FreeHGlobal((IntPtr)appInfo.PApplicationName);

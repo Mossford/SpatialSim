@@ -15,6 +15,7 @@ namespace SpatialSim.Engine.Rendering
         {
             pipeline = AppState.appContext.DeviceFactory.CreatePipelineDevice(vertex, fragment);
             Ticks.pipelineCount.created++;
+            Debug.LogDebug($"Created pipeline with {vertex.settings.file} and {fragment.settings.file}");
         }
 
         public void UpdateUniforms(in Shader shader, int frame)

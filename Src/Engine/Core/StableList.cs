@@ -109,6 +109,18 @@ namespace SpatialSim.Engine.Core
             
             return data[index];
         }
+        
+        public bool TryGet(int id, out T? value)
+        {
+            value = default;
+            if (id < 0 || id >= dataIds.Count)
+                return false;
+            int index = dataIds[id];
+            if (index == -1)
+                return false;
+            value = data[index];
+            return true;
+        }
 
         public void RemoveAt(int id)
         {

@@ -6,11 +6,13 @@ namespace SpatialSim.Engine.Rendering
 {
         public ShaderType type;
         public string file;
+        public ShaderDescriptorDef[] descriptorDef;
 
-        public ShaderSettings(ShaderType type, string file)
+        public ShaderSettings(ShaderType type, ShaderDescriptorDef[] descriptorDef, string file)
         {
             this.type = type;
             this.file = file;
+            this.descriptorDef = descriptorDef;
         }
 
         public bool Equals(ShaderSettings other)

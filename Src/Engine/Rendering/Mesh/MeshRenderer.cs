@@ -44,7 +44,7 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer.BindVertexBuffers(vertexBuffer.buffer!);
             commandBuffer.BindIndexBuffers(indexBuffer.buffer!);
             Mesh meshComp = EcsManager.GetComponent<Mesh>(mesh);
-            Shader vertexShader = ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Vertex, "base.vert"));
+            Shader vertexShader = ShaderManager.RetrieveShader("base.vert");
             Camera camera = (Camera)AppState.appContext.GetContext<VkContext>().camera
                 .GetFirstComponentOfType(EcsComponentType.Camera);
             vertexShader.AddMat4(camera.view);
@@ -52,6 +52,7 @@ namespace SpatialSim.Engine.Rendering
             vertexShader.AddMat4(EcsManager.GetComponent<Transform>(meshComp.transform).GetModelMat());
             AppState.appContext.defaultPipeline.UpdateUniforms(vertexShader, frame);
             commandBuffer.BindUniforms(AppState.appContext.defaultPipeline);
+            commandBuffer.BindTexture(AppState.appContext.defaultPipeline, TextureManager.RetrieveTexture(""));
             commandBuffer.Draw(meshComp.meshData.indices.Length);
         }
 
