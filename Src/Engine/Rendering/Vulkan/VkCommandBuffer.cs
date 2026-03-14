@@ -135,12 +135,29 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
         }
 
-        public void BeginCommandBuffer()
+        public void Begin()
         {
             CommandBufferBeginInfo beginInfo = new()
             {
                 SType = StructureType.CommandBufferBeginInfo,
                 Flags = CommandBufferUsageFlags.SimultaneousUseBit
+            };
+
+            Result result = AppState.appContext.GetContext<VkContext>().vk
+                .BeginCommandBuffer(commandBuffer, in beginInfo);
+            if (result != Result.Success)
+            {
+                Debug.Error($"Failed to begin recording command buffer {result}");
+                throw new Exception($"Failed to begin recording command buffer {result}");
+            }
+        }
+        
+        public void BeginOneUse()
+        {
+            CommandBufferBeginInfo beginInfo = new()
+            {
+                SType = StructureType.CommandBufferBeginInfo,
+                Flags = CommandBufferUsageFlags.OneTimeSubmitBit
             };
 
             Result result = AppState.appContext.GetContext<VkContext>().vk
@@ -162,7 +179,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
         }
 
-        public unsafe void SubmitCommandBuffer()
+        public unsafe void Submit()
         {
             submittedCommandBuffer = true;
             

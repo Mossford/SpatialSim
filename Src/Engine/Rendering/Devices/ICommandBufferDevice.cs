@@ -7,9 +7,10 @@ namespace SpatialSim.Engine.Rendering
 
         public void BindVertexBuffers<T>(IBufferDevice<T> bufferDevice) where T : unmanaged;
         public void BindIndexBuffers<T>(IBufferDevice<T> bufferDevice) where T : unmanaged;
-        public void BeginCommandBuffer();
+        public void Begin();
+        public void BeginOneUse();
         public void EndCommandBuffer();
-        public void SubmitCommandBuffer();
+        public void Submit();
         public void BeginRenderPass(int frame);
         public void BindPipeLine(Pipeline pipeline);
         public void BindUniforms(Pipeline pipeline);

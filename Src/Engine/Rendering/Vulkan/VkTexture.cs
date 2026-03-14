@@ -190,7 +190,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         {
             CommandBuffer commandBuffer = new CommandBuffer();
             commandBuffer.Create();
-            commandBuffer.BeginCommandBuffer();
+            commandBuffer.BeginOneUse();
 
             ImageMemoryBarrier barrier = new()
             {
@@ -246,8 +246,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 1, 
                 in barrier);
 
-            commandBuffer.EndCommandBuffer();
-            commandBuffer.SubmitCommandBuffer();
+            commandBuffer.End();
+            commandBuffer.Submit();
             commandBuffer.Clean();
         }
 

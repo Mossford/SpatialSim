@@ -34,9 +34,9 @@ namespace SpatialSim.Engine.Rendering
         {
             Mesh meshComp = ((Mesh)EcsManager.GetComponent(mesh));
             vertexBuffer = new Buffer<Vertex>();
-            vertexBuffer.Create(new Span<Vertex>(meshComp.GetVertexes()), BufferUsage.Vertex, BufferMemoryUsage.Cpu);
+            vertexBuffer.Create(new Span<Vertex>(meshComp.GetVertexes()), BufferUsage.Vertex, BufferMemoryUsage.Gpu);
             indexBuffer = new Buffer<int>();
-            indexBuffer.Create(new Span<int>(meshComp.meshData.indices), BufferUsage.Index, BufferMemoryUsage.Cpu);
+            indexBuffer.Create(new Span<int>(meshComp.meshData.indices), BufferUsage.Index, BufferMemoryUsage.Gpu);
         }
 
         public void Draw(CommandBuffer commandBuffer, int frame)

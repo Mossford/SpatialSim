@@ -72,16 +72,16 @@ namespace SpatialSim.Engine.Core.Vulkan
             camera.AddComponent(new Camera(
                 camera.AddComponent(new Transform(new Vector3(0f), Quaternion.Identity, new Vector3(1.0f))), 65));
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 10; i++)
             {
-                for (int j = 0; j < 5; j++)
+                for (int j = 0; j < 10; j++)
                 {
                     meshTest = EcsManager.AddEntity();
                 
                     EcsComponentRef mesh = meshTest.AddComponent(
                         new Mesh(
                             MeshGeneration.CreateSphereMesh(1, 0), 
-                            meshTest.AddComponent(new Transform(new Vector3(new Random().NextSingle() * 2 - 1, new Random().NextSingle() * 2 - 1, new Random().NextSingle() * 2 - 1) * 5, Quaternion.Identity, new Vector3(0.7f)))));
+                            meshTest.AddComponent(new Transform(new Vector3(new Random().NextSingle() * 2 - 1, new Random().NextSingle() * 2 - 1, new Random().NextSingle() * 2 - 1) * 5, Quaternion.Identity, new Vector3(0.1f)))));
                 
                     meshTest.AddComponent(new MeshRenderer(mesh, meshTest.AddComponent(new Material())));
                 }
@@ -141,7 +141,7 @@ namespace SpatialSim.Engine.Core.Vulkan
             //render
             
             CommandBuffer vkcommandBuffer = ((VkCommandBuffer)VkSwapChain.commandBuffers[imageIndex].commandBuffer!).commandBuffer;
-            VkSwapChain.commandBuffers[imageIndex].BeginCommandBuffer();
+            VkSwapChain.commandBuffers[imageIndex].Begin();
             
             ((Camera)camera.GetFirstComponentOfType(EcsComponentType.Camera)).GenerateTransforms();
             
@@ -149,7 +149,7 @@ namespace SpatialSim.Engine.Core.Vulkan
             
             imGuiController.Render(vkcommandBuffer, VkSwapChain.swapChainFramebuffers[imageIndex], VkSwapChain.swapChainExtent);
 
-            VkSwapChain.commandBuffers[imageIndex].EndCommandBuffer();
+            VkSwapChain.commandBuffers[imageIndex].End();
             VkSwapChain.commandBuffers[imageIndex].ResetPipeLine(defaultPipeline);
             
             SubmitInfo submitInfo = new()

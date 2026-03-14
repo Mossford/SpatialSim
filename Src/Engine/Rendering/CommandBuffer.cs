@@ -18,19 +18,24 @@ namespace SpatialSim.Engine.Rendering
             Debug.LogDebug("Cleaned up Commandbuffer");
         }
 
-        public void BeginCommandBuffer()
+        public void Begin()
         {
-            commandBuffer?.BeginCommandBuffer();
+            commandBuffer?.Begin();
+        }
+        
+        public void BeginOneUse()
+        {
+            commandBuffer?.BeginOneUse();
         }
 
-        public void EndCommandBuffer()
+        public void End()
         {
             commandBuffer?.EndCommandBuffer();
         }
 
-        public void SubmitCommandBuffer()
+        public void Submit()
         {
-            commandBuffer?.SubmitCommandBuffer();
+            commandBuffer?.Submit();
         }
 
         public void BeginRenderPass(int frame)

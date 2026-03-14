@@ -137,6 +137,14 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 memoryMap = (byte*)ptr;
                 data.CopyTo(new Span<T>(memoryMap, data.Length));
             }
+            else if (memoryUsage == BufferMemoryUsage.Gpu)
+            {
+                //create a staging buffer
+                VkBuffer<T> stagingBuffer = new VkBuffer<T>();
+                stagingBuffer.Create(data, usage, BufferMemoryUsage.Cpu);
+                stagingBuffer.CopyTo(this);
+                stagingBuffer.Clean();
+            }
         }
         
         public void Create(uint dataLength, BufferUsage usage, BufferMemoryUsage memoryUsage)
@@ -265,14 +273,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             CommandBuffer commandBuffer = new CommandBuffer();
             commandBuffer.Create();
 
-            CommandBufferBeginInfo beginInfo = new()
-            {
-                SType = StructureType.CommandBufferBeginInfo,
-                Flags = CommandBufferUsageFlags.OneTimeSubmitBit,
-            };
-
             VkCommandBuffer vkCommandBuffer = (VkCommandBuffer)commandBuffer.commandBuffer!;
-            commandBuffer.BeginCommandBuffer();
+            commandBuffer.BeginOneUse();
 
             BufferCopy copyRegion = new()
             {
@@ -281,7 +283,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             AppState.appContext.GetContext<VkContext>().vk.CmdCopyBuffer(vkCommandBuffer.commandBuffer, buffer, ((VkBuffer<T>)dest).buffer, 1, in copyRegion);
 
-            commandBuffer.EndCommandBuffer();
+            commandBuffer.End();
 
             SubmitInfo submitInfo;
             fixed (Silk.NET.Vulkan.CommandBuffer* cmdBufPtr = &vkCommandBuffer.commandBuffer)
@@ -305,7 +307,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         {
             CommandBuffer commandBuffer = new CommandBuffer();
             commandBuffer.Create();
-            commandBuffer.BeginCommandBuffer();
+            commandBuffer.BeginOneUse();
 
             BufferImageCopy region = new()
             {
@@ -332,8 +334,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 1,
                 in region);
 
-            commandBuffer.EndCommandBuffer();
-            commandBuffer.SubmitCommandBuffer();
+            commandBuffer.End();
+            commandBuffer.Submit();
             commandBuffer.Clean();
         }
 
