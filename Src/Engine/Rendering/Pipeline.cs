@@ -18,10 +18,18 @@ namespace SpatialSim.Engine.Rendering
             Debug.LogDebug($"Created pipeline with {vertex.settings.file} and {fragment.settings.file}");
         }
 
-        public void UpdateUniforms(in Shader shader, int frame)
+        public void UpdateUniforms(in Shader shader, int binding, int frame)
         {
-            pipeline?.UpdateUniforms(shader, frame);
-            shader.uniformData.Clear();
+            // TODO this is running two times maybe change?
+            int set = RendererSettings.VertexUniformSet;
+            if (shader.settings.type == ShaderType.Fragment)
+            {
+                set = RendererSettings.FragmentUniformSet;
+            }
+            
+            ShaderDescriptorDef def = new ShaderDescriptorDef(set, binding, ShaderDescriptorUsage.Uniform, shader.settings.type);
+            pipeline?.UpdateUniforms(shader, binding, frame);
+            shader.uniformData[def].Clear();
         }
         
         public void Bind()

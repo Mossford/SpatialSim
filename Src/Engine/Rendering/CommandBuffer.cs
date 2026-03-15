@@ -48,11 +48,16 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer?.BindPipeLine(pipeline);
         }
 
-        public void BindUniforms(Pipeline pipeline)
+        public void BindVertexUniforms(Pipeline pipeline, int binding)
         {
-            commandBuffer?.BindUniforms(pipeline);
+            commandBuffer?.BindVertexUniforms(pipeline, binding);
         }
-        
+
+        public void BindFragmentUniforms(Pipeline pipeline, int binding)
+        {
+            commandBuffer?.BindFragmentUniforms(pipeline, binding);
+        }
+
         public void BindTexture(Pipeline pipeline, Texture texture)
         {
             commandBuffer?.BindTexture(pipeline, texture);

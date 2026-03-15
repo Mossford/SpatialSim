@@ -19,7 +19,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         //This is what sdlgpu has set to the maxuniform size
         public const uint MaxUniformSize = 1 << 15;
         //max of 8 shaders for the pipeline
-        public const int MaxUniformsPerStage = 4;
+        public const int MaxUniformsPerStage = 1;
         /// <summary>
         /// Max uniform section size of 4096 bytes
         /// </summary>
@@ -54,14 +54,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         {
             ValidationFeatureEnableEXT.BestPracticesExt,
         };
-
-        #endregion
-
-        #region DescriptorSetBindings
-
-        public const int UniformSet = 0;
-        public const int SamplerSet = 1;
-        public const int TotalSetCount = 2;
 
         #endregion
     }

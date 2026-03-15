@@ -247,19 +247,41 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.GetContext<VkContext>().vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, ((VkPipeline)pipeline.pipeline!).pipeline);
         }
 
-        public unsafe void BindUniforms(Pipeline pipeline)
+        public unsafe void BindVertexUniforms(Pipeline pipeline, int binding)
         {
             VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
-            
-            DescriptorSet set = vkPipeLine.uniformManager.GetDescriptorSet();
-            uint dynamicOffset = ((VkBuffer<byte>)vkPipeLine.uniformManager.uniformBuffers[vkPipeLine.uniformManager.currentBuffer].buffer!).drawOffset;
+
+            ShaderDescriptorDef def = new ShaderDescriptorDef(RendererSettings.VertexUniformSet, binding, ShaderDescriptorUsage.Uniform, ShaderType.Vertex);
+            DescriptorSet set = vkPipeLine.uniformManager.GetDescriptorSet(def);
+            //data will be 0 so we just grab the current buffer
+            uint dynamicOffset = ((VkBuffer<byte>)vkPipeLine.uniformManager.GetBuffer(def, 0).buffer!).drawOffset;
 
             //bind only the descriptor set with the one buffer attached vulkan will auto increment
             AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
                 commandBuffer,
                 PipelineBindPoint.Graphics,
                 vkPipeLine.pipelineLayout,
-                VkSettings.UniformSet,
+                RendererSettings.VertexUniformSet,
+                1,
+                &set,
+                1,
+                &dynamicOffset);
+        }
+        
+        public unsafe void BindFragmentUniforms(Pipeline pipeline, int binding)
+        {
+            VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
+            
+            ShaderDescriptorDef def = new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, binding, ShaderDescriptorUsage.Uniform, ShaderType.Fragment);
+            DescriptorSet set = vkPipeLine.uniformManager.GetDescriptorSet(def);
+            uint dynamicOffset = ((VkBuffer<byte>)vkPipeLine.uniformManager.GetBuffer(def, 0).buffer!).drawOffset;
+
+            //bind only the descriptor set with the one buffer attached vulkan will auto increment
+            AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
+                commandBuffer,
+                PipelineBindPoint.Graphics,
+                vkPipeLine.pipelineLayout,
+                RendererSettings.FragmentUniformSet,
                 1,
                 &set,
                 1,
@@ -278,7 +300,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 commandBuffer,
                 PipelineBindPoint.Graphics,
                 vkPipeLine.pipelineLayout,
-                VkSettings.SamplerSet,
+                RendererSettings.FragmentSamplerSet,
                 1,
                 &set,
                 0,
@@ -291,13 +313,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public void ResetPipeLine(Pipeline pipeline)
         {
             VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
-            for (int i = 0; i < vkPipeLine.uniformManager.uniformBuffers.Count; i++)
-            {
-                ((VkBuffer<byte>)vkPipeLine.uniformManager.uniformBuffers[i].buffer!).drawOffset = 0;
-                ((VkBuffer<byte>)vkPipeLine.uniformManager.uniformBuffers[i].buffer!).memoryOffset = 0;
-            }
-
-            vkPipeLine.uniformManager.currentBuffer = 0;
+            vkPipeLine.uniformManager.ResetUniforms();
         }
 
         public void Draw(int indexCount)

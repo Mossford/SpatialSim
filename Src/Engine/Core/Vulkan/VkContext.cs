@@ -58,8 +58,17 @@ namespace SpatialSim.Engine.Core.Vulkan
             
             defaultPipeline = new Pipeline();
             defaultPipeline.Create(
-                ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Vertex, [new ShaderDescriptorDef(0, 0, ShaderDescriptorUsage.Uniform)], "base.vert")), 
-                ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Fragment, [new ShaderDescriptorDef(1, 0, ShaderDescriptorUsage.Sampler)], "base.frag")));
+                ShaderManager.RetrieveShader(
+                    new ShaderSettings(
+                        ShaderType.Vertex, 
+                        [new ShaderDescriptorDef(RendererSettings.VertexUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Vertex)],
+                        "base.vert")),
+                ShaderManager.RetrieveShader(
+                    new ShaderSettings(ShaderType.Fragment, 
+                        [
+                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, 0, ShaderDescriptorUsage.Sampler, ShaderType.Fragment), 
+                            new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Fragment)],
+                        "base.frag")));
             
             VkDepthBuffer.CreateDepthBuffers();
             VkSwapChain.CreateFramebuffers();
@@ -80,8 +89,8 @@ namespace SpatialSim.Engine.Core.Vulkan
                 
                     EcsComponentRef mesh = meshTest.AddComponent(
                         new Mesh(
-                            MeshGeneration.CreateSphereMesh(1, 0), 
-                            meshTest.AddComponent(new Transform(new Vector3(new Random().NextSingle() * 2 - 1, new Random().NextSingle() * 2 - 1, new Random().NextSingle() * 2 - 1) * 5, Quaternion.Identity, new Vector3(0.1f)))));
+                            MeshGeneration.CreateSphereMesh(1, 2), 
+                            meshTest.AddComponent(new Transform(new Vector3(new Random().NextSingle() * 2 - 1, new Random().NextSingle() * 2 - 1, new Random().NextSingle() * 2 - 1) * 5, Quaternion.Identity, new Vector3(0.7f)))));
                 
                     meshTest.AddComponent(new MeshRenderer(mesh, meshTest.AddComponent(new Material())));
                 }

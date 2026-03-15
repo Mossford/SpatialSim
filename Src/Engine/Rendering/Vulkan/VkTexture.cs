@@ -121,7 +121,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             CreateSampler();
 
             descriptor = new VkDescriptor();
-            descriptor.Create(((VkPipeline)AppState.appContext.defaultPipeline.pipeline!), new ShaderDescriptorDef(1, 0, ShaderDescriptorUsage.Sampler));
+            descriptor.Create(((VkPipeline)AppState.appContext.defaultPipeline.pipeline!), 
+                new ShaderDescriptorDef(1, 0, ShaderDescriptorUsage.Sampler, ShaderType.Fragment));
 
             SetTextureToDescriptorSet();
 

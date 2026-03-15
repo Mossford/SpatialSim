@@ -47,12 +47,19 @@ namespace SpatialSim.Engine.Rendering
             Shader vertexShader = ShaderManager.RetrieveShader("base.vert");
             Camera camera = (Camera)AppState.appContext.GetContext<VkContext>().camera
                 .GetFirstComponentOfType(EcsComponentType.Camera);
-            vertexShader.AddMat4(camera.view);
-            vertexShader.AddMat4(camera.proj);
-            vertexShader.AddMat4(EcsManager.GetComponent<Transform>(meshComp.transform).GetModelMat());
-            AppState.appContext.defaultPipeline.UpdateUniforms(vertexShader, frame);
-            commandBuffer.BindUniforms(AppState.appContext.defaultPipeline);
-            commandBuffer.BindTexture(AppState.appContext.defaultPipeline, TextureManager.RetrieveTexture(""));
+            vertexShader.AddMat4(0, camera.view);
+            vertexShader.AddMat4(0, camera.proj);
+            vertexShader.AddMat4(0, EcsManager.GetComponent<Transform>(meshComp.transform).GetModelMat());
+            AppState.appContext.defaultPipeline.UpdateUniforms(vertexShader, 0, frame);
+            commandBuffer.BindVertexUniforms(AppState.appContext.defaultPipeline, 0);
+            Shader fragmentShader = ShaderManager.RetrieveShader("base.frag");
+            fragmentShader.AddVec4(0, new Vector4(MathF.Abs(MathF.Sin((float)AppState.GetSeconds()))));
+            fragmentShader.AddVec4(0, new Vector4(1.0f));
+            fragmentShader.AddVec4(0, new Vector4(1.0f));
+            fragmentShader.AddVec4(0, new Vector4(1.0f));
+            AppState.appContext.defaultPipeline.UpdateUniforms(fragmentShader, 0, frame);
+            commandBuffer.BindFragmentUniforms(AppState.appContext.defaultPipeline, 0);
+            commandBuffer.BindTexture(AppState.appContext.defaultPipeline, TextureManager.RetrieveTexture("uvCheck.jpg"));
             commandBuffer.Draw(meshComp.meshData.indices.Length);
         }
 

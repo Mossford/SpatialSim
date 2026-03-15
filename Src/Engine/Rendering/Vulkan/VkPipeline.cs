@@ -34,16 +34,24 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                         break;
                     }
                 }
-                
-                if (!descriptorSetLayouts.TryAdd(vertex.settings.descriptorDef[i], CreateDescriptorSetLayout(ShaderStageFlags.VertexBit, type, vertex.settings.descriptorDef[i].binding)))
+
+                DescriptorSetLayout layout = CreateDescriptorSetLayout(ShaderStageFlags.VertexBit | ShaderStageFlags.FragmentBit, type,
+                    vertex.settings.descriptorDef[i].binding);
+                if (!descriptorSetLayouts.TryAdd(vertex.settings.descriptorDef[i], layout))
                 {
-                    Debug.Warning($"Tried to add a descriptor set layout {vertex.settings.descriptorDef[i].set} {vertex.settings.descriptorDef[i].binding} {vertex.settings.descriptorDef[i].usage} that already exists, skipping");
+                    Debug.Error($"Tried to add a descriptor set layout to vertex " +
+                                $"{vertex.settings.descriptorDef[i].set} " +
+                                $"{vertex.settings.descriptorDef[i].binding} " +
+                                $"{vertex.settings.descriptorDef[i].usage} " +
+                                $"{vertex.settings.descriptorDef[i].type} that already exists, skipping");
+                    
+                    AppState.appContext.GetContext<VkContext>().vk.DestroyDescriptorSetLayout(VkDevices.device, layout, null);
                 }
             }
             
             for (int i = 0; i < fragment.settings.descriptorDef.Length; i++)
             {
-                DescriptorType type = DescriptorType.UniformBufferDynamic;
+                DescriptorType type = DescriptorType.UniformBufferDynamic;  
                 switch (fragment.settings.descriptorDef[i].usage)
                 {
                     case ShaderDescriptorUsage.Uniform:
@@ -57,15 +65,40 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                         break;
                     }
                 }
-                
-                if (!descriptorSetLayouts.TryAdd(fragment.settings.descriptorDef[i], CreateDescriptorSetLayout(ShaderStageFlags.FragmentBit, type, fragment.settings.descriptorDef[i].binding)))
+
+                DescriptorSetLayout layout = CreateDescriptorSetLayout(ShaderStageFlags.VertexBit | ShaderStageFlags.FragmentBit, type,
+                    fragment.settings.descriptorDef[i].binding);
+                if (!descriptorSetLayouts.TryAdd(fragment.settings.descriptorDef[i], layout))
                 {
-                    Debug.Warning($"Tried to add a descriptor set layout {fragment.settings.descriptorDef[i].set} {fragment.settings.descriptorDef[i].binding} {fragment.settings.descriptorDef[i].usage} that already exists, skipping");
+                    Debug.Error($"Tried to add a descriptor set layout to fragment " +
+                                $"{fragment.settings.descriptorDef[i].set} " +
+                                $"{fragment.settings.descriptorDef[i].binding} " +
+                                $"{fragment.settings.descriptorDef[i].usage} " +
+                                $"{fragment.settings.descriptorDef[i].type} that already exists, skipping");
+                    
+                    AppState.appContext.GetContext<VkContext>().vk.DestroyDescriptorSetLayout(VkDevices.device, layout, null);
+                }
+            }
+
+            List<ShaderDescriptorDef> defs = new List<ShaderDescriptorDef>();
+            for (int i = 0; i < vertex.settings.descriptorDef.Length; i++)
+            {
+                if (vertex.settings.descriptorDef[i].usage == ShaderDescriptorUsage.Uniform)
+                {
+                    defs.Add(vertex.settings.descriptorDef[i]);
+                }
+            }
+            
+            for (int i = 0; i < fragment.settings.descriptorDef.Length; i++)
+            {
+                if (fragment.settings.descriptorDef[i].usage == ShaderDescriptorUsage.Uniform)
+                {
+                    defs.Add(fragment.settings.descriptorDef[i]);
                 }
             }
             
             uniformManager = new VkUniformManager();
-            uniformManager.Init(this);
+            uniformManager.Init(this, [ShaderType.Vertex, ShaderType.Fragment], defs.ToArray());
             
             PipelineShaderStageCreateInfo vertShaderStageInfo = new()
             {
@@ -270,10 +303,18 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             Debug.LogInfo("Successful pipeline creation");
         }
 
-        public void UpdateUniforms(in Shader shader, int frame)
+        public void UpdateUniforms(in Shader shader, int binding, int frame)
         {
-            uniformManager.GetBuffer(shader.uniformData.Count)
-                .UpdateUniformData(new Span<byte>(shader.uniformData.ToArray()));
+            int set = RendererSettings.VertexUniformSet;
+            if (shader.settings.type == ShaderType.Fragment)
+            {
+                set = RendererSettings.FragmentUniformSet;
+            }
+            
+            ShaderDescriptorDef def = new ShaderDescriptorDef(set, binding, ShaderDescriptorUsage.Uniform, shader.settings.type);
+            
+            uniformManager.GetBuffer(def, shader.uniformData.Count)
+                .UpdateUniformData(new Span<byte>(shader.uniformData[def].ToArray()));
         }
 
         unsafe DescriptorSetLayout CreateDescriptorSetLayout(ShaderStageFlags stage, DescriptorType type, int binding)

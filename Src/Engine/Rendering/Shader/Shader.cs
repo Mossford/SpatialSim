@@ -5,12 +5,6 @@ using SpatialSim.Engine.Rendering.Vulkan;
 
 namespace SpatialSim.Engine.Rendering
 {
-    public interface IShaderDevice
-    {
-        public void Create(ShaderSettings settings, in byte[] code);
-        public void Clean();
-    }
-
     public sealed class Shader : IDisposable
     {
         public ShaderSettings settings;
@@ -19,13 +13,42 @@ namespace SpatialSim.Engine.Rendering
         /// Stores the api shader information
         /// </summary>
         public IShaderDevice? shader;
-
-        public List<byte> uniformData;
+        public Dictionary<ShaderDescriptorDef, List<byte>> uniformData;
+        
+        ShaderDescriptorDef uniformDef;
 
         public void Create(ShaderSettings settings)
         {
             this.settings = settings;
-            uniformData = new List<byte>();
+            uniformData = new Dictionary<ShaderDescriptorDef, List<byte>>();
+
+            for (int i = 0; i < settings.descriptorDef.Length; i++)
+            {
+                if (settings.descriptorDef[i].usage == ShaderDescriptorUsage.Uniform)
+                {
+                    if(!uniformData.TryAdd(settings.descriptorDef[i], new List<byte>()))
+                    {
+                        Debug.Warning("Tried to add uniform data buffer to shader, but already exists, skipping");
+                    }
+                }
+            }
+
+            uniformDef = new ShaderDescriptorDef();
+            uniformDef.type = settings.type;
+            uniformDef.usage = ShaderDescriptorUsage.Uniform;
+            switch (uniformDef.type)
+            {
+                case ShaderType.Vertex:
+                {
+                    uniformDef.set = RendererSettings.VertexUniformSet;
+                    break;
+                }
+                case ShaderType.Fragment:
+                {
+                    uniformDef.set = RendererSettings.FragmentUniformSet;
+                    break;
+                }
+            }
             
             if (!File.Exists(Resources.ShaderPath + settings.file))
             {
@@ -147,94 +170,143 @@ namespace SpatialSim.Engine.Rendering
             return shaderProgram;
         }
         
-        public void AddBool(bool value)
+        public void AddBool(int binding, bool value)
         {
+            uniformDef.binding = binding;
+            
+            if (uniformData.Count == 0)
+            {
+                Debug.Warning("Tried to add data to shader that has no uniforms");
+            }
+            
             byte[] data = BitConverter.GetBytes(value);
-            if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
+            if (uniformData[uniformDef].Count + data.Length > VkSettings.MaxBlockUniformMemory)
             {
                 Debug.Warning("Tried to push uniform data past max block memory limit");
                 return;
             }
-            uniformData.AddRange(data);
+            uniformData[uniformDef].AddRange(data);
         }
 
-        public void AddInt(int value)
+        public void AddInt(int binding, int value)
         {
+            uniformDef.binding = binding;
+            
+            if (uniformData.Count == 0)
+            {
+                Debug.Warning("Tried to add data to shader that has no uniforms");
+            }
+            
             byte[] data = BitConverter.GetBytes(value);
-            if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
+            if (uniformData[uniformDef].Count + data.Length > VkSettings.MaxBlockUniformMemory)
             {
                 Debug.Warning("Tried to push uniform data past max block memory limit");
                 return;
             }
-            uniformData.AddRange(data);
+            uniformData[uniformDef].AddRange(data);
         }
 
-        public void AddFloat(float value)
+        public void AddFloat(int binding, float value)
         {
+            uniformDef.binding = binding;
+            
+            if (uniformData.Count == 0)
+            {
+                Debug.Warning("Tried to add data to shader that has no uniforms");
+            }
+            
             byte[] data = BitConverter.GetBytes(value);
-            if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
+            if (uniformData[uniformDef].Count + data.Length > VkSettings.MaxBlockUniformMemory)
             {
                 Debug.Warning("Tried to push uniform data past max block memory limit");
                 return;
             }
-            uniformData.AddRange(data);
+            uniformData[uniformDef].AddRange(data);
         }
 
-        public void AddVec2(Vector2 value)
+        public void AddVec2(int binding, Vector2 value)
         {
+            uniformDef.binding = binding;
+            
+            if (uniformData.Count == 0)
+            {
+                Debug.Warning("Tried to add data to shader that has no uniforms");
+            }
+            
             for (int i = 0; i < 2; i++)
             {
                 byte[] data = BitConverter.GetBytes(value[i]);
-                if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
+                if (uniformData[uniformDef].Count + data.Length > VkSettings.MaxBlockUniformMemory)
                 {
                     Debug.Warning("Tried to push uniform data past max block memory limit");
                     return;
                 }
-                uniformData.AddRange(data);
+                uniformData[uniformDef].AddRange(data);
             }
         }
 
-        public void AddVec3(Vector3 value)
+        public void AddVec3(int binding, Vector3 value)
         {
+            uniformDef.binding = binding;
+            
+            if (uniformData.Count == 0)
+            {
+                Debug.Warning("Tried to add data to shader that has no uniforms");
+            }
+            
             for (int i = 0; i < 3; i++)
             {
                 byte[] data = BitConverter.GetBytes(value[i]);
-                if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
+                if (uniformData[uniformDef].Count + data.Length > VkSettings.MaxBlockUniformMemory)
                 {
                     Debug.Warning("Tried to push uniform data past max block memory limit");
                     return;
                 }
-                uniformData.AddRange(data);
+                uniformData[uniformDef].AddRange(data);
             }
         }
 
-        public void AddVec4(Vector4 value)
+        public void AddVec4(int binding, Vector4 value)
         {
+            uniformDef.binding = binding;
+            
+            if (uniformData.Count == 0)
+            {
+                Debug.Warning("Tried to add data to shader that has no uniforms");
+            }
+            
             for (int i = 0; i < 4; i++)
             {
                 byte[] data = BitConverter.GetBytes(value[i]);
-                if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
+                if (uniformData[uniformDef].Count + data.Length > VkSettings.MaxBlockUniformMemory)
                 {
                     Debug.Warning("Tried to push uniform data past max block memory limit");
                     return;
                 }
-                uniformData.AddRange(data);
+                uniformData[uniformDef].AddRange(data);
             }
         }
 
-        public void AddMat4(Matrix4x4 value)
+        public void AddMat4(int binding, Matrix4x4 value)
         {
+            uniformDef.binding = binding;
+
+            if (uniformData.Count == 0)
+            {
+                Debug.Warning("Tried to add data to shader that has no uniforms");
+            }
+            
             for (int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
                     byte[] data = BitConverter.GetBytes(value[i][j]);
-                    if (uniformData.Count + data.Length > VkSettings.MaxBlockUniformMemory)
+                    if (uniformData[uniformDef].Count + data.Length > VkSettings.MaxBlockUniformMemory)
                     {
                         Debug.Warning("Tried to push uniform data past max block memory limit");
                         return;
                     }
-                    uniformData.AddRange(data);
+                    uniformData[uniformDef].AddRange(data);
                 }
             }
         }

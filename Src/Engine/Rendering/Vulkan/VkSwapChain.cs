@@ -223,8 +223,17 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.renderPass.Create();
             
             AppState.appContext.defaultPipeline.Create(
-                ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Vertex, [new ShaderDescriptorDef(0, 0, ShaderDescriptorUsage.Uniform)], "base.vert")), 
-                ShaderManager.RetrieveShader(new ShaderSettings(ShaderType.Fragment, [new ShaderDescriptorDef(1, 0, ShaderDescriptorUsage.Sampler)], "base.frag")));
+                ShaderManager.RetrieveShader(
+                    new ShaderSettings(
+                        ShaderType.Vertex, 
+                        [new ShaderDescriptorDef(RendererSettings.VertexUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Vertex)],
+                        "base.vert")),
+                ShaderManager.RetrieveShader(
+                    new ShaderSettings(ShaderType.Fragment, 
+                        [
+                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, 0, ShaderDescriptorUsage.Sampler, ShaderType.Fragment), 
+                            new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Fragment)],
+                        "base.frag")));
             
             VkDepthBuffer.CreateDepthBuffers();
             CreateFramebuffers();
