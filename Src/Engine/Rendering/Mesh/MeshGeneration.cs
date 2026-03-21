@@ -40,7 +40,6 @@ namespace SpatialSim.Engine.Rendering
         public static MeshData CreateSphereMesh(float size, int sphereSubDivide = 2)
         {
             MeshData meshData = new MeshData();
-            meshData.vertexData = new MeshData.VertexData();
             float t = 0.52573111f;
             float y = 0.850650808f;
 

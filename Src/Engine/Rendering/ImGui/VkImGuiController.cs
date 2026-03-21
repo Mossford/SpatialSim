@@ -195,8 +195,8 @@ namespace SpatialSim.Engine.Rendering.ImGui
             var dependency = new SubpassDependency();
             dependency.SrcSubpass = Vk.SubpassExternal;
             dependency.DstSubpass = 0;
-            dependency.SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.EarlyFragmentTestsBit;
-            dependency.SrcAccessMask = 0;
+            dependency.SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.LateFragmentTestsBit;
+            dependency.SrcAccessMask = AccessFlags.DepthStencilAttachmentWriteBit;
             dependency.DstStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.EarlyFragmentTestsBit;
             dependency.DstAccessMask = AccessFlags.ColorAttachmentWriteBit | AccessFlags.DepthStencilAttachmentWriteBit | AccessFlags.ColorAttachmentReadBit;
 

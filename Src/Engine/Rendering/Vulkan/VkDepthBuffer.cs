@@ -15,13 +15,13 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             texture.Create(
                 VkSwapChain.swapChainExtent.Width, 
                 VkSwapChain.swapChainExtent.Height, 
-                FindDepthFormat(), 
+                depthFormat, 
                 ImageTiling.Optimal, 
                 ImageUsageFlags.DepthStencilAttachmentBit, 
                 MemoryPropertyFlags.DeviceLocalBit);
             texture.CreateImageView(ImageAspectFlags.DepthBit);
             
-            Debug.LogInfo("Successful vulkan depth buffer creation");
+            Debug.LogInfo($"Successful vulkan depth buffer creation on format {depthFormat}");
         }
         
         public static Format FindDepthFormat()

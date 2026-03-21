@@ -26,5 +26,17 @@ namespace SpatialSim.Engine.Rendering
             vertexData = new VertexData();
             indices = new int[0];
         }
+        
+        public Vertex[] GetVertexes()
+        {
+            Vertex[] vertexes = new Vertex[vertexData.vertices.Length];
+            
+            for (int i = 0; i < vertexes.Length; i++)
+            {
+                vertexes[i] = new Vertex(vertexData.vertices[i], vertexData.normals[i], vertexData.uvs[i]);
+            }
+
+            return vertexes;
+        }
     }
 }

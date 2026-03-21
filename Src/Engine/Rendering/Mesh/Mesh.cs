@@ -24,14 +24,7 @@ namespace SpatialSim.Engine.Rendering
 
         public Vertex[] GetVertexes()
         {
-            Vertex[] vertexes = new Vertex[meshData.vertexData.vertices.Length];
-            
-            for (int i = 0; i < vertexes.Length; i++)
-            {
-                vertexes[i] = new Vertex(meshData.vertexData.vertices[i], meshData.vertexData.normals[i], meshData.vertexData.uvs[i]);
-            }
-
-            return vertexes;
+            return meshData.GetVertexes();
         }
 
         public void Dispose()

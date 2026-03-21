@@ -102,6 +102,28 @@ namespace SpatialSim.Engine.Core
                 entity = entityId
             };
         }
+        
+        public static EcsComponentRef AddComponentThr(in IComponent component, int entityId)
+        {
+            int poolId = component.type.GetId();
+            lock (componentPools)
+            {
+                lock (componentPools[poolId].components)
+                {
+                    int id = componentPools[poolId].components.Add(component);
+                    componentPools[poolId].components[id].id = id;
+                    Debug.LogDebug($"Added component of type {component.type} at {id} to Entity [{entityId}]");
+
+                    totalComponents++;
+                    return new EcsComponentRef() with
+                    {
+                        type = component.type,
+                        id = id,
+                        entity = entityId
+                    };
+                }
+            }
+        }
 
         public static bool RemoveComponent(in EcsComponentRef componentRef)
         {

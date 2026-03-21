@@ -16,10 +16,18 @@ namespace SpatialSim.Engine.Rendering
             missingTexture.LoadTexture("");
         }
 
+        public static bool IsTextureStored(string texture)
+        {
+            return textureLocToIndex.ContainsKey(texture);
+        }
+
         public static bool LoadTexture(string texture)
         {
-            if (!File.Exists(Resources.ImagePath + texture))
+            if (!File.Exists(Resources.ImagePath + texture) && texture.Length != 0)
+            {
+                Debug.Warning($"Could not find file at path {Resources.ImagePath + texture}");
                 return false;
+            }
             
             if (textureLocToIndex.TryAdd(texture, textures.Count))
             {
@@ -28,6 +36,7 @@ namespace SpatialSim.Engine.Rendering
                 return true;
             }
 
+            Debug.Warning($"Could not add texture {texture} possible duplicate");
             return false;
         }
 

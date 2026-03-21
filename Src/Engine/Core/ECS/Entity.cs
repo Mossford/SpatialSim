@@ -21,6 +21,17 @@ namespace SpatialSim.Engine.Core
             
             return componentRefs[refId];
         }
+        
+        public EcsComponentRef AddComponentThr(in IComponent component)
+        {
+            int refId = componentRefs.PeekNextId();
+            componentRefs.Add(EcsManager.AddComponentThr(component, id) with
+            {
+                refId = refId
+            });
+            
+            return componentRefs[refId];
+        }
 
         public void RemoveComponent(in EcsComponentRef componentRef)
         {

@@ -8,6 +8,7 @@ namespace SpatialSim.Engine.Core
         public static string ShaderPath;
         public static string LogPath;
         public static string ImagePath;
+        public static string ModelPath;
 
         public static void Init()
         {
@@ -15,6 +16,7 @@ namespace SpatialSim.Engine.Core
             ShaderPath = BasePath + "Shaders/";
             LogPath = BasePath + "Logs/";
             ImagePath = BasePath + "Images/";
+            ModelPath = BasePath + "Models/";
         }
     }
 }

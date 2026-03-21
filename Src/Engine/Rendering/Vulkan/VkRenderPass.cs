@@ -17,6 +17,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 LoadOp = AttachmentLoadOp.Clear,
                 StoreOp = AttachmentStoreOp.Store,
                 StencilLoadOp = AttachmentLoadOp.DontCare,
+                StencilStoreOp = AttachmentStoreOp.DontCare,
                 InitialLayout = ImageLayout.Undefined,
                 FinalLayout = ImageLayout.PresentSrcKhr,
             };
@@ -57,8 +58,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             {
                 SrcSubpass = Vk.SubpassExternal,
                 DstSubpass = 0,
-                SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.EarlyFragmentTestsBit,
-                SrcAccessMask = 0,
+                SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.LateFragmentTestsBit,
+                SrcAccessMask = AccessFlags.DepthStencilAttachmentWriteBit,
                 DstStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.EarlyFragmentTestsBit,
                 DstAccessMask = AccessFlags.ColorAttachmentWriteBit | AccessFlags.DepthStencilAttachmentWriteBit | AccessFlags.ColorAttachmentReadBit
             };

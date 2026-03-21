@@ -81,18 +81,15 @@ namespace SpatialSim.Engine.Core.Vulkan
             camera.AddComponent(new Camera(
                 camera.AddComponent(new Transform(new Vector3(0f), Quaternion.Identity, new Vector3(1.0f))), 65));
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 1; i++)
             {
-                for (int j = 0; j < 10; j++)
+                for (int j = 0; j < 1; j++)
                 {
+                    ModelLoader.LoadModelFile("Sponza/sponza.obj", "", new Transform(
+                        new Vector3(),
+                        Quaternion.Identity,
+                        new Vector3(0.007f)));
                     meshTest = EcsManager.AddEntity();
-                
-                    EcsComponentRef mesh = meshTest.AddComponent(
-                        new Mesh(
-                            MeshGeneration.CreateSphereMesh(1, 2), 
-                            meshTest.AddComponent(new Transform(new Vector3(new Random().NextSingle() * 2 - 1, new Random().NextSingle() * 2 - 1, new Random().NextSingle() * 2 - 1) * 5, Quaternion.Identity, new Vector3(0.7f)))));
-                
-                    meshTest.AddComponent(new MeshRenderer(mesh, meshTest.AddComponent(new Material())));
                 }
             }
             

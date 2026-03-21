@@ -34,9 +34,9 @@ namespace SpatialSim.Engine.Rendering
         {
             Mesh meshComp = ((Mesh)EcsManager.GetComponent(mesh));
             vertexBuffer = new Buffer<Vertex>();
-            vertexBuffer.Create(new Span<Vertex>(meshComp.GetVertexes()), BufferUsage.Vertex, BufferMemoryUsage.Gpu);
+            vertexBuffer.Create(new Span<Vertex>(meshComp.GetVertexes()), BufferUsage.Vertex, BufferMemoryUsage.Cpu);
             indexBuffer = new Buffer<int>();
-            indexBuffer.Create(new Span<int>(meshComp.meshData.indices), BufferUsage.Index, BufferMemoryUsage.Gpu);
+            indexBuffer.Create(new Span<int>(meshComp.meshData.indices), BufferUsage.Index, BufferMemoryUsage.Cpu);
         }
 
         public void Draw(CommandBuffer commandBuffer, int frame)
@@ -44,6 +44,7 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer.BindVertexBuffers(vertexBuffer.buffer!);
             commandBuffer.BindIndexBuffers(indexBuffer.buffer!);
             Mesh meshComp = EcsManager.GetComponent<Mesh>(mesh);
+            Material mat = EcsManager.GetComponent<Material>(material);
             Shader vertexShader = ShaderManager.RetrieveShader("base.vert");
             Camera camera = (Camera)AppState.appContext.GetContext<VkContext>().camera
                 .GetFirstComponentOfType(EcsComponentType.Camera);
@@ -53,13 +54,13 @@ namespace SpatialSim.Engine.Rendering
             AppState.appContext.defaultPipeline.UpdateUniforms(vertexShader, 0, frame);
             commandBuffer.BindVertexUniforms(AppState.appContext.defaultPipeline, 0);
             Shader fragmentShader = ShaderManager.RetrieveShader("base.frag");
-            fragmentShader.AddVec4(0, new Vector4(MathF.Abs(MathF.Sin((float)AppState.GetSeconds()))));
+            fragmentShader.AddVec4(0, new Vector4(mat.diffuse, 1.0f));
             fragmentShader.AddVec4(0, new Vector4(1.0f));
             fragmentShader.AddVec4(0, new Vector4(1.0f));
             fragmentShader.AddVec4(0, new Vector4(1.0f));
             AppState.appContext.defaultPipeline.UpdateUniforms(fragmentShader, 0, frame);
             commandBuffer.BindFragmentUniforms(AppState.appContext.defaultPipeline, 0);
-            commandBuffer.BindTexture(AppState.appContext.defaultPipeline, TextureManager.RetrieveTexture("uvCheck.jpg"));
+            commandBuffer.BindTexture(AppState.appContext.defaultPipeline, TextureManager.RetrieveTexture(mat.textureRef));
             commandBuffer.Draw(meshComp.meshData.indices.Length);
         }
 

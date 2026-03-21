@@ -29,7 +29,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         #region Descriptors
 
-        public const int MaxDescriptorsInPool = 100;
+        public const int MaxDescriptorsInPool = 1000;
 
         #endregion
 
@@ -53,6 +53,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static readonly ValidationFeatureEnableEXT[] validationFeatures =
         {
             ValidationFeatureEnableEXT.BestPracticesExt,
+            ValidationFeatureEnableEXT.SynchronizationValidationExt
         };
 
         #endregion

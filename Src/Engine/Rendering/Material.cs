@@ -13,6 +13,13 @@ namespace SpatialSim.Engine.Rendering
         public Vector3 specular;
         public float specularExp;
         public int materialId;
+
+        public string textureRef;
+
+        public Material()
+        {
+            textureRef = "";
+        }
         
         public void Dispose()
         {
