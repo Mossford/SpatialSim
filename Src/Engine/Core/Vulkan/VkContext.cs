@@ -73,7 +73,7 @@ namespace SpatialSim.Engine.Core.Vulkan
             VkSwapChain.CreateSyncObjects();
             VkSwapChain.CreateSwapChainCommandBuffers();
             
-            //VkCreation.CreateImGui();
+            VkCreation.CreateImGui();
 
             camera = EcsManager.AddEntity();
             camera.AddComponent(new Camera(
@@ -96,7 +96,7 @@ namespace SpatialSim.Engine.Core.Vulkan
 
         public unsafe void Update(float delta)
         {
-            //imGuiController.Update(delta);
+            imGuiController.Update(delta);
             
             if (currentlyResizing)
             {
@@ -172,7 +172,7 @@ namespace SpatialSim.Engine.Core.Vulkan
             
             EcsManager.Render(VkSwapChain.commandBuffers[imageIndex], (int)imageIndex);
             
-            //imGuiController.Render(vkcommandBuffer, VkSwapChain.swapChainFramebuffers[imageIndex], VkSwapChain.swapChainExtent);
+            imGuiController.Render(vkcommandBuffer, VkSwapChain.swapChainImageViews[imageIndex], VkDepthBuffer.texture.imageView, VkSwapChain.swapChainExtent);
 
             VkTexture.TransitionImageLayout(
                 VkSwapChain.commandBuffers[imageIndex], 
@@ -259,7 +259,7 @@ namespace SpatialSim.Engine.Core.Vulkan
         {
             vk.DeviceWaitIdle(VkDevices.device);
          
-            //imGuiController.Dispose();
+            imGuiController.Dispose();
             
             VkSwapChain.CleanSwapChain();
             

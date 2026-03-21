@@ -12,9 +12,8 @@ using Silk.NET.Maths;
 using Silk.NET.Vulkan;
 using Silk.NET.Windowing;
 using SpatialSim.Engine.Core;
-using RenderPass = Silk.NET.Vulkan.RenderPass;
+using SpatialSim.Engine.Rendering.Vulkan;
 using Buffer = Silk.NET.Vulkan.Buffer;
-using CommandBuffer = Silk.NET.Vulkan.CommandBuffer;
 
 //Taken from https://github.com/dotnet/Silk.NET/blob/main/src/Lab/Experiments/ImGuiVulkan/Lib/ImGuiController.cs
 
@@ -31,7 +30,6 @@ namespace SpatialSim.Engine.Rendering.ImGui
         private readonly List<char> _pressedChars = new List<char>();
         private IKeyboard _keyboard;
         private DescriptorPool _descriptorPool;
-        private Silk.NET.Vulkan.RenderPass _renderPass;
         private int _windowWidth;
         private int _windowHeight;
         private int _swapChainImageCt;
@@ -148,70 +146,6 @@ namespace SpatialSim.Engine.Rendering.ImGui
             if (_vk.CreateDescriptorPool(_device, descriptorPool, default, out _descriptorPool) != Result.Success)
             {
                 throw new Exception($"Unable to create descriptor pool");
-            }
-
-            // Create the render pass
-            var colorAttachment = new AttachmentDescription();
-            colorAttachment.Format = swapChainFormat;
-            colorAttachment.Samples = SampleCountFlags.Count1Bit;
-            colorAttachment.LoadOp = AttachmentLoadOp.Load;
-            colorAttachment.StoreOp = AttachmentStoreOp.Store;
-            colorAttachment.StencilLoadOp = AttachmentLoadOp.DontCare;
-            colorAttachment.StencilStoreOp = AttachmentStoreOp.DontCare;
-            colorAttachment.InitialLayout = AttachmentLoadOp.Load == AttachmentLoadOp.Clear ? ImageLayout.Undefined : ImageLayout.PresentSrcKhr;
-            colorAttachment.FinalLayout = ImageLayout.PresentSrcKhr;
-
-            var colorAttachmentRef = new AttachmentReference();
-            colorAttachmentRef.Attachment = 0;
-            colorAttachmentRef.Layout = ImageLayout.ColorAttachmentOptimal;
-
-            var subpass = new SubpassDescription();
-            subpass.PipelineBindPoint = PipelineBindPoint.Graphics;
-            subpass.ColorAttachmentCount = 1;
-            subpass.PColorAttachments = (AttachmentReference*)Unsafe.AsPointer(ref colorAttachmentRef);
-
-            Span<AttachmentDescription> attachments = stackalloc AttachmentDescription[] { colorAttachment };
-            var depthAttachment = new AttachmentDescription();
-            var depthAttachmentRef = new AttachmentReference();
-            if (depthBufferFormat.HasValue)
-            {
-                depthAttachment.Format = depthBufferFormat.Value;
-                depthAttachment.Samples = SampleCountFlags.Count1Bit;
-                depthAttachment.LoadOp = AttachmentLoadOp.Load;
-                depthAttachment.StoreOp = AttachmentStoreOp.Store;
-                depthAttachment.StencilLoadOp = AttachmentLoadOp.DontCare;
-                depthAttachment.StencilStoreOp = AttachmentStoreOp.DontCare;
-                depthAttachment.InitialLayout = AttachmentLoadOp.Load == AttachmentLoadOp.Clear ? ImageLayout.Undefined : ImageLayout.DepthStencilAttachmentOptimal;
-                depthAttachment.FinalLayout = ImageLayout.DepthStencilAttachmentOptimal;
-
-                depthAttachmentRef.Attachment = 1;
-                depthAttachmentRef.Layout = ImageLayout.DepthStencilAttachmentOptimal;
-
-                subpass.PDepthStencilAttachment = (AttachmentReference*)Unsafe.AsPointer(ref depthAttachmentRef);
-
-                attachments = stackalloc AttachmentDescription[] { colorAttachment, depthAttachment };
-            }
-
-            var dependency = new SubpassDependency();
-            dependency.SrcSubpass = Vk.SubpassExternal;
-            dependency.DstSubpass = 0;
-            dependency.SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.LateFragmentTestsBit;
-            dependency.SrcAccessMask = AccessFlags.DepthStencilAttachmentWriteBit;
-            dependency.DstStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.EarlyFragmentTestsBit;
-            dependency.DstAccessMask = AccessFlags.ColorAttachmentWriteBit | AccessFlags.DepthStencilAttachmentWriteBit | AccessFlags.ColorAttachmentReadBit;
-
-            var renderPassInfo = new RenderPassCreateInfo();
-            renderPassInfo.SType = StructureType.RenderPassCreateInfo;
-            renderPassInfo.AttachmentCount = (uint)attachments.Length;
-            renderPassInfo.PAttachments = (AttachmentDescription*)Unsafe.AsPointer(ref attachments.GetPinnableReference());
-            renderPassInfo.SubpassCount = 1;
-            renderPassInfo.PSubpasses = (SubpassDescription*)Unsafe.AsPointer(ref subpass);
-            renderPassInfo.DependencyCount = 1;
-            renderPassInfo.PDependencies = (SubpassDependency*)Unsafe.AsPointer(ref dependency);
-
-            if (_vk.CreateRenderPass(_device, renderPassInfo, default, out _renderPass) != Result.Success)
-            {
-                throw new Exception($"Failed to create render pass");
             }
 
             var info = new SamplerCreateInfo();
@@ -386,6 +320,14 @@ namespace SpatialSim.Engine.Rendering.ImGui
             dynamic_state.SType = StructureType.PipelineDynamicStateCreateInfo;
             dynamic_state.DynamicStateCount = (uint)dynamic_states.Length;
             dynamic_state.PDynamicStates = (DynamicState*)Unsafe.AsPointer(ref dynamic_states[0]);
+            
+            PipelineRenderingCreateInfo pipelineRenderingCreateInfo = new()
+            {
+                SType = StructureType.PipelineRenderingCreateInfo,
+                ColorAttachmentCount = 1,
+                PColorAttachmentFormats = &swapChainFormat,
+                DepthAttachmentFormat = VkDepthBuffer.FindDepthFormat()
+            };
 
             var pipelineInfo = new GraphicsPipelineCreateInfo();
             pipelineInfo.SType = StructureType.GraphicsPipelineCreateInfo;
@@ -401,8 +343,7 @@ namespace SpatialSim.Engine.Rendering.ImGui
             pipelineInfo.PColorBlendState = (PipelineColorBlendStateCreateInfo*)Unsafe.AsPointer(ref blend_info);
             pipelineInfo.PDynamicState = (PipelineDynamicStateCreateInfo*)Unsafe.AsPointer(ref dynamic_state);
             pipelineInfo.Layout = _pipelineLayout;
-            pipelineInfo.RenderPass = _renderPass;
-            pipelineInfo.Subpass = 0;
+            pipelineInfo.PNext = &pipelineRenderingCreateInfo;
             if (vk.CreateGraphicsPipelines(_device, default, 1, pipelineInfo, default, out _pipeline) != Result.Success)
             {
                 throw new Exception($"Unable to create the pipeline");
@@ -647,13 +588,13 @@ namespace SpatialSim.Engine.Rendering.ImGui
         /// <summary>
         /// Renders the ImGui draw list data.
         /// </summary>
-        public void Render(Silk.NET.Vulkan.CommandBuffer commandBuffer, Framebuffer framebuffer, Extent2D swapChainExtent)
+        public void Render(Silk.NET.Vulkan.CommandBuffer commandBuffer, ImageView color, ImageView depth, Extent2D swapChainExtent)
         {
             if (_frameBegun)
             {
                 _frameBegun = false;
                 ImGuiNET.ImGui.Render();
-                RenderImDrawData(ImGuiNET.ImGui.GetDrawData(), commandBuffer, framebuffer, swapChainExtent);
+                RenderImDrawData(ImGuiNET.ImGui.GetDrawData(), commandBuffer, color, depth, swapChainExtent);
             }
         }
 
@@ -756,7 +697,7 @@ namespace SpatialSim.Engine.Rendering.ImGui
             io.KeyMap[(int)ImGuiKey.Z] = (int)Key.Z;*/
         }
 
-        private unsafe void RenderImDrawData(in ImDrawDataPtr drawDataPtr, in Silk.NET.Vulkan.CommandBuffer commandBuffer, in Framebuffer framebuffer, in Extent2D swapChainExtent)
+        private unsafe void RenderImDrawData(in ImDrawDataPtr drawDataPtr, in Silk.NET.Vulkan.CommandBuffer commandBuffer, in ImageView color, in ImageView depth, in Extent2D swapChainExtent)
         {
             int framebufferWidth = (int)(drawDataPtr.DisplaySize.X * drawDataPtr.FramebufferScale.X);
             int framebufferHeight = (int)(drawDataPtr.DisplaySize.Y * drawDataPtr.FramebufferScale.Y);
@@ -764,17 +705,40 @@ namespace SpatialSim.Engine.Rendering.ImGui
             {
                 return;
             }
+            
+            RenderingAttachmentInfo colorAttachmentInfo = new()
+            {
+                SType = StructureType.RenderingAttachmentInfo,
+                ImageView = color,
+                ImageLayout = ImageLayout.ColorAttachmentOptimal,
+                LoadOp = AttachmentLoadOp.Load,
+                StoreOp = AttachmentStoreOp.Store,
+                ClearValue = default,
+                ResolveMode = ResolveModeFlags.None
+            };
 
-            var renderPassInfo = new RenderPassBeginInfo();
-            renderPassInfo.SType = StructureType.RenderPassBeginInfo;
-            renderPassInfo.RenderPass = _renderPass;
-            renderPassInfo.Framebuffer = framebuffer;
-            renderPassInfo.RenderArea.Offset = default;
-            renderPassInfo.RenderArea.Extent = swapChainExtent;
-            renderPassInfo.ClearValueCount = 0;
-            renderPassInfo.PClearValues = default;
-
-            _vk.CmdBeginRenderPass(commandBuffer, &renderPassInfo, SubpassContents.Inline);
+            RenderingAttachmentInfo depthAttachmentInfo = new()
+            {
+                SType = StructureType.RenderingAttachmentInfo,
+                ImageView = depth,
+                ImageLayout = ImageLayout.DepthStencilAttachmentOptimal,
+                LoadOp = AttachmentLoadOp.Load,
+                StoreOp = AttachmentStoreOp.DontCare,
+                ClearValue = default,
+                ResolveMode = ResolveModeFlags.None
+            };
+            
+            RenderingInfo renderingInfo = new()
+            {
+                SType = StructureType.RenderingInfo,
+                RenderArea = new Rect2D(new Offset2D(0, 0), swapChainExtent),
+                LayerCount = 1,
+                ColorAttachmentCount = 1,
+                PColorAttachments = &colorAttachmentInfo,
+                PDepthAttachment = &depthAttachmentInfo
+            };
+            
+            VkDevices.dynamicRendering.CmdBeginRendering(commandBuffer, &renderingInfo);
 
             var drawData = *drawDataPtr.NativePtr;
 
@@ -935,8 +899,8 @@ namespace SpatialSim.Engine.Rendering.ImGui
                 indexOffset += cmd_list->IdxBuffer.Size;
                 vertexOffset += cmd_list->VtxBuffer.Size;
             }
-
-            _vk.CmdEndRenderPass(commandBuffer);
+            
+            VkDevices.dynamicRendering.CmdEndRendering(commandBuffer);
         }
 
         unsafe void CreateOrResizeBuffer(ref Silk.NET.Vulkan.Buffer buffer, ref DeviceMemory buffer_memory, ref ulong bufferSize, ulong newSize, BufferUsageFlags usage)
@@ -1005,7 +969,6 @@ namespace SpatialSim.Engine.Rendering.ImGui
             _vk.DestroyPipelineLayout(_device, _pipelineLayout, default);
             _vk.DestroyPipeline(_device, _pipeline, default);
             _vk.DestroyDescriptorPool(_vk.CurrentDevice.Value, _descriptorPool, default);
-            _vk.DestroyRenderPass(_vk.CurrentDevice.Value, _renderPass, default);
 
             ImGuiNET.ImGui.DestroyContext();
         }
