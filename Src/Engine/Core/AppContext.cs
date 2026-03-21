@@ -11,7 +11,6 @@ namespace SpatialSim.Engine.Core
 
         //should be removed into a pipeline manager
         public Pipeline defaultPipeline { get; set; }
-        public RenderPass renderPass { get; set; }
         
         public void Init();
         public void Update(float delta);

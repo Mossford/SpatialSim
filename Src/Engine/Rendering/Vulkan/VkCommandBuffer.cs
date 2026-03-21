@@ -1,4 +1,5 @@
 using Silk.NET.Vulkan;
+using Silk.NET.Vulkan.Extensions.KHR;
 using SpatialSim.Engine.Core;
 using SpatialSim.Engine.Core.Vulkan;
 
@@ -199,20 +200,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
         }
 
-        public unsafe void BeginRenderPass(int frame)
+        public unsafe void BeingRendering(int frame)
         {
-            RenderPassBeginInfo renderPassInfo = new()
-            {
-                SType = StructureType.RenderPassBeginInfo,
-                RenderPass = ((VkRenderPass)AppState.appContext.renderPass).renderPass,
-                Framebuffer = VkSwapChain.swapChainFramebuffers[frame],
-                RenderArea =
-                {
-                    Offset = { X = 0, Y = 0 },
-                    Extent = VkSwapChain.swapChainExtent,
-                }
-            };
-            
             ClearValue[] clearValues = new ClearValue[]
             {
                 new()
@@ -234,12 +223,45 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     }
                 }
             };
-
-            renderPassInfo.ClearValueCount = (uint)clearValues.Length;
-            fixed (ClearValue* clearValuesPtr = clearValues)
-                renderPassInfo.PClearValues = clearValuesPtr;
             
-            AppState.appContext.GetContext<VkContext>().vk.CmdBeginRenderPass(commandBuffer, &renderPassInfo, SubpassContents.Inline);
+            RenderingAttachmentInfo colorAttachmentInfo = new()
+            {
+                SType = StructureType.RenderingAttachmentInfo,
+                ImageView = VkSwapChain.swapChainImageViews[frame],
+                ImageLayout = ImageLayout.ColorAttachmentOptimal,
+                LoadOp = AttachmentLoadOp.Clear,
+                StoreOp = AttachmentStoreOp.Store,
+                ClearValue = clearValues[0],
+                ResolveMode = ResolveModeFlags.None
+            };
+
+            RenderingAttachmentInfo depthAttachmentInfo = new()
+            {
+                SType = StructureType.RenderingAttachmentInfo,
+                ImageView = VkDepthBuffer.texture.imageView,
+                ImageLayout = ImageLayout.DepthStencilAttachmentOptimal,
+                LoadOp = AttachmentLoadOp.Clear,
+                StoreOp = AttachmentStoreOp.DontCare,
+                ClearValue = clearValues[1],
+                ResolveMode = ResolveModeFlags.None
+            };
+            
+            RenderingInfo renderingInfo = new()
+            {
+                SType = StructureType.RenderingInfo,
+                RenderArea = new Rect2D(new Offset2D(0, 0), VkSwapChain.swapChainExtent),
+                LayerCount = 1,
+                ColorAttachmentCount = 1,
+                PColorAttachments = &colorAttachmentInfo,
+                PDepthAttachment = &depthAttachmentInfo
+            };
+            
+            VkDevices.dynamicRendering.CmdBeginRendering(commandBuffer, &renderingInfo);
+        }
+
+        public void EndRendering()
+        {
+            VkDevices.dynamicRendering.CmdEndRendering(commandBuffer);
         }
 
         public void BindPipeLine(Pipeline pipeline)

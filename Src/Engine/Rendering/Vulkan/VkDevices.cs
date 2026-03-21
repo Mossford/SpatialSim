@@ -19,6 +19,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static uint graphicsFamilyIndex;
         public static PhysicalDeviceProperties properties;
         public static PhysicalDeviceProperties2 properties2;
+
+        //this needs to exist because the vk class will segfault on commands for dynamic rendering as they dont have the methods loaded
+        public static KhrDynamicRendering dynamicRendering;
         
         public struct QueueFamilyIndices
         {
@@ -88,6 +91,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             DeviceCreateInfo createInfo;
 
+            PhysicalDeviceVulkan13Features features = new PhysicalDeviceVulkan13Features()
+            {
+                SType = StructureType.PhysicalDeviceVulkan13Features,
+                DynamicRendering = true,
+            };
+
             fixed (PhysicalDeviceFeatures* deviceFeatures = &VkSettings.physicalDeviceFeatures)
             {
                 createInfo = new()
@@ -97,9 +106,10 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     PQueueCreateInfos = queueCreateInfos,
 
                     PEnabledFeatures = deviceFeatures,
+                    PNext = &features,
 
                     EnabledExtensionCount = (uint)VkSettings.deviceExtensions.Length,
-                    PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(VkSettings.deviceExtensions)
+                    PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(VkSettings.deviceExtensions),
                 };
             }
 
@@ -128,6 +138,10 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             {
                 SilkMarshal.Free((nint)createInfo.PpEnabledLayerNames);
             }
+
+            AppState.appContext.GetContext<VkContext>().vk
+                .TryGetDeviceExtension(AppState.appContext.GetContext<VkContext>().instance, device,
+                    out dynamicRendering);
             
             Debug.LogInfo("Successful logical device creation");
         }

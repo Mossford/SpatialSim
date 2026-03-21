@@ -10,6 +10,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public DeviceMemory memory;
         public Format format;
         public Filter filter;
+        public ImageUsageFlags usage;
         
         //to be able to access the image
         public ImageView imageView;
@@ -52,7 +53,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             // TODO make it possible that there might be multiple usages attached?
             //Texture is set as the destination as we wont need to read back from it most of the time
-            ImageUsageFlags usage = ImageUsageFlags.TransferDstBit;
+            usage = ImageUsageFlags.TransferDstBit;
             switch (data.usage)
             {
                 case TextureUsage.Sampler:
@@ -187,7 +188,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.GetContext<VkContext>().vk.BindImageMemory(VkDevices.device, image, memory, 0);
         }
 
-        unsafe void TransitionImageLayout(ImageLayout oldLayout, ImageLayout newLayout)
+        public unsafe void TransitionImageLayout(ImageLayout oldLayout, ImageLayout newLayout)
         {
             CommandBuffer commandBuffer = new CommandBuffer();
             commandBuffer.Create();
@@ -203,12 +204,13 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 Image = image,
                 SubresourceRange =
                 {
+                    //TODO make this a parameter
                     AspectMask = ImageAspectFlags.ColorBit,
                     BaseMipLevel = 0,
                     LevelCount = 1,
                     BaseArrayLayer = 0,
                     LayerCount = 1,
-                }
+                },
             };
 
             PipelineStageFlags sourceStage;
@@ -232,7 +234,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
             else
             {
-                throw new Exception("unsupported layout transition!");
+                Debug.Error("Unsupported layout transition");
+                throw new Exception("Unsupported layout transition");
             }
 
             AppState.appContext.GetContext<VkContext>().vk.CmdPipelineBarrier(
@@ -250,6 +253,53 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             commandBuffer.End();
             commandBuffer.Submit();
             commandBuffer.Clean();
+        }
+        
+        public static unsafe void TransitionImageLayout(
+            CommandBuffer commandBuffer,
+            Image image,
+            ImageLayout oldLayout,
+            ImageLayout newLayout,
+            AccessFlags srcAccessMask,
+            AccessFlags dstAccessMask,
+            PipelineStageFlags srcStage,
+            PipelineStageFlags dstStage,
+            ImageAspectFlags aspectFlags
+        )
+        {
+
+            ImageMemoryBarrier barrier = new()
+            {
+                SType = StructureType.ImageMemoryBarrier,
+                OldLayout = oldLayout,
+                NewLayout = newLayout,
+                SrcQueueFamilyIndex = Vk.QueueFamilyIgnored,
+                DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
+                Image = image,
+                SubresourceRange = new()
+                {
+                    AspectMask     = aspectFlags,
+                    BaseMipLevel   = 0,
+                    LevelCount     = 1,
+                    BaseArrayLayer = 0,
+                    LayerCount     = 1
+                },
+                SrcAccessMask = srcAccessMask,
+                DstAccessMask = dstAccessMask
+            };
+
+            AppState.appContext.GetContext<VkContext>().vk.CmdPipelineBarrier(
+                ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
+                srcStage,
+                dstStage,
+                0,
+                0,
+                null,
+                0,
+                null,
+                1,
+                in barrier
+            );
         }
 
         /// <summary>

@@ -272,9 +272,25 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 Debug.Error("Failed to create pipeline layout");
                 throw new Exception("Failed to create pipeline layout");
             }
-                
+
+            Format swapChainFormat = VkSwapChain.swapChainImageFormat;
+            PipelineRenderingCreateInfo pipelineRenderingCreateInfo = new()
+            {
+                SType = StructureType.PipelineRenderingCreateInfo,
+                ColorAttachmentCount = 1,
+                PColorAttachmentFormats = &swapChainFormat,
+                DepthAttachmentFormat = VkDepthBuffer.FindDepthFormat()
+            };
+            
+            PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo = new()
+            {
+                SType = StructureType.PipelineDynamicStateCreateInfo,
+                DynamicStateCount = 0,
+            };
+            
             GraphicsPipelineCreateInfo pipelineInfo = new()
             {
+                PNext = &pipelineRenderingCreateInfo,
                 SType = StructureType.GraphicsPipelineCreateInfo,
                 StageCount = 2,
                 PStages = shaderStages,
@@ -285,10 +301,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 PMultisampleState = &multisampling,
                 PColorBlendState = &colorBlending,
                 PDepthStencilState = &depthStencil,
+                PDynamicState = &pipelineDynamicStateCreateInfo,
                 Layout = pipelineLayout,
-                RenderPass = ((VkRenderPass)AppState.appContext.renderPass).renderPass,
-                Subpass = 0,
-                BasePipelineHandle = default
+                BasePipelineHandle = default,
             };
 
             if (AppState.appContext.GetContext<VkContext>().vk.CreateGraphicsPipelines(VkDevices.device, default, 1, in pipelineInfo, null, out pipeline) != Result.Success)

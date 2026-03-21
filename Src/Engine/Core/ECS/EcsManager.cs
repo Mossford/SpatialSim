@@ -41,14 +41,14 @@ namespace SpatialSim.Engine.Core
 
         public static void Render(CommandBuffer commandBuffer, int frame)
         {
-            commandBuffer.BeginRenderPass(frame);
+            commandBuffer.BeginRendering(frame);
             commandBuffer.BindPipeLine(AppState.appContext.defaultPipeline);
             for (int i = 0; i < componentPools[EcsComponentType.MeshRenderer.GetId()].components.ValueCount; i++)
             {
                 MeshRenderer renderer = (MeshRenderer)componentPools[EcsComponentType.MeshRenderer.GetId()].components.Get(i);
                 renderer.Draw(commandBuffer, frame);
             }
-            commandBuffer.EndRenderPass();
+            commandBuffer.EndRendering();
         }
 
         public static void Clean()

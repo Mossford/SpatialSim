@@ -38,11 +38,15 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static readonly string[] deviceExtensions = new[]
         {
             KhrSwapchain.ExtensionName,
+            KhrDeferredHostOperations.ExtensionName,
+            KhrDynamicRendering.ExtensionName,
+            KhrAccelerationStructure.ExtensionName,
+            "VK_KHR_ray_query" //will need to find the actual class referencing this but this works for now
         };
         
         public static readonly PhysicalDeviceFeatures physicalDeviceFeatures = new PhysicalDeviceFeatures() with
         {
-            SamplerAnisotropy = true
+            SamplerAnisotropy = true,
         };
         
         public static readonly string[] validationLayers = new[]

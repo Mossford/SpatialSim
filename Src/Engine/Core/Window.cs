@@ -80,7 +80,7 @@ namespace SpatialSim.Engine.Core
             
             TextureManager.Init();
             
-            MainImgui.SetImGuiStyle();
+            //MainImgui.SetImGuiStyle();
             
             AppState.window.WindowState = WindowState.Fullscreen;
             maxSize = (Vector2)AppState.window.GetFullSize();
@@ -117,7 +117,7 @@ namespace SpatialSim.Engine.Core
 
         static void Render(double delta)
         {
-            MainImgui.MainMenu();
+            //MainImgui.MainMenu();
             AppState.appContext.Render();
         }
 

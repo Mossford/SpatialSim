@@ -11,13 +11,13 @@ namespace SpatialSim.Engine.Rendering
         public void BeginOneUse();
         public void EndCommandBuffer();
         public void Submit();
-        public void BeginRenderPass(int frame);
+        public void BeingRendering(int frame);
+        public void EndRendering();
         public void BindPipeLine(Pipeline pipeline);
         public void BindVertexUniforms(Pipeline pipeline, int binding);
         public void BindFragmentUniforms(Pipeline pipeline, int binding);
         public void BindTexture(Pipeline pipeline, Texture texture);
         public void Draw(int indexCount);
-        public void EndRenderPass();
         public void ResetPipeLine(Pipeline pipeline);
     }
 }

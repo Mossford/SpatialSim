@@ -14,6 +14,8 @@ namespace SpatialSim.Engine.Rendering
             textures = new List<Texture>();
             missingTexture = new Texture();
             missingTexture.LoadTexture("");
+            
+            Debug.LogInfo("Successful texture manager creation");
         }
 
         public static bool IsTextureStored(string texture)

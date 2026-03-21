@@ -6,15 +6,16 @@ using SpatialSim.Engine.Rendering.ImGui;
 using SpatialSim.Engine.Rendering.Vulkan;
 using CommandBuffer = Silk.NET.Vulkan.CommandBuffer;
 using Pipeline = SpatialSim.Engine.Rendering.Pipeline;
-using RenderPass = SpatialSim.Engine.Rendering.RenderPass;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
-using VkRenderPass = SpatialSim.Engine.Rendering.Vulkan.VkRenderPass;
 using VkCommandBuffer = SpatialSim.Engine.Rendering.Vulkan.VkCommandBuffer;
 
 namespace SpatialSim.Engine.Core.Vulkan
 {
     public class VkContext : AppContext
     {
+        /// <summary>
+        /// IMPORTANT This only supports, probably vulkan 1.0 commands
+        /// </summary>
         public Vk vk;
         public Instance instance;
         
@@ -52,9 +53,7 @@ namespace SpatialSim.Engine.Core.Vulkan
             VkDevices.CreateLogicalDevice();
             VkSwapChain.CreateSwapChain();
             VkSwapChain.CreateImageViews();
-            
-            renderPass = new VkRenderPass();
-            renderPass.Create();
+            VkSwapChain.TransitionSwapChainImages();
             
             defaultPipeline = new Pipeline();
             defaultPipeline.Create(
@@ -71,11 +70,10 @@ namespace SpatialSim.Engine.Core.Vulkan
                         "base.frag")));
             
             VkDepthBuffer.CreateDepthBuffers();
-            VkSwapChain.CreateFramebuffers();
             VkSwapChain.CreateSyncObjects();
             VkSwapChain.CreateSwapChainCommandBuffers();
             
-            VkCreation.CreateImGui();
+            //VkCreation.CreateImGui();
 
             camera = EcsManager.AddEntity();
             camera.AddComponent(new Camera(
@@ -98,7 +96,7 @@ namespace SpatialSim.Engine.Core.Vulkan
 
         public unsafe void Update(float delta)
         {
-            imGuiController.Update(delta);
+            //imGuiController.Update(delta);
             
             if (currentlyResizing)
             {
@@ -114,8 +112,6 @@ namespace SpatialSim.Engine.Core.Vulkan
                     currentSwapChainRecreations = 0;
                 }
             }
-            
-            
         }
 
         public unsafe void Render()
@@ -140,7 +136,7 @@ namespace SpatialSim.Engine.Core.Vulkan
 
             if (VkSwapChain.imagesInFlight[imageIndex].Handle != 0)
             {
-                vk!.WaitForFences(VkDevices.device, 1, in VkSwapChain.imagesInFlight[imageIndex], true, ulong.MaxValue);
+                vk.WaitForFences(VkDevices.device, 1, in VkSwapChain.imagesInFlight[imageIndex], true, ulong.MaxValue);
             }
             VkSwapChain.imagesInFlight[imageIndex] = VkSwapChain.inFlightFences[VkSwapChain.currentFrame];
             
@@ -148,13 +144,48 @@ namespace SpatialSim.Engine.Core.Vulkan
             
             CommandBuffer vkcommandBuffer = ((VkCommandBuffer)VkSwapChain.commandBuffers[imageIndex].commandBuffer!).commandBuffer;
             VkSwapChain.commandBuffers[imageIndex].Begin();
+            VkTexture.TransitionImageLayout(
+                VkSwapChain.commandBuffers[imageIndex], 
+                VkSwapChain.swapChainImages[imageIndex],
+                ImageLayout.Undefined,
+                ImageLayout.ColorAttachmentOptimal,
+                AccessFlags.None,
+                AccessFlags.ColorAttachmentWriteBit,
+                PipelineStageFlags.ColorAttachmentOutputBit,
+                PipelineStageFlags.ColorAttachmentOutputBit,
+                ImageAspectFlags.ColorBit
+                );
+            
+            VkTexture.TransitionImageLayout(
+                VkSwapChain.commandBuffers[imageIndex],
+                VkDepthBuffer.texture.image,
+                ImageLayout.Undefined,
+                ImageLayout.DepthStencilAttachmentOptimal,
+                AccessFlags.DepthStencilAttachmentWriteBit,
+                AccessFlags.DepthStencilAttachmentWriteBit,
+                PipelineStageFlags.EarlyFragmentTestsBit | PipelineStageFlags.LateFragmentTestsBit,
+                PipelineStageFlags.EarlyFragmentTestsBit | PipelineStageFlags.LateFragmentTestsBit,
+                ImageAspectFlags.DepthBit
+            );
             
             ((Camera)camera.GetFirstComponentOfType(EcsComponentType.Camera)).GenerateTransforms();
             
             EcsManager.Render(VkSwapChain.commandBuffers[imageIndex], (int)imageIndex);
             
-            imGuiController.Render(vkcommandBuffer, VkSwapChain.swapChainFramebuffers[imageIndex], VkSwapChain.swapChainExtent);
+            //imGuiController.Render(vkcommandBuffer, VkSwapChain.swapChainFramebuffers[imageIndex], VkSwapChain.swapChainExtent);
 
+            VkTexture.TransitionImageLayout(
+                VkSwapChain.commandBuffers[imageIndex], 
+                VkSwapChain.swapChainImages[imageIndex],
+                ImageLayout.ColorAttachmentOptimal,
+                ImageLayout.PresentSrcKhr,
+                AccessFlags.ColorAttachmentWriteBit,
+                AccessFlags.None,
+                PipelineStageFlags.ColorAttachmentOutputBit,
+                PipelineStageFlags.BottomOfPipeBit,
+                ImageAspectFlags.ColorBit
+                );
+            
             VkSwapChain.commandBuffers[imageIndex].End();
             VkSwapChain.commandBuffers[imageIndex].ResetPipeLine(defaultPipeline);
             
@@ -165,6 +196,7 @@ namespace SpatialSim.Engine.Core.Vulkan
 
             Semaphore* waitSemaphores = stackalloc[] { VkSwapChain.imageAvailableSemaphores[VkSwapChain.currentFrame] };
             PipelineStageFlags* waitStages = stackalloc[] { PipelineStageFlags.ColorAttachmentOutputBit };
+            Semaphore* signalSemaphores = stackalloc[] { VkSwapChain.renderFinishedSemaphores[imageIndex] };
             
             submitInfo = submitInfo with
             {
@@ -173,12 +205,8 @@ namespace SpatialSim.Engine.Core.Vulkan
                 PWaitDstStageMask = waitStages,
 
                 CommandBufferCount = 1,
-                PCommandBuffers = &vkcommandBuffer
-            };
-
-            Semaphore* signalSemaphores = stackalloc[] { VkSwapChain.renderFinishedSemaphores[imageIndex] };
-            submitInfo = submitInfo with
-            {
+                PCommandBuffers = &vkcommandBuffer,
+                
                 SignalSemaphoreCount = 1,
                 PSignalSemaphores = signalSemaphores,
             };
@@ -205,7 +233,7 @@ namespace SpatialSim.Engine.Core.Vulkan
 
                 PImageIndices = &imageIndex
             };
-
+            
             result = VkSwapChain.khrSwapChain.QueuePresent(VkSurface.presentQueue, in presentInfo);
 
             if (result == Result.ErrorOutOfDateKhr || result == Result.SuboptimalKhr)
@@ -231,7 +259,7 @@ namespace SpatialSim.Engine.Core.Vulkan
         {
             vk.DeviceWaitIdle(VkDevices.device);
          
-            imGuiController.Dispose();
+            //imGuiController.Dispose();
             
             VkSwapChain.CleanSwapChain();
             

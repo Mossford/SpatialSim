@@ -38,16 +38,21 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer?.Submit();
         }
 
-        public void BeginRenderPass(int frame)
-        {
-            commandBuffer?.BeginRenderPass(frame);
-        }
-
         public void BindPipeLine(Pipeline pipeline)
         {
             commandBuffer?.BindPipeLine(pipeline);
         }
 
+        public void BeginRendering(int frame)
+        {
+            commandBuffer?.BeingRendering(frame);
+        }
+
+        public void EndRendering()
+        {
+            commandBuffer?.EndRendering();
+        }
+        
         public void BindVertexUniforms(Pipeline pipeline, int binding)
         {
             commandBuffer?.BindVertexUniforms(pipeline, binding);
@@ -79,11 +84,6 @@ namespace SpatialSim.Engine.Rendering
         public void Draw(int indexCount)
         {
             commandBuffer?.Draw(indexCount);
-        }
-
-        public void EndRenderPass()
-        {
-            commandBuffer?.EndRenderPass();
         }
 
         public void ResetPipeLine(Pipeline pipeline)

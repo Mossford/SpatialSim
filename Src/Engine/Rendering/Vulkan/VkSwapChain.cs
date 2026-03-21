@@ -22,7 +22,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static Format swapChainImageFormat;
         public static Extent2D swapChainExtent;
         public static ImageView[] swapChainImageViews;
-        public static Framebuffer[] swapChainFramebuffers;
         public static PresentModeKHR presentMode;
         
         public static Silk.NET.Vulkan.Semaphore[] imageAvailableSemaphores;
@@ -194,10 +193,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             VkDepthBuffer.Clean();
             
-            foreach (Framebuffer framebuffer in swapChainFramebuffers!)
-            {
-                AppState.appContext.GetContext<VkContext>().vk.DestroyFramebuffer(VkDevices.device, framebuffer, null);
-            }
 
             for (int i = 0; i < commandBuffers.Length; i++)
             {
@@ -208,7 +203,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
 
             AppState.appContext.defaultPipeline.Clean();
-            AppState.appContext.renderPass.Clean();
 
             foreach (ImageView imageView in swapChainImageViews!)
             {
@@ -219,8 +213,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             CreateSwapChain();
             CreateImageViews();
-            AppState.appContext.renderPass = new VkRenderPass();
-            AppState.appContext.renderPass.Create();
+            TransitionSwapChainImages();
             
             AppState.appContext.defaultPipeline.Create(
                 ShaderManager.RetrieveShader(
@@ -236,7 +229,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                         "base.frag")));
             
             VkDepthBuffer.CreateDepthBuffers();
-            CreateFramebuffers();
             
             for (int i = 0; i < commandBuffers.Length; i++)
             {
@@ -252,13 +244,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         {
             VkDepthBuffer.Clean();
             
-            foreach (Framebuffer framebuffer in swapChainFramebuffers!)
-            {
-                AppState.appContext.GetContext<VkContext>().vk.DestroyFramebuffer(VkDevices.device, framebuffer, null);
-            }
-
             AppState.appContext.defaultPipeline.Clean();
-            AppState.appContext.renderPass.Clean();
 
             foreach (ImageView imageView in swapChainImageViews!)
             {
@@ -284,44 +270,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
             
             Debug.LogInfo("Cleaned up SwapChain");
-        }
-        
-        public static unsafe void CreateFramebuffers()
-        {
-            swapChainFramebuffers = new Framebuffer[swapChainImageViews.Length];
-
-            for (int i = 0; i < swapChainImageViews.Length; i++)
-            {
-                ImageView[] attachments = new []
-                {
-                    swapChainImageViews[i], 
-                    VkDepthBuffer.texture.imageView
-                };
-
-                fixed (ImageView* attPtr = attachments)
-                {
-                    FramebufferCreateInfo framebufferInfo = new()
-                    {
-                        SType = StructureType.FramebufferCreateInfo,
-                        RenderPass = ((VkRenderPass)AppState.appContext.renderPass).renderPass,
-                        AttachmentCount = (uint)attachments.Length,
-                        PAttachments = attPtr,
-                        Width = swapChainExtent.Width,
-                        Height = swapChainExtent.Height,
-                        Layers = 1,
-                    };
-
-                    Result result = AppState.appContext.GetContext<VkContext>().vk.CreateFramebuffer(VkDevices.device,
-                        in framebufferInfo, null, out swapChainFramebuffers[i]);
-                    if (result != Result.Success)
-                    {
-                        Debug.Error($"Failed to create framebuffer {result}");
-                        throw new Exception($"Failed to create framebuffer {result}");
-                    }
-                }
-            }
-            
-            Debug.LogInfo("Successful swapchain framebuffers creation");
         }
 
         static SurfaceFormatKHR ChooseSwapSurfaceFormat(IReadOnlyList<SurfaceFormatKHR> availableFormats)
@@ -414,6 +362,53 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
 
             return details;
+        }
+        
+        public static unsafe void TransitionSwapChainImages()
+        {
+            for (int i = 0; i < swapChainImages.Length; i++)
+            {
+                CommandBuffer commandBuffer = new CommandBuffer();
+                commandBuffer.Create();
+                commandBuffer.BeginOneUse();
+
+                ImageMemoryBarrier barrier = new ImageMemoryBarrier
+                {
+                    SType = StructureType.ImageMemoryBarrier,
+                    OldLayout = ImageLayout.Undefined,
+                    NewLayout = ImageLayout.ColorAttachmentOptimal,
+                    SrcQueueFamilyIndex = Vk.QueueFamilyIgnored,
+                    DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
+                    Image = swapChainImages[i],
+                    SubresourceRange =
+                    {
+                        AspectMask = ImageAspectFlags.ColorBit,
+                        BaseMipLevel = 0,
+                        LevelCount = 1,
+                        BaseArrayLayer = 0,
+                        LayerCount = 1
+                    },
+                    SrcAccessMask = 0,
+                    DstAccessMask = AccessFlags.ColorAttachmentReadBit | AccessFlags.ColorAttachmentWriteBit
+                };
+
+                AppState.appContext.GetContext<VkContext>().vk.CmdPipelineBarrier(
+                    ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
+                    PipelineStageFlags.TopOfPipeBit,
+                    PipelineStageFlags.ColorAttachmentOutputBit,
+                    0, 
+                    0, 
+                    null, 
+                    0, 
+                    null, 
+                    1, 
+                    in barrier
+                );
+
+                commandBuffer.End();
+                commandBuffer.Submit();
+                commandBuffer.Clean();
+            }
         }
         
         public static unsafe void CreateImageViews()
