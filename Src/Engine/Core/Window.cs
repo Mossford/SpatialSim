@@ -82,9 +82,9 @@ namespace SpatialSim.Engine.Core
             
             MainImgui.SetImGuiStyle();
             
-            AppState.window.WindowState = WindowState.Fullscreen;
-            maxSize = (Vector2)AppState.window.GetFullSize();
-            AppState.window.WindowState = WindowState.Normal;
+            init.Invoke();
+            
+            maxSize = (Vector2)AppState.window.Monitor!.Bounds.Size;
             size = (Vector2)AppState.window.FramebufferSize;
             windowScale = size / (Vector2)AppState.window.Size;
             scaleFromBase = size / AppState.WindowStartSize;
@@ -97,6 +97,8 @@ namespace SpatialSim.Engine.Core
             
             Input.Update();
             EcsManager.Update();
+            
+            update.Invoke((float)delta);
             
             AppState.appContext.Update((float)delta);
             

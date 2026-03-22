@@ -11,6 +11,7 @@ namespace SpatialSim.Engine.Rendering
 
         public EcsComponentRef mesh;
         public EcsComponentRef material;
+        public EcsComponentRef camera;
 
         public Buffer<Vertex> vertexBuffer;
         public Buffer<int> indexBuffer;
@@ -20,12 +21,13 @@ namespace SpatialSim.Engine.Rendering
             
         }
 
-        public MeshRenderer(EcsComponentRef mesh, EcsComponentRef material)
+        public MeshRenderer(EcsComponentRef mesh, EcsComponentRef material, EcsComponentRef camera)
         {
             mesh.CheckComponent(EcsComponentType.Mesh);
             material.CheckComponent(EcsComponentType.Material);
             this.mesh = mesh;
             this.material = material;
+            this.camera = camera;
             
             Create();
         }
@@ -46,8 +48,7 @@ namespace SpatialSim.Engine.Rendering
             Mesh meshComp = EcsManager.GetComponent<Mesh>(mesh);
             Material mat = EcsManager.GetComponent<Material>(material);
             Shader vertexShader = ShaderManager.RetrieveShader("base.vert");
-            Camera camera = (Camera)AppState.appContext.GetContext<VkContext>().camera
-                .GetFirstComponentOfType(EcsComponentType.Camera);
+            Camera camera = EcsManager.GetComponent<Camera>(this.camera);
             vertexShader.AddMat4(0, camera.view);
             vertexShader.AddMat4(0, camera.proj);
             vertexShader.AddMat4(0, EcsManager.GetComponent<Transform>(meshComp.transform).GetModelMat());

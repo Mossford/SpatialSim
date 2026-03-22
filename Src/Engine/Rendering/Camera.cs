@@ -24,10 +24,8 @@ namespace SpatialSim.Engine.Rendering
         public void GenerateTransforms()
         {
             view = Matrix4x4.CreateLookAt(
-                new Vector3(MathF.Sin((float)AppState.GetSeconds() * 0.5f) * 2,
-                    0.5f,
-                    MathF.Cos((float)AppState.GetSeconds() * 0.5f) * 2), new Vector3(0, 0.01f, 0), new Vector3(0, -1, 0));
-            proj = Matrix4x4.CreatePerspectiveFieldOfView(fov * MathF.PI / 180.0f, Window.size.X / Window.size.Y, 0.5f, 100.0f);
+                new Vector3(0f), new Vector3(2f, 0f, 0), new Vector3(0, -1, 0));
+            proj = Matrix4x4.CreatePerspectiveFieldOfView(fov * MathF.PI / 180.0f, Window.size.X / Window.size.Y, 0.1f, 10.0f);
         }
 
         public void Dispose()

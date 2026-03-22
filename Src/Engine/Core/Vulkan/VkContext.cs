@@ -24,9 +24,6 @@ namespace SpatialSim.Engine.Core.Vulkan
         public Pipeline defaultPipeline { get; set; }
         public RenderPass renderPass { get; set; }
         public VkImGuiController imGuiController;
-
-        public Entity meshTest;
-        public Entity camera;
         
         const float ResizeDelay = 0.1f;
         int currentSwapChainRecreations;
@@ -74,22 +71,6 @@ namespace SpatialSim.Engine.Core.Vulkan
             VkSwapChain.CreateSwapChainCommandBuffers();
             
             VkCreation.CreateImGui();
-
-            camera = EcsManager.AddEntity();
-            camera.AddComponent(new Camera(
-                camera.AddComponent(new Transform(new Vector3(0f), Quaternion.Identity, new Vector3(1.0f))), 65));
-
-            for (int i = 0; i < 1; i++)
-            {
-                for (int j = 0; j < 1; j++)
-                {
-                    ModelLoader.LoadModelFile("Sponza/sponza.obj", "", new Transform(
-                        new Vector3(),
-                        Quaternion.Identity,
-                        new Vector3(0.007f)));
-                    meshTest = EcsManager.AddEntity();
-                }
-            }
             
             Debug.LogInfo("Successful vulkan context creation");
         }
@@ -167,8 +148,6 @@ namespace SpatialSim.Engine.Core.Vulkan
                 PipelineStageFlags.EarlyFragmentTestsBit | PipelineStageFlags.LateFragmentTestsBit,
                 ImageAspectFlags.DepthBit
             );
-            
-            ((Camera)camera.GetFirstComponentOfType(EcsComponentType.Camera)).GenerateTransforms();
             
             EcsManager.Render(VkSwapChain.commandBuffers[imageIndex], (int)imageIndex);
             

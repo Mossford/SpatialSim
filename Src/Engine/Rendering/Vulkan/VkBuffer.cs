@@ -386,9 +386,15 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             memoryOffset += blockSize;
         }
 
-        public void Bind()
+        public ulong GetBufferDeviceAddress()
         {
-            throw new NotImplementedException();
+            BufferDeviceAddressInfo info = new()
+            {
+                SType = StructureType.BufferDeviceAddressInfo,
+                Buffer = buffer
+            };
+
+            return AppState.appContext.GetContext<VkContext>().vk.GetBufferDeviceAddress(VkDevices.device, &info);
         }
 
         public void Clean()

@@ -40,6 +40,14 @@ namespace SpatialSim.Engine.Core
                 componentRefs.RemoveAt(componentRef.refId);
             }
         }
+        
+        public void RemoveComponentThr(in EcsComponentRef componentRef)
+        {
+            if (EcsManager.RemoveComponentThr(componentRef))
+            {
+                componentRefs.RemoveAt(componentRef.refId);
+            }
+        }
 
         public IComponent GetComponent(in EcsComponentRef componentRef)
         {

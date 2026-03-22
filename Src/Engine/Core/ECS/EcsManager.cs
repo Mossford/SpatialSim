@@ -36,7 +36,11 @@ namespace SpatialSim.Engine.Core
 
         public static void Update()
         {
-            
+            for (int i = 0; i < componentPools[EcsComponentType.Camera.GetId()].components.ValueCount; i++)
+            {
+                Camera camera = (Camera)componentPools[EcsComponentType.Camera.GetId()].components.Get(i);
+                camera.GenerateTransforms();
+            }
         }
 
         public static void Render(CommandBuffer commandBuffer, int frame)
@@ -133,6 +137,26 @@ namespace SpatialSim.Engine.Core
                 return false;
             
             componentPools[poolId].components.RemoveAt(id);
+
+            totalComponents--;
+
+            return true;
+        }
+        
+        public static bool RemoveComponentThr(in EcsComponentRef componentRef)
+        {
+            lock (componentPools)
+            {
+                int poolId = componentRef.type.GetId();
+                lock (componentPools[poolId].components)
+                {
+                    int id = componentRef.id;
+                    if (id < 0 || id >= componentPools[poolId].components.Count)
+                        return false;
+
+                    componentPools[poolId].components.RemoveAt(id);
+                }
+            }
 
             totalComponents--;
 

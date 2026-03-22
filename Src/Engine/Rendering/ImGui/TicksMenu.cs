@@ -20,23 +20,27 @@ namespace SpatialSim.Engine.Rendering.ImGui
                 ImGuiNET.ImGui.TextWrapped("Command Buffer Count: " + Ticks.commandBufferCount);
                 ImGuiNET.ImGui.TextWrapped("SwapChain Recreations: " + Ticks.swapchainRecreations);
                 ulong gpuMem = Ticks.gpuMemoryAllocation.total;
+
+                double value = gpuMem;
                 string unit = "B";
-                if (gpuMem >= 1 << 10)
-                {
-                    gpuMem >>= 10;
-                    unit = "KiB";
-                }
-                if (gpuMem >= 1 << 20)
-                {
-                    gpuMem >>= 10;
-                    unit = "MiB";
-                }
+
                 if (gpuMem >= 1 << 30)
                 {
-                    gpuMem >>= 10;
+                    value = gpuMem / (double)(1 << 30);
                     unit = "GiB";
                 }
-                ImGuiNET.ImGui.TextWrapped("Gpu Memory allocation: " + gpuMem + unit);
+                else if (gpuMem >= 1 << 20)
+                {
+                    value = gpuMem / (double)(1 << 20);
+                    unit = "MiB";
+                }
+                else if (gpuMem >= 1 << 10)
+                {
+                    value = gpuMem / (double)(1 << 10);
+                    unit = "KiB";
+                }
+                
+                ImGuiNET.ImGui.TextWrapped($"Gpu Memory allocation: {value:N2} {unit}");
                 
                 ImGuiNET.ImGui.End();
             }

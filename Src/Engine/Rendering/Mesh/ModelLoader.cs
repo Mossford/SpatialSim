@@ -23,7 +23,7 @@ namespace SpatialSim.Engine.Rendering
 
         static Queue<string> textureQueue;
         
-        public static Entity LoadModelFile(string modelFile, string materialFile, Transform transform)
+        public static Entity LoadModelFile(string modelFile, string materialFile, Transform transform, EcsComponentRef camera)
         {
             Entity entity = EcsManager.AddEntity();
             textureQueue = new Queue<string>();
@@ -37,7 +37,7 @@ namespace SpatialSim.Engine.Rendering
             Debug.LogDebug($"Loading model {modelFile}");
             lock (entity)
             {
-                ThreadPool.QueueUserWorkItem(state => LoadModel(entity, modelFile, materialFile, transform));
+                ThreadPool.QueueUserWorkItem(state => LoadModel(entity, modelFile, materialFile, transform, camera));
             }
 
             for (int i = 0; i < textureQueue.Count; i++)
@@ -50,7 +50,7 @@ namespace SpatialSim.Engine.Rendering
             return entity;
         }
 
-        unsafe static void LoadModel(Entity entity, string modelFile, string materialFile, Transform transform)
+        unsafe static void LoadModel(Entity entity, string modelFile, string materialFile, Transform transform, EcsComponentRef camera)
         {
             Assimp assimp = Assimp.GetApi();
             Scene* scene = assimp.ImportFile(Resources.ModelPath + modelFile, (uint)PostProcessPreset.TargetRealTimeMaximumQuality);
@@ -63,13 +63,13 @@ namespace SpatialSim.Engine.Rendering
             {
                 if (scene->MRootNode != null)
                 {
-                    LoadNode(assimp, scene, scene->MRootNode, entity, transform);
+                    LoadNode(assimp, scene, scene->MRootNode, entity, transform, camera);
                     Debug.LogDebug($"Loaded root node");
                     
                     for (int i = 0; i < scene->MRootNode->MNumChildren; i++)
                     {
                         Debug.LogDebug($"Loaded node {i}");
-                        LoadNode(assimp, scene, scene->MRootNode->MChildren[i], entity, transform);
+                        LoadNode(assimp, scene, scene->MRootNode->MChildren[i], entity, transform, camera);
                     }
                 }
                 else
@@ -77,7 +77,7 @@ namespace SpatialSim.Engine.Rendering
                     for (int i = 0; i < scene->MNumMeshes; i++)
                     {
                         Debug.LogDebug($"Loaded mesh {i}");
-                        LoadSubMesh(assimp, scene, scene->MMeshes[i], entity, transform);
+                        LoadSubMesh(assimp, scene, scene->MMeshes[i], entity, transform, camera);
                     }
                 }
             }
@@ -89,15 +89,15 @@ namespace SpatialSim.Engine.Rendering
             assimp.ReleaseImport(scene);
         }
 
-        unsafe static void LoadNode(Assimp assimp, Scene* scene, Node* node, Entity entity, Transform transform)
+        unsafe static void LoadNode(Assimp assimp, Scene* scene, Node* node, Entity entity, Transform transform, EcsComponentRef camera)
         {
             for (int i = 0; i < node->MNumMeshes; i++)
             {
-                LoadSubMesh(assimp, scene, scene->MMeshes[node->MMeshes[i]], entity, transform);
+                LoadSubMesh(assimp, scene, scene->MMeshes[node->MMeshes[i]], entity, transform, camera);
             }
         }
 
-        unsafe static void LoadSubMesh(Assimp assimp, Scene* scene, Silk.NET.Assimp.Mesh* mesh, Entity entity, Transform transform)
+        unsafe static void LoadSubMesh(Assimp assimp, Scene* scene, Silk.NET.Assimp.Mesh* mesh, Entity entity, Transform transform, EcsComponentRef camera)
         {
             MeshData meshData = new MeshData();
             List<Vector2> uvs = new List<Vector2>();
@@ -136,7 +136,7 @@ namespace SpatialSim.Engine.Rendering
             //grab the material associated with this mesh
             Material mat = LoadSubMaterial(assimp, scene, materialIndex);
             
-            entity.AddComponentThr(new MeshRenderer(entity.AddComponentThr(meshComp), entity.AddComponentThr(mat)));
+            entity.AddComponentThr(new MeshRenderer(entity.AddComponentThr(meshComp), entity.AddComponentThr(mat), camera));
             
             Debug.LogDebug($"Loaded sub mesh {mesh->MName.AsString}");
         }
