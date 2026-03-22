@@ -19,6 +19,10 @@ namespace SpatialSim.Engine.Rendering
         public Material()
         {
             textureRef = "";
+            ambient = new Vector3(1f);
+            diffuse = new Vector3(1f);
+            specular = new Vector3(1f);
+            specularExp = 1f;
         }
         
         public void Dispose()

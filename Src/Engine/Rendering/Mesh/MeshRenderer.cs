@@ -9,12 +9,43 @@ namespace SpatialSim.Engine.Rendering
         public EcsComponentType type => EcsComponentType.MeshRenderer;
         public int id { get; set; } = -1;
 
-        public EcsComponentRef mesh;
-        public EcsComponentRef material;
-        public EcsComponentRef camera;
+        public EcsComponentRef mesh 
+        {
+            get;
+            set
+            {
+                //make sure we update the mesh reference if we update it
+                field = value;
+                meshRef = EcsManager.GetComponent<Mesh>(mesh);
+            }
+        }
+        public EcsComponentRef material
+        {
+            get;
+            set
+            {
+                //make sure we update the material reference if we update it
+                field = value;
+                materialRef = EcsManager.GetComponent<Material>(material);
+            }
+        }
+        public EcsComponentRef camera
+        {
+            get;
+            set
+            {
+                //make sure we update the camera reference if we update it
+                field = value;
+                cameraRef = EcsManager.GetComponent<Camera>(camera);
+            }
+        }
 
         public Buffer<Vertex> vertexBuffer;
         public Buffer<int> indexBuffer;
+
+        public Mesh meshRef { get; private set; }
+        public Material materialRef { get; private set; }
+        public Camera cameraRef { get; private set; }
 
         public MeshRenderer()
         {
@@ -34,35 +65,37 @@ namespace SpatialSim.Engine.Rendering
 
         public void Create()
         {
-            Mesh meshComp = ((Mesh)EcsManager.GetComponent(mesh));
             vertexBuffer = new Buffer<Vertex>();
-            vertexBuffer.Create(new Span<Vertex>(meshComp.GetVertexes()), BufferUsage.Vertex, BufferMemoryUsage.Cpu);
+            vertexBuffer.Create(new Span<Vertex>(meshRef.GetVertexes()), BufferUsage.Vertex, BufferMemoryUsage.Cpu);
             indexBuffer = new Buffer<int>();
-            indexBuffer.Create(new Span<int>(meshComp.meshData.indices), BufferUsage.Index, BufferMemoryUsage.Cpu);
+            indexBuffer.Create(new Span<int>(meshRef.meshData.indices), BufferUsage.Index, BufferMemoryUsage.Cpu);
+        }
+
+        public void UpdateMesh()
+        {
+            vertexBuffer.UpdateData(meshRef.GetVertexes());
+            indexBuffer.UpdateData(meshRef.meshData.indices);
         }
 
         public void Draw(CommandBuffer commandBuffer, int frame)
         {
             commandBuffer.BindVertexBuffers(vertexBuffer.buffer!);
             commandBuffer.BindIndexBuffers(indexBuffer.buffer!);
-            Mesh meshComp = EcsManager.GetComponent<Mesh>(mesh);
-            Material mat = EcsManager.GetComponent<Material>(material);
             Shader vertexShader = ShaderManager.RetrieveShader("base.vert");
-            Camera camera = EcsManager.GetComponent<Camera>(this.camera);
-            vertexShader.AddMat4(0, camera.view);
-            vertexShader.AddMat4(0, camera.proj);
-            vertexShader.AddMat4(0, EcsManager.GetComponent<Transform>(meshComp.transform).GetModelMat());
+            vertexShader.AddMat4(0, cameraRef.view);
+            vertexShader.AddMat4(0, cameraRef.proj);
+            vertexShader.AddMat4(0, meshRef.transformRef.GetModelMat());
             AppState.appContext.defaultPipeline.UpdateUniforms(vertexShader, 0, frame);
             commandBuffer.BindVertexUniforms(AppState.appContext.defaultPipeline, 0);
             Shader fragmentShader = ShaderManager.RetrieveShader("base.frag");
-            fragmentShader.AddVec4(0, new Vector4(mat.diffuse, 1.0f));
+            fragmentShader.AddVec4(0, new Vector4(materialRef.diffuse, 1.0f));
             fragmentShader.AddVec4(0, new Vector4(1.0f));
             fragmentShader.AddVec4(0, new Vector4(1.0f));
             fragmentShader.AddVec4(0, new Vector4(1.0f));
             AppState.appContext.defaultPipeline.UpdateUniforms(fragmentShader, 0, frame);
             commandBuffer.BindFragmentUniforms(AppState.appContext.defaultPipeline, 0);
-            commandBuffer.BindTexture(AppState.appContext.defaultPipeline, TextureManager.RetrieveTexture(mat.textureRef));
-            commandBuffer.Draw(meshComp.meshData.indices.Length);
+            commandBuffer.BindTexture(AppState.appContext.defaultPipeline, TextureManager.RetrieveTexture(materialRef.textureRef));
+            commandBuffer.Draw(meshRef.meshData.indices.Length);
         }
 
         public void Clean()

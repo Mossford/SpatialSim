@@ -9,6 +9,9 @@ namespace SpatialSim.Engine.Rendering.ImGui
         
         public static void Show()
         {
+            if(!show)
+                return;
+            
             if(!ImGuiNET.ImGui.Begin("VkTick Menu", ref show))
             {
                 ImGuiNET.ImGui.End();

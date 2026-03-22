@@ -12,6 +12,10 @@ namespace SpatialSim.Engine.Core
         public Vector3 scale;
         public Matrix4x4 modelMat;
 
+        public Vector3 forward => GetForward();
+        public Vector3 up => GetUp();
+        public Vector3 right => GetRight();
+
         public Transform()
         {
             position = new Vector3();
@@ -28,10 +32,30 @@ namespace SpatialSim.Engine.Core
 
         public Matrix4x4 GetModelMat()
         {
-            modelMat = Matrix4x4.Identity * Matrix4x4.CreateScale(scale) *
-                       Matrix4x4.CreateTranslation(position) *
-                       Matrix4x4.CreateFromQuaternion(rotation);
+            modelMat = Matrix4x4.Identity *
+                       Matrix4x4.CreateScale(scale) *
+                       Matrix4x4.CreateFromQuaternion(rotation) *
+                       Matrix4x4.CreateTranslation(position);
             return modelMat;
+        }
+        
+        public Vector3 GetForward()
+        {
+            Vector3 target;
+            target.X = -MathF.Sin(rotation.X*(MathF.PI/180.0f)) * MathF.Cos(rotation.Y*(MathF.PI/180.0f));
+            target.Y = -MathF.Sin(rotation.Y*(MathF.PI/180.0f));
+            target.Z = MathF.Cos(rotation.X*(MathF.PI/180.0f)) * MathF.Cos(rotation.Y*(MathF.PI/180.0f));
+            return Vector3.Normalize(target);
+        }
+
+        public Vector3 GetRight()
+        {
+            return Vector3.Normalize(Vector3.Cross(Vector3.UnitY, forward));
+        }
+        
+        public Vector3 GetUp()
+        {
+            return Vector3.Cross(forward, GetRight());
         }
         
         public void Dispose()

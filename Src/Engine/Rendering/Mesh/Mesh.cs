@@ -7,8 +7,19 @@ namespace SpatialSim.Engine.Rendering
         public EcsComponentType type => EcsComponentType.Mesh;
         public int id { get; set; } = -1;
 
-        public EcsComponentRef transform;
+        public EcsComponentRef transform
+        {
+            get;
+            set
+            {
+                //make sure we update the transform reference if we update it
+                field = value;
+                transformRef = EcsManager.GetComponent<Transform>(transform);
+            }
+        }
         public MeshData meshData;
+        
+        public Transform transformRef { get; private set; }
         
         public Mesh()
         {

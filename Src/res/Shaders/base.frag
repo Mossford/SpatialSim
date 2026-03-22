@@ -19,4 +19,6 @@ layout(set = 1) uniform sampler2D texSampler;
 void main() 
 {
     outColor = texture(texSampler, aUv) * ubo.diffuse;
+    float gamma = 2.2;
+    outColor.rgb = pow(outColor.rgb, vec3(1.0/gamma));
 }

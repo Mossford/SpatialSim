@@ -7,6 +7,7 @@ namespace SpatialSim.Engine.Rendering
     {
         public ITextureDevice texture;
         public TextureData data;
+        public ulong dataSize;
         
         public void LoadTexture(string file)
         {
@@ -36,12 +37,15 @@ namespace SpatialSim.Engine.Rendering
             }
             
             texture = AppState.appContext.DeviceFactory.CreateTextureDevice(data);
+            dataSize = (ulong)data.data.Length;
+            Ticks.gpuMemoryAllocation.created += dataSize;
             
             Debug.LogDebug($"Loaded texture at {file}");
         }
 
         public void Clean()
         {
+            Ticks.gpuMemoryAllocation.deleted += dataSize;
             texture?.Clean();
             Debug.LogDebug($"Cleaned texture");
         }

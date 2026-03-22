@@ -4,7 +4,7 @@ namespace SpatialSim.Engine.Rendering
     {
         public static byte[] pixels;
         public static int size = 48;
-        static bool created = false;
+        static bool created;
 
         public static void Create()
         {

@@ -71,10 +71,7 @@ namespace SpatialSim.Engine.Rendering
                 ImGuiNET.ImGui.End();
             }
 
-            if (TicksMenu.show)
-            {
-                TicksMenu.Show();
-            }
+            TicksMenu.Show();
             
         }
 

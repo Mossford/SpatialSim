@@ -126,7 +126,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 new ShaderDescriptorDef(1, 0, ShaderDescriptorUsage.Sampler, ShaderType.Fragment));
 
             SetTextureToDescriptorSet();
-
             hasDescriptor = true;
         }
 
@@ -136,6 +135,25 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public unsafe void Create(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties)
         {
             this.format = format;
+            
+            //TODO If extent is bigger than maximum split up image into multiple parts
+            AppState.appContext.GetContext<VkContext>().vk.GetPhysicalDeviceImageFormatProperties(
+                    VkDevices.physicalDevice,
+                    format,
+                    ImageType.Type2D,
+                    tiling,
+                    usage,
+                    ImageCreateFlags.Create2DArrayCompatibleBit,
+                    out ImageFormatProperties formatProperties);
+
+            if (formatProperties.MaxExtent.Width <= width)
+            {
+                Debug.Error($"Image width {width} is greater than max extent width {formatProperties.MaxExtent.Width} for format {format}");
+            }
+            if (formatProperties.MaxExtent.Height <= height)
+            {
+                Debug.Error($"Image height {height} is greater than max extent height {formatProperties.MaxExtent.Height} for format {format}");
+            }
             
             ImageCreateInfo imageInfo = new()
             {
@@ -159,13 +177,17 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             fixed (Image* imagePtr = &image)
             {
-                if (AppState.appContext.GetContext<VkContext>().vk.CreateImage(VkDevices.device, in imageInfo, null, imagePtr) != Result.Success)
+                Result result = AppState.appContext.GetContext<VkContext>().vk
+                    .CreateImage(VkDevices.device, in imageInfo, null, imagePtr);
+                if (result != Result.Success)
                 {
-                    throw new Exception("failed to create image!");
+                    Debug.Error($"Failed to create image {result}");
+                    throw new Exception($"Failed to create image {result}");
                 }
             }
 
-            AppState.appContext.GetContext<VkContext>().vk.GetImageMemoryRequirements(VkDevices.device, image, out MemoryRequirements memRequirements);
+            AppState.appContext.GetContext<VkContext>().vk.GetImageMemoryRequirements(
+                VkDevices.device, image, out MemoryRequirements memRequirements);
 
             MemoryAllocateInfo allocInfo = new()
             {

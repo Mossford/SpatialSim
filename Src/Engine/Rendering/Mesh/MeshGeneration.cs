@@ -134,7 +134,7 @@ namespace SpatialSim.Engine.Rendering
 
             for (int g = 0; g < vertexes.Length; g++)
             {
-                Vector3 normal = Vector3.One;
+                Vector3 normal = Vector3.Zero;
                 for (int i = 0; i < indices.Length; i += 3)
                 {
                     uint a, b, c;
@@ -167,7 +167,7 @@ namespace SpatialSim.Engine.Rendering
                 }
                 vertexes[g].normal = Vector3.Normalize(normal);
             }
-
+            
             meshData.vertexData.vertices = new Vector3[vertexes.Length];
             meshData.vertexData.normals = new Vector3[vertexes.Length];
             meshData.vertexData.uvs = new Vector2[vertexes.Length];
@@ -177,16 +177,16 @@ namespace SpatialSim.Engine.Rendering
                 meshData.vertexData.vertices[i] = vertexes[i].position;
                 meshData.vertexData.normals[i] = vertexes[i].normal;
                 meshData.vertexData.uvs[i] = new Vector2(
-                    0.5f + MathF.Atan2(vertexes[i].position.Z, vertexes[i].position.X) / (2.0f * MathF.PI),
+                    0.5f - MathF.Atan2(vertexes[i].position.Z, vertexes[i].position.X) / (2.0f * MathF.PI),
                     0.5f - MathF.Asin(vertexes[i].position.Y) / MathF.PI
                 );
             }
-
+            
             for (int i = 0; i < indices.Length; i++)
             {
                 meshData.indices[i] = (int)indices[i];
             }
-
+            
             return meshData;
         }
     }

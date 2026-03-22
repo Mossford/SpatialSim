@@ -23,7 +23,7 @@ namespace SpatialSim.Engine.Rendering
 
         static Queue<string> textureQueue;
         
-        public static Entity LoadModelFile(string modelFile, string materialFile, Transform transform, EcsComponentRef camera)
+        public static Entity LoadModelFile(string modelFile, Transform transform, EcsComponentRef camera)
         {
             Entity entity = EcsManager.AddEntity();
             textureQueue = new Queue<string>();
@@ -37,7 +37,7 @@ namespace SpatialSim.Engine.Rendering
             Debug.LogDebug($"Loading model {modelFile}");
             lock (entity)
             {
-                ThreadPool.QueueUserWorkItem(state => LoadModel(entity, modelFile, materialFile, transform, camera));
+                ThreadPool.QueueUserWorkItem(state => LoadModel(entity, modelFile, transform, camera));
             }
 
             for (int i = 0; i < textureQueue.Count; i++)
@@ -50,7 +50,7 @@ namespace SpatialSim.Engine.Rendering
             return entity;
         }
 
-        unsafe static void LoadModel(Entity entity, string modelFile, string materialFile, Transform transform, EcsComponentRef camera)
+        unsafe static void LoadModel(Entity entity, string modelFile, Transform transform, EcsComponentRef camera)
         {
             Assimp assimp = Assimp.GetApi();
             Scene* scene = assimp.ImportFile(Resources.ModelPath + modelFile, (uint)PostProcessPreset.TargetRealTimeMaximumQuality);
