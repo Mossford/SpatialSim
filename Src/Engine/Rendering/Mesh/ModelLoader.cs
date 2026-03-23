@@ -42,7 +42,7 @@ namespace SpatialSim.Engine.Rendering
 
             for (int i = 0; i < textureQueue.Count; i++)
             {
-                TextureManager.LoadTexture(textureQueue.Dequeue());
+                TextureManager.LoadTexture(textureQueue.Dequeue(), "");
             }
             
             Debug.LogDebug($"Loaded model {modelFile}");

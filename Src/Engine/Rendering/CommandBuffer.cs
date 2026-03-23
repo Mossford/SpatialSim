@@ -1,3 +1,4 @@
+using System.Numerics;
 using SpatialSim.Engine.Core;
 
 namespace SpatialSim.Engine.Rendering
@@ -43,6 +44,16 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer?.BindPipeLine(pipeline);
         }
 
+        public void SetViewport(Vector2 size)
+        {
+            commandBuffer?.SetViewport(size);
+        }
+        
+        public void SetScissor(Vector2 size)
+        {
+            commandBuffer?.SetScissor(size);
+        }
+        
         public void BeginRendering(int frame)
         {
             commandBuffer?.BeingRendering(frame);

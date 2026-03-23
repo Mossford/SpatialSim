@@ -13,7 +13,7 @@ namespace SpatialSim.Engine.Rendering
             textureLocToIndex = new Dictionary<string, int>();
             textures = new List<Texture>();
             missingTexture = new Texture();
-            missingTexture.LoadTexture("");
+            missingTexture.LoadTexture("", "");
             
             Debug.LogInfo("Successful texture manager creation");
         }
@@ -23,7 +23,7 @@ namespace SpatialSim.Engine.Rendering
             return textureLocToIndex.ContainsKey(texture);
         }
 
-        public static bool LoadTexture(string texture)
+        public static bool LoadTexture(string texture, string pipeline)
         {
             if (!File.Exists(Resources.ImagePath + texture) && texture.Length != 0)
             {
@@ -34,7 +34,7 @@ namespace SpatialSim.Engine.Rendering
             if (textureLocToIndex.TryAdd(texture, textures.Count))
             {
                 textures.Add(new Texture());
-                textures[^1].LoadTexture(texture);
+                textures[^1].LoadTexture(texture, pipeline);
                 return true;
             }
 
@@ -42,7 +42,7 @@ namespace SpatialSim.Engine.Rendering
             return false;
         }
 
-        public static Texture RetrieveTexture(string texture)
+        public static Texture RetrieveTexture(string texture, string pipeline)
         {
             if (textureLocToIndex.TryGetValue(texture, out int index))
             {
@@ -50,7 +50,7 @@ namespace SpatialSim.Engine.Rendering
             }
             else
             {
-                if (LoadTexture(texture))
+                if (LoadTexture(texture, pipeline))
                 {
                     return textures[textureLocToIndex[texture]];
                 }

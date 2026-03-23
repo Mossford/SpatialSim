@@ -9,7 +9,7 @@ namespace SpatialSim.Engine.Rendering
         public TextureData data;
         public ulong dataSize;
         
-        public void LoadTexture(string file)
+        public void LoadTexture(string file, string pipeline)
         {
             TextureData data = new TextureData();
             if (!File.Exists(Resources.ImagePath + file))
@@ -36,7 +36,7 @@ namespace SpatialSim.Engine.Rendering
                 data.memoryUsage = TextureMemoryUsage.gpu;
             }
             
-            texture = AppState.appContext.DeviceFactory.CreateTextureDevice(data);
+            texture = AppState.appContext.DeviceFactory.CreateTextureDevice(data, pipeline);
             dataSize = (ulong)data.data.Length;
             Ticks.gpuMemoryAllocation.created += dataSize;
             

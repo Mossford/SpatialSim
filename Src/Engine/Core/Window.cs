@@ -82,7 +82,7 @@ namespace SpatialSim.Engine.Core
             Input.Init();
             
             AppState.appContext.Init();
-            
+            PipelineManager.Init();
             TextureManager.Init();
             
             MainImgui.SetImGuiStyle();
@@ -139,6 +139,7 @@ namespace SpatialSim.Engine.Core
             ShaderManager.Clean();
             Input.Clean();
             AppState.appContext.CleanObjects();
+            PipelineManager.Clean();
             TextureManager.Clean();
             EcsManager.Clean();
             AppState.appContext.CleanContext();

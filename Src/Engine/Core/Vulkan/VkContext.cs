@@ -21,7 +21,6 @@ namespace SpatialSim.Engine.Core.Vulkan
         
         public GraphicsAPI graphicsApi { get; set; }
         public IDeviceFactory DeviceFactory { get; set; }
-        public Pipeline defaultPipeline { get; set; }
         public RenderPass renderPass { get; set; }
         public VkImGuiController imGuiController;
         
@@ -51,20 +50,6 @@ namespace SpatialSim.Engine.Core.Vulkan
             VkSwapChain.CreateSwapChain();
             VkSwapChain.CreateImageViews();
             VkSwapChain.TransitionSwapChainImages();
-            
-            defaultPipeline = new Pipeline();
-            defaultPipeline.Create(
-                ShaderManager.RetrieveShader(
-                    new ShaderSettings(
-                        ShaderType.Vertex, 
-                        [new ShaderDescriptorDef(RendererSettings.VertexUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Vertex)],
-                        "base.vert")),
-                ShaderManager.RetrieveShader(
-                    new ShaderSettings(ShaderType.Fragment, 
-                        [
-                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, 0, ShaderDescriptorUsage.Sampler, ShaderType.Fragment), 
-                            new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Fragment)],
-                        "base.frag")));
             
             VkDepthBuffer.CreateDepthBuffers();
             VkSwapChain.CreateSyncObjects();
@@ -147,7 +132,7 @@ namespace SpatialSim.Engine.Core.Vulkan
                 );
             
             VkSwapChain.commandBuffers[imageIndex].End();
-            VkSwapChain.commandBuffers[imageIndex].ResetPipeLine(defaultPipeline);
+            VkSwapChain.commandBuffers[imageIndex].ResetPipeLine(PipelineManager.RetrievePipeline(""));
             
             SubmitFrame(vkcommandBuffer, (uint)imageIndex);
         }

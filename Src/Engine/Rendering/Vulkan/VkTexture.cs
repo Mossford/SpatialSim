@@ -20,7 +20,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public VkDescriptor descriptor;
         bool hasDescriptor;
         
-        public unsafe void Create(in TextureData data)
+        public unsafe void Create(in TextureData data, string pipeline)
         {
             //create some staging buffer
             //upload to gpu side to store texture memory
@@ -122,7 +122,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             CreateSampler();
 
             descriptor = new VkDescriptor();
-            descriptor.Create(((VkPipeline)AppState.appContext.defaultPipeline.pipeline!), 
+            descriptor.Create(((VkPipeline)PipelineManager.RetrievePipeline("").pipeline!), 
                 new ShaderDescriptorDef(1, 0, ShaderDescriptorUsage.Sampler, ShaderType.Fragment));
 
             SetTextureToDescriptorSet();

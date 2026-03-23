@@ -46,7 +46,6 @@ namespace SpatialSim.Engine.Core
         public static void Render(CommandBuffer commandBuffer, int frame)
         {
             commandBuffer.BeginRendering(frame);
-            commandBuffer.BindPipeLine(AppState.appContext.defaultPipeline);
             for (int i = 0; i < componentPools[EcsComponentType.MeshRenderer.GetId()].components.ValueCount; i++)
             {
                 MeshRenderer renderer = (MeshRenderer)componentPools[EcsComponentType.MeshRenderer.GetId()].components.Get(i);

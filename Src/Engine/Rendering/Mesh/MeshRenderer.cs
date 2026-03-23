@@ -79,22 +79,27 @@ namespace SpatialSim.Engine.Rendering
 
         public void Draw(CommandBuffer commandBuffer, int frame)
         {
+            Pipeline pipeline = PipelineManager.RetrievePipeline("");
+            commandBuffer.BindPipeLine(pipeline);
+            commandBuffer.SetViewport(Window.size);
+            commandBuffer.SetScissor(Window.size);
+            
             commandBuffer.BindVertexBuffers(vertexBuffer.buffer!);
             commandBuffer.BindIndexBuffers(indexBuffer.buffer!);
             Shader vertexShader = ShaderManager.RetrieveShader("base.vert");
             vertexShader.AddMat4(0, cameraRef.view);
             vertexShader.AddMat4(0, cameraRef.proj);
             vertexShader.AddMat4(0, meshRef.transformRef.GetModelMat());
-            AppState.appContext.defaultPipeline.UpdateUniforms(vertexShader, 0, frame);
-            commandBuffer.BindVertexUniforms(AppState.appContext.defaultPipeline, 0);
+            pipeline.UpdateUniforms(vertexShader, 0, frame);
+            commandBuffer.BindVertexUniforms(pipeline, 0);
             Shader fragmentShader = ShaderManager.RetrieveShader("base.frag");
             fragmentShader.AddVec4(0, new Vector4(materialRef.diffuse, 1.0f));
             fragmentShader.AddVec4(0, new Vector4(1.0f));
             fragmentShader.AddVec4(0, new Vector4(1.0f));
             fragmentShader.AddVec4(0, new Vector4(1.0f));
-            AppState.appContext.defaultPipeline.UpdateUniforms(fragmentShader, 0, frame);
-            commandBuffer.BindFragmentUniforms(AppState.appContext.defaultPipeline, 0);
-            commandBuffer.BindTexture(AppState.appContext.defaultPipeline, TextureManager.RetrieveTexture(materialRef.textureRef));
+            pipeline.UpdateUniforms(fragmentShader, 0, frame);
+            commandBuffer.BindFragmentUniforms(pipeline, 0);
+            commandBuffer.BindTexture(PipelineManager.RetrievePipeline(""), TextureManager.RetrieveTexture(materialRef.textureRef, ""));
             commandBuffer.Draw(meshRef.meshData.indices.Length);
         }
 

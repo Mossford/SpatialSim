@@ -1,3 +1,4 @@
+using System.Numerics;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using SpatialSim.Engine.Core;
@@ -267,6 +268,38 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public void BindPipeLine(Pipeline pipeline)
         {
             AppState.appContext.GetContext<VkContext>().vk.CmdBindPipeline(commandBuffer, PipelineBindPoint.Graphics, ((VkPipeline)pipeline.pipeline!).pipeline);
+        }
+
+        public void SetViewport(Vector2 size)
+        {
+            Viewport viewport = new()
+            {
+                X = 0,
+                Y = 0,
+                Width = size.X,
+                Height = size.Y,
+                MaxDepth = 1,
+                MinDepth = 0
+            };
+            AppState.appContext.GetContext<VkContext>().vk.CmdSetViewport(commandBuffer, 0, [viewport]);
+        }
+
+        public void SetScissor(Vector2 size)
+        {
+            Rect2D scissor = new()
+            {
+                Extent =
+                {
+                    Width = (uint)size.X,
+                    Height = (uint)size.Y
+                },
+                Offset =
+                {
+                    X = 0,
+                    Y = 0
+                }
+            };
+            AppState.appContext.GetContext<VkContext>().vk.CmdSetScissor(commandBuffer, 0, [scissor]);
         }
 
         public unsafe void BindVertexUniforms(Pipeline pipeline, int binding)

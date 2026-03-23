@@ -202,8 +202,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     ref ((VkCommandBuffer)commandBuffers[i].commandBuffer!).commandBuffer);
             }
 
-            AppState.appContext.defaultPipeline.Clean();
-
             foreach (ImageView imageView in swapChainImageViews!)
             {
                 AppState.appContext.GetContext<VkContext>().vk.DestroyImageView(VkDevices.device, imageView, null);
@@ -214,19 +212,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             CreateSwapChain();
             CreateImageViews();
             TransitionSwapChainImages();
-            
-            AppState.appContext.defaultPipeline.Create(
-                ShaderManager.RetrieveShader(
-                    new ShaderSettings(
-                        ShaderType.Vertex, 
-                        [new ShaderDescriptorDef(RendererSettings.VertexUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Vertex)],
-                        "base.vert")),
-                ShaderManager.RetrieveShader(
-                    new ShaderSettings(ShaderType.Fragment, 
-                        [
-                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, 0, ShaderDescriptorUsage.Sampler, ShaderType.Fragment), 
-                            new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Fragment)],
-                        "base.frag")));
             
             VkDepthBuffer.CreateDepthBuffers();
             
@@ -243,8 +228,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static unsafe void CleanSwapChain()
         {
             VkDepthBuffer.Clean();
-            
-            AppState.appContext.defaultPipeline.Clean();
 
             foreach (ImageView imageView in swapChainImageViews!)
             {

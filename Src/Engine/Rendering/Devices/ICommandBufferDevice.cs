@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace SpatialSim.Engine.Rendering
 {
     public interface ICommandBufferDevice
@@ -14,6 +16,8 @@ namespace SpatialSim.Engine.Rendering
         public void BeingRendering(int frame);
         public void EndRendering();
         public void BindPipeLine(Pipeline pipeline);
+        public void SetViewport(Vector2 size);
+        public void SetScissor(Vector2 size);
         public void BindVertexUniforms(Pipeline pipeline, int binding);
         public void BindFragmentUniforms(Pipeline pipeline, int binding);
         public void BindTexture(Pipeline pipeline, Texture texture);

@@ -8,9 +8,6 @@ namespace SpatialSim.Engine.Core
     {
         public GraphicsAPI graphicsApi { get; set; }
         public IDeviceFactory DeviceFactory { get; }
-
-        //should be removed into a pipeline manager
-        public Pipeline defaultPipeline { get; set; }
         
         public void Init();
         public void Update(float delta);

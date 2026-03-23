@@ -176,33 +176,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 PrimitiveRestartEnable = false,
             };
 
-            Viewport viewport = new()
-            {
-                X = 0,
-                Y = 0,
-                Width = VkSwapChain.swapChainExtent.Width,
-                Height = VkSwapChain.swapChainExtent.Height,
-                MinDepth = 0,
-                MaxDepth = 1,
-            };
-
-            Rect2D scissor = new()
-            {
-                Offset =
-                {
-                    X = 0, 
-                    Y = 0
-                },
-                Extent = VkSwapChain.swapChainExtent,
-            };
-
             PipelineViewportStateCreateInfo viewportState = new()
             {
                 SType = StructureType.PipelineViewportStateCreateInfo,
                 ViewportCount = 1,
-                PViewports = &viewport,
-                ScissorCount = 1,
-                PScissors = &scissor,
+                ScissorCount = 1
             };
 
             PipelineRasterizationStateCreateInfo rasterizer = new()
@@ -281,12 +259,19 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 PColorAttachmentFormats = &swapChainFormat,
                 DepthAttachmentFormat = VkDepthBuffer.FindDepthFormat()
             };
-            
-            PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo = new()
+
+            DynamicState[] dynamicStates = { DynamicState.Viewport, DynamicState.Scissor };
+
+            PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo;
+            fixed (DynamicState* states = dynamicStates)
             {
-                SType = StructureType.PipelineDynamicStateCreateInfo,
-                DynamicStateCount = 0,
-            };
+                pipelineDynamicStateCreateInfo = new()
+                {
+                    SType = StructureType.PipelineDynamicStateCreateInfo,
+                    DynamicStateCount = (uint)dynamicStates.Length,
+                    PDynamicStates = states
+                };
+            }
             
             GraphicsPipelineCreateInfo pipelineInfo = new()
             {
