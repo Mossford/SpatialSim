@@ -25,7 +25,7 @@ namespace SpatialSim.Engine.Rendering
                             new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Fragment)],
                         "base.frag")));
             
-            Debug.LogInfo("Successful texture manager creation");
+            Debug.LogInfo("Successful pipeline manager creation");
         }
 
         public static bool IsPipelineStored(string pipelineName)
