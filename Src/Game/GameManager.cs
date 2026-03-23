@@ -15,7 +15,7 @@ namespace SpatialSim.Game
                         new Vector3(0f), 
                         Quaternion.CreateFromYawPitchRoll(0, 0, 0), 
                         new Vector3(1.0f))), 
-                2f * MathF.Atan2(23.9f, 2f * 600) * 180f / MathF.PI));
+                2f * MathF.Atan2(23.9f, 2f * 2400) * 180f / MathF.PI));
 
             Entity mesh = EcsManager.AddEntity();
             EcsComponentRef transform = mesh.AddComponent(new Transform(

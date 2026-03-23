@@ -47,6 +47,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static readonly PhysicalDeviceFeatures physicalDeviceFeatures = new PhysicalDeviceFeatures() with
         {
             SamplerAnisotropy = true,
+            FillModeNonSolid = true
         };
         
         public static readonly string[] validationLayers = new[]

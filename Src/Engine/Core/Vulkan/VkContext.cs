@@ -97,30 +97,11 @@ namespace SpatialSim.Engine.Core.Vulkan
 
         public unsafe void Render()
         {
-            //wait for the current frame to complete
-            vk.WaitForFences(VkDevices.device, 1, in VkSwapChain.inFlightFences[VkSwapChain.currentFrame], true, ulong.MaxValue);
-            
-            //grab an image to render to at the image index
-            uint imageIndex = 0;
-            Result result = VkSwapChain.khrSwapChain!.AcquireNextImage(VkDevices.device, VkSwapChain.swapChain, ulong.MaxValue, VkSwapChain.imageAvailableSemaphores[VkSwapChain.currentFrame], default, ref imageIndex);
-
-            if (result == Result.ErrorOutOfDateKhr)
+            int imageIndex = PrepareFrame();
+            if (imageIndex == -1)
             {
-                VkSwapChain.RecreateSwapChain();
                 return;
             }
-            else if (result != Result.Success && result != Result.SuboptimalKhr)
-            {
-                Debug.Error($"Failed to acquire swap chain image {result}");
-                throw new Exception($"Failed to acquire swap chain image {result}");
-            }
-
-            if (VkSwapChain.imagesInFlight[imageIndex].Handle != 0)
-            {
-                vk.WaitForFences(VkDevices.device, 1, in VkSwapChain.imagesInFlight[imageIndex], true, ulong.MaxValue);
-            }
-            VkSwapChain.imagesInFlight[imageIndex] = VkSwapChain.inFlightFences[VkSwapChain.currentFrame];
-            
             //render
             
             CommandBuffer vkcommandBuffer = ((VkCommandBuffer)VkSwapChain.commandBuffers[imageIndex].commandBuffer!).commandBuffer;
@@ -168,6 +149,40 @@ namespace SpatialSim.Engine.Core.Vulkan
             VkSwapChain.commandBuffers[imageIndex].End();
             VkSwapChain.commandBuffers[imageIndex].ResetPipeLine(defaultPipeline);
             
+            SubmitFrame(vkcommandBuffer, (uint)imageIndex);
+        }
+
+        unsafe int PrepareFrame()
+        {
+            //wait for the current frame to complete
+            vk.WaitForFences(VkDevices.device, 1, in VkSwapChain.inFlightFences[VkSwapChain.currentFrame], true, ulong.MaxValue);
+            
+            //grab an image to render to at the image index
+            uint imageIndex = 0;
+            Result result = VkSwapChain.khrSwapChain!.AcquireNextImage(VkDevices.device, VkSwapChain.swapChain, ulong.MaxValue, VkSwapChain.imageAvailableSemaphores[VkSwapChain.currentFrame], default, ref imageIndex);
+
+            if (result == Result.ErrorOutOfDateKhr)
+            {
+                VkSwapChain.RecreateSwapChain();
+                return -1;
+            }
+            else if (result != Result.Success && result != Result.SuboptimalKhr)
+            {
+                Debug.Error($"Failed to acquire swap chain image {result}");
+                throw new Exception($"Failed to acquire swap chain image {result}");
+            }
+
+            if (VkSwapChain.imagesInFlight[imageIndex].Handle != 0)
+            {
+                vk.WaitForFences(VkDevices.device, 1, in VkSwapChain.imagesInFlight[imageIndex], true, ulong.MaxValue);
+            }
+            VkSwapChain.imagesInFlight[imageIndex] = VkSwapChain.inFlightFences[VkSwapChain.currentFrame];
+
+            return (int)imageIndex;
+        }
+
+        unsafe void SubmitFrame(CommandBuffer commandBuffer, uint imageIndex)
+        {
             SubmitInfo submitInfo = new()
             {
                 SType = StructureType.SubmitInfo,
@@ -184,14 +199,14 @@ namespace SpatialSim.Engine.Core.Vulkan
                 PWaitDstStageMask = waitStages,
 
                 CommandBufferCount = 1,
-                PCommandBuffers = &vkcommandBuffer,
+                PCommandBuffers = &commandBuffer,
                 
                 SignalSemaphoreCount = 1,
                 PSignalSemaphores = signalSemaphores,
             };
 
             vk.ResetFences(VkDevices.device, 1, in VkSwapChain.inFlightFences[VkSwapChain.currentFrame]);
-            result = vk.QueueSubmit(VkDevices.graphicsQueue, 1, in submitInfo,
+            Result result = vk.QueueSubmit(VkDevices.graphicsQueue, 1, in submitInfo,
                 VkSwapChain.inFlightFences[VkSwapChain.currentFrame]);
             if (result != Result.Success)
             {

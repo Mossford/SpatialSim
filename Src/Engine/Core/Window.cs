@@ -16,6 +16,11 @@ namespace SpatialSim.Engine.Core
         public static Vector2 maxSize;
         public static Vector2 windowScale;
         public static Vector2 scaleFromBase;
+
+        static double updateStartTime;
+        static double renderStartTime;
+        public static double updateTime;
+        public static double renderTime;
         
         static Action init;
         static Action<float> update;
@@ -92,6 +97,8 @@ namespace SpatialSim.Engine.Core
 
         static void Update(double delta)
         {
+            updateStartTime = AppState.window.Time * 1000000;
+            
             AppState.deltaTime = (float)delta;
             AppState.totalTime += (ulong)(delta * 1000000);
             
@@ -106,6 +113,8 @@ namespace SpatialSim.Engine.Core
             {
                 AppState.window.Close();
             }
+
+            updateTime = AppState.window.Time * 1000000 - updateStartTime;
         }
 
         static void WindowResize(Vector2D<int> vector2D)
@@ -119,8 +128,10 @@ namespace SpatialSim.Engine.Core
 
         static void Render(double delta)
         {
+            renderStartTime = AppState.window.Time * 1000000;
             MainImgui.MainMenu();
             AppState.appContext.Render();
+            renderTime = AppState.window.Time * 1000000 - renderStartTime;
         }
 
         static unsafe void Clean()

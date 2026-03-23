@@ -13,6 +13,8 @@ namespace SpatialSim.Engine.Rendering
         
         static uint frameCount;
         static double frameAvg;
+        static double updateAvg;
+        static double renderAvg;
         static float fpsMax;
         static float fpsTime;
         
@@ -37,6 +39,20 @@ namespace SpatialSim.Engine.Rendering
                 ImGuiNET.ImGui.TextWrapped("Gpu: " + AppState.gpuDeviceName);
                 ImGuiNET.ImGui.TextWrapped("API: " + AppState.Api);
                 ImGuiNET.ImGui.TextWrapped($"{1000f / frameAvg:N3} ms ({frameAvg:N1} FPS)");
+                string unit = "us";
+                if (updateAvg >= 1000)
+                {
+                    updateAvg /= 1000;
+                    unit = "ms";
+                }
+                ImGuiNET.ImGui.TextWrapped($"Update Tick: {updateAvg:N3} {unit}");
+                unit = "us";
+                if (renderAvg >= 1000)
+                {
+                    renderAvg /= 1000;
+                    unit = "ms";
+                }
+                ImGuiNET.ImGui.TextWrapped($"Render Tick: {renderAvg:N3} {unit}");
                 ImGuiNET.ImGui.TextWrapped($"{1.0f / fpsMax * 1000.0f:N3} ms/frame Max ({fpsMax:N1} FPS Max)");
                 ImGuiNET.ImGui.TextWrapped($"Time Open {MathF.Floor(curTime / 60.0f):N0}:{curTime:N2}");
                 ImGuiNET.ImGui.TextWrapped("ECS GameObject Count " + EcsManager.entities.ValueCount);
@@ -48,6 +64,8 @@ namespace SpatialSim.Engine.Rendering
                 }
             
                 frameAvg += (frameRate - frameAvg) / (frameCount + 1);
+                updateAvg += (Window.updateTime - updateAvg) / (frameCount + 1);
+                renderAvg += (Window.renderTime - renderAvg) / (frameCount + 1);
                 frameCount++;
                 fpsTime += AppState.GetDelta();
                 if(fpsTime >= 5)
