@@ -2,12 +2,11 @@ using SpatialSim.Engine.Core;
 
 namespace SpatialSim.Engine.Rendering
 {
-    // TODO Make a function that will copy to gpu memory or not as, high frequency changes should use cpu memory, but static be gpu memory
     /// <summary>
     /// By default will store memory on the cpu side
     /// Copy to gpu memory if needed on gpu local memory
     /// </summary>
-    public class Buffer<T> : IDisposable where T : unmanaged
+    public sealed class Buffer<T> : IDisposable where T : unmanaged
     {
         public IBufferDevice<T>? buffer;
         public BufferUsage usage;

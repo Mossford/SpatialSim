@@ -189,5 +189,43 @@ namespace SpatialSim.Engine.Rendering
             
             return meshData;
         }
+        
+        public static MeshData Create2DQuad()
+        {
+            MeshData meshData = new MeshData();
+            meshData.vertexData.vertices = new[]
+            {
+                new Vector3(-1.0f, -1.0f, 0.0f),
+                new Vector3(1.0f, -1.0f, 0.0f),
+                new Vector3(-1.0f, 1.0f, 0.0f),
+                new Vector3(1.0f, -1.0f, 0.0f),
+                new Vector3(1.0f, 1.0f, 0.0f), 
+            };
+
+            meshData.vertexData.normals = new[]
+            {
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+            };
+
+            meshData.vertexData.uvs = new[]
+            {
+                new Vector2(0, 0),
+                new Vector2(1, 0),
+                new Vector2(0, 1),
+                new Vector2(1, 0),
+                new Vector2(1, 1)
+            };
+            
+            meshData.indices = new []
+            {
+                0, 1, 2, 3, 4, 2
+            };
+           
+            return meshData;
+        }
     }
 }

@@ -3,7 +3,7 @@ using StbImageSharp;
 
 namespace SpatialSim.Engine.Rendering
 {
-    public class Texture : IDisposable
+    public sealed class Texture : IDisposable
     {
         public ITextureDevice texture;
         public TextureData data;

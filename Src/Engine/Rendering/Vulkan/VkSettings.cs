@@ -10,7 +10,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static Format SwapchainColorFormat = Format.B8G8R8A8Unorm;
         public static ColorSpaceKHR SwapchainColorSpaceFormat = ColorSpaceKHR.SpaceSrgbNonlinearKhr;
         //immediate but no tearing for mailbox
-        public static PresentModeKHR SwapchainPresentMode = PresentModeKHR.MailboxKhr;
+        public static PresentModeKHR SwapchainPresentMode = PresentModeKHR.FifoKhr;
 
         #endregion
 

@@ -46,19 +46,21 @@ namespace SpatialSim.Engine.Rendering
         public Mesh meshRef { get; private set; }
         public Material materialRef { get; private set; }
         public Camera cameraRef { get; private set; }
+        public string pipelineRef;
 
         public MeshRenderer()
         {
             
         }
 
-        public MeshRenderer(EcsComponentRef mesh, EcsComponentRef material, EcsComponentRef camera)
+        public MeshRenderer(EcsComponentRef mesh, EcsComponentRef material, EcsComponentRef camera, string pipeline = "")
         {
             mesh.CheckComponent(EcsComponentType.Mesh);
             material.CheckComponent(EcsComponentType.Material);
             this.mesh = mesh;
             this.material = material;
             this.camera = camera;
+            pipelineRef = pipeline;
             
             Create();
         }
@@ -79,27 +81,14 @@ namespace SpatialSim.Engine.Rendering
 
         public void Draw(CommandBuffer commandBuffer, int frame)
         {
-            Pipeline pipeline = PipelineManager.RetrievePipeline("");
+            Pipeline pipeline = PipelineManager.RetrievePipeline(pipelineRef);
             commandBuffer.BindPipeLine(pipeline);
             commandBuffer.SetViewport(Window.size);
             commandBuffer.SetScissor(Window.size);
             
             commandBuffer.BindVertexBuffers(vertexBuffer.buffer!);
             commandBuffer.BindIndexBuffers(indexBuffer.buffer!);
-            Shader vertexShader = ShaderManager.RetrieveShader("base.vert");
-            vertexShader.AddMat4(0, cameraRef.view);
-            vertexShader.AddMat4(0, cameraRef.proj);
-            vertexShader.AddMat4(0, meshRef.transformRef.GetModelMat());
-            pipeline.UpdateUniforms(vertexShader, 0, frame);
-            commandBuffer.BindVertexUniforms(pipeline, 0);
-            Shader fragmentShader = ShaderManager.RetrieveShader("base.frag");
-            fragmentShader.AddVec4(0, new Vector4(materialRef.diffuse, 1.0f));
-            fragmentShader.AddVec4(0, new Vector4(1.0f));
-            fragmentShader.AddVec4(0, new Vector4(1.0f));
-            fragmentShader.AddVec4(0, new Vector4(1.0f));
-            pipeline.UpdateUniforms(fragmentShader, 0, frame);
-            commandBuffer.BindFragmentUniforms(pipeline, 0);
-            commandBuffer.BindTexture(PipelineManager.RetrievePipeline(""), TextureManager.RetrieveTexture(materialRef.textureRef, ""));
+            pipeline.SetDrawData(commandBuffer, this, 0);
             commandBuffer.Draw(meshRef.meshData.indices.Length);
         }
 

@@ -17,6 +17,7 @@ namespace SpatialSim.Engine.Rendering
         
         ShaderDescriptorDef uniformDef;
 
+        // TODO the shader settings should have a predefined list of descriptor sets that follows the renderer settings?
         public void Create(ShaderSettings settings)
         {
             this.settings = settings;

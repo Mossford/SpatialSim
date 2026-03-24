@@ -12,7 +12,7 @@ namespace SpatialSim.Engine.Rendering
         {
             pipelineToIndex = new Dictionary<string, int>();
             pipelines = new List<Pipeline>();
-            defaultPipeline = new Pipeline();
+            defaultPipeline = new Pipeline("");
             defaultPipeline.Create(ShaderManager.RetrieveShader(
                     new ShaderSettings(
                         ShaderType.Vertex, 
@@ -33,23 +33,24 @@ namespace SpatialSim.Engine.Rendering
             return pipelineToIndex.ContainsKey(pipelineName);
         }
 
-        public static bool LoadPipeline(string pipelineName, Shader[] shaders)
+        public static bool LoadPipeline(Pipeline pipeline, Shader[] shaders)
         {
+            //TODO remove this check
             if (shaders.Length != 2)
             {
                 Debug.Error("Tried to load pipeline at an incorrect amount of shaders");
                 return false;
             }
             
-            if (pipelineToIndex.TryAdd(pipelineName, pipelines.Count))
+            if (pipelineToIndex.TryAdd(pipeline.pipelineName, pipelines.Count))
             {
-                pipelines.Add(new Pipeline());
+                pipelines.Add(pipeline);
                 //TODO make the pipeline accept an array of shaders and a usage and infer what to then do
                 pipelines[^1].Create(shaders[0], shaders[1]);
                 return true;
             }
 
-            Debug.Warning($"Could not add pipeline {pipelineName} possible duplicate");
+            Debug.Warning($"Could not add pipeline {pipeline.pipelineName} possible duplicate");
             return false;
         }
 

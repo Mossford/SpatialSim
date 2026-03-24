@@ -2,7 +2,6 @@ namespace SpatialSim.Engine.Core
 {
     public enum EcsComponentType
     {
-        Pipeline,
         Mesh,
         MeshRenderer,
         Material,

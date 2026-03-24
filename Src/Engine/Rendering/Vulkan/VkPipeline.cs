@@ -65,7 +65,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                         break;
                     }
                 }
-
+                
                 DescriptorSetLayout layout = CreateDescriptorSetLayout(ShaderStageFlags.VertexBit | ShaderStageFlags.FragmentBit, type,
                     fragment.settings.descriptorDef[i].binding);
                 if (!descriptorSetLayouts.TryAdd(fragment.settings.descriptorDef[i], layout))
@@ -245,10 +245,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 };
             }
 
-            if (AppState.appContext.GetContext<VkContext>().vk.CreatePipelineLayout(VkDevices.device, in pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
+            Result result = AppState.appContext.GetContext<VkContext>().vk
+                .CreatePipelineLayout(VkDevices.device, in pipelineLayoutInfo, null, out pipelineLayout);
+            if (result != Result.Success)
             {
-                Debug.Error("Failed to create pipeline layout");
-                throw new Exception("Failed to create pipeline layout");
+                Debug.Error($"Failed to create pipeline layout {result}");
+                throw new Exception($"Failed to create pipeline layout {result}");
             }
 
             Format swapChainFormat = VkSwapChain.swapChainImageFormat;
@@ -291,10 +293,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 BasePipelineHandle = default,
             };
 
-            if (AppState.appContext.GetContext<VkContext>().vk.CreateGraphicsPipelines(VkDevices.device, default, 1, in pipelineInfo, null, out pipeline) != Result.Success)
+             result = AppState.appContext.GetContext<VkContext>().vk
+                .CreateGraphicsPipelines(VkDevices.device, default, 1, in pipelineInfo, null, out pipeline);
+            if (result != Result.Success)
             {
-                Debug.Error("Failed to create graphics pipeline");
-                throw new Exception("Failed to create graphics pipeline");
+                Debug.Error($"Failed to create graphics pipeline {result}");
+                throw new Exception($"Failed to create graphics pipeline {result}");
             }
 
             SilkMarshal.Free((nint)vertShaderStageInfo.PName);
@@ -303,7 +307,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             Debug.LogInfo("Successful pipeline creation");
         }
 
-        public void UpdateUniforms(in Shader shader, int binding, int frame)
+        public void UpdateUniforms(in Shader shader, int binding)
         {
             int set = RendererSettings.VertexUniformSet;
             if (shader.settings.type == ShaderType.Fragment)
