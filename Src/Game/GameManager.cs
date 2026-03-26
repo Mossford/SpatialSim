@@ -33,8 +33,8 @@ namespace SpatialSim.Game
             EcsComponentRef cameraRef = camera.AddComponent(new Camera(
                 camera.AddComponent(
                     new Transform(
-                        new Vector3(0f), 
-                        Quaternion.CreateFromYawPitchRoll(0, 0, 0), 
+                        new Vector3(), 
+                        new Vector3(), 
                         new Vector3(1.0f))), 
                  MathUtil.GetFovFromFocalLength(23.9f, 2400)));
 
@@ -43,7 +43,7 @@ namespace SpatialSim.Game
             Entity mesh = EcsManager.AddEntity();
             EcsComponentRef transform = mesh.AddComponent(new Transform(
                 new Vector3(0, 0, 1),
-                Quaternion.CreateFromYawPitchRoll(90 * MathF.PI / 180f, 0, 0),
+                new Vector3(90 * MathF.PI / 180f, 0, 0),
                 new Vector3(MathF.Tan(31 / 60f * MathF.PI / 180f / 2f))));
             EcsComponentRef meshRef = mesh.AddComponent(
                 new Mesh(MeshGeneration.CreateSphereMesh(1f, 4),
@@ -56,7 +56,7 @@ namespace SpatialSim.Game
             Entity screenQuad = EcsManager.AddEntity();
             transform = screenQuad.AddComponent(new Transform(
                 new Vector3(0, 0, 0),
-                Quaternion.Identity,
+                new Vector3(),
                 new Vector3(1f)));
             meshRef = screenQuad.AddComponent(new Mesh(MeshGeneration.Create2DQuad(), transform));
             screenQuad.AddComponent(new MeshRenderer(

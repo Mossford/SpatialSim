@@ -19,7 +19,8 @@ namespace SpatialSim.Game.Rendering
             fragmentShader.AddData(binding, meshRenderer.cameraRef.view);
             fragmentShader.AddData(binding, meshRenderer.cameraRef.transformRef.position);
             fragmentShader.AddData(binding, (float)AppState.GetSeconds());
-            fragmentShader.AddData(binding, new Vector4(Window.size, 0, 0));
+            fragmentShader.AddData(binding, new Vector3(Window.size, 0));
+            fragmentShader.AddData(binding, (uint)100);
             UpdateUniforms(fragmentShader, binding);
             commandBuffer.BindFragmentUniforms(this, binding);
         }

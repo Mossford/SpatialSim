@@ -39,7 +39,11 @@ namespace SpatialSim.Engine.Rendering
                 transformRef.position, transformRef.forward, transformRef.up);
             if (fov < 0.001f)
                 fov = 0.001f;
-            proj = Matrix4x4.CreatePerspectiveFieldOfView(fov * MathF.PI / 180.0f, Window.size.X / Window.size.Y, 0.1f, 10.0f);
+            proj = Matrix4x4.CreatePerspectiveFieldOfView(
+                fov * MathF.PI / 180.0f, 
+                Window.size.X / Window.size.Y, 
+                0.1f, 
+                10.0f);
         }
 
         public void Dispose()

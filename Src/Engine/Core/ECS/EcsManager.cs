@@ -45,6 +45,7 @@ namespace SpatialSim.Engine.Core
 
         public static void Render(CommandBuffer commandBuffer, int frame)
         {
+            // TODO This should have some ordering system where we can then draw by a layer system or match by transparency
             commandBuffer.BeginRendering(frame);
             for (int i = 0; i < componentPools[EcsComponentType.MeshRenderer.GetId()].components.ValueCount; i++)
             {

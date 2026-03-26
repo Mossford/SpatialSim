@@ -18,7 +18,7 @@ namespace SpatialSim.Game
             private set;
         }
 
-        public float sensitivity = 0.005f;
+        public float sensitivity = 0.003f;
 
         public CameraController(EcsComponentRef cameraRef)
         {
@@ -33,8 +33,7 @@ namespace SpatialSim.Game
                 
                 Vector2 mousePosMoved = Input.position - Input.lastPosition;
                 mousePosMoved *= camera.fov * sensitivity;
-                camera.transformRef.rotation += 
-                    Quaternion.CreateFromYawPitchRoll(-mousePosMoved.Y, mousePosMoved.X, 0f);
+                camera.transformRef.rotation += new Vector3(mousePosMoved.X, -mousePosMoved.Y, 0f);
 
                 if (Input.scroll != 0)
                 {

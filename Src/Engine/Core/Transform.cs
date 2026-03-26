@@ -8,7 +8,7 @@ namespace SpatialSim.Engine.Core
         public int id { get; set; } = -1;
 
         public Vector3 position;
-        public Quaternion rotation;
+        public Vector3 rotation;
         public Vector3 scale;
         public Matrix4x4 modelMat;
 
@@ -19,11 +19,11 @@ namespace SpatialSim.Engine.Core
         public Transform()
         {
             position = new Vector3();
-            rotation = new Quaternion();
+            rotation = new Vector3();
             scale = new Vector3();
         }
 
-        public Transform(Vector3 position, Quaternion rotation, Vector3 scale)
+        public Transform(Vector3 position, Vector3 rotation, Vector3 scale)
         {
             this.position = position;
             this.rotation = rotation;
@@ -34,7 +34,7 @@ namespace SpatialSim.Engine.Core
         {
             modelMat = Matrix4x4.Identity *
                        Matrix4x4.CreateScale(scale) *
-                       Matrix4x4.CreateFromQuaternion(rotation) *
+                       Matrix4x4.CreateFromYawPitchRoll(rotation.X, rotation.Y, rotation.Z) *
                        Matrix4x4.CreateTranslation(position);
             return modelMat;
         }
