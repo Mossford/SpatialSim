@@ -6,6 +6,7 @@ using SpatialSim.Engine.Core.Vulkan;
 using SpatialSim.Engine.Rendering;
 using SpatialSim.Engine.Rendering.Vulkan;
 using Silk.NET.Windowing.Glfw;
+using SpatialSim.Engine.Rendering.ImGui;
 
 
 namespace SpatialSim.Engine.Core
@@ -86,6 +87,7 @@ namespace SpatialSim.Engine.Core
             TextureManager.Init();
             
             MainImgui.SetImGuiStyle();
+            MainImgui.menus.Add(new TicksMenu());
             
             init.Invoke();
             

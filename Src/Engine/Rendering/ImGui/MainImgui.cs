@@ -11,6 +11,7 @@ namespace SpatialSim.Engine.Rendering
     public static class MainImgui
     {
         public static bool ShowMainWindow = true;
+        public static List<ImGuiMenu> menus = new List<ImGuiMenu>();
         
         static uint frameCount;
         static double frameAvg;
@@ -80,9 +81,10 @@ namespace SpatialSim.Engine.Rendering
                 {
                     if (ImGuiNET.ImGui.BeginMenu("Menus"))
                     {
-                        ImGuiNET.ImGui.MenuItem("VkTicks", null, ref TicksMenu.show);
-                        // TODO Make a generic menu so it can be added without manually needing to do this
-                        ImGuiNET.ImGui.MenuItem("Camera", null, ref CameraMenu.show);
+                        for (int i = 0; i < menus.Count; i++)
+                        {
+                            ImGuiNET.ImGui.MenuItem(menus[i].name, null, ref menus[i].show);
+                        }
                         
                         ImGuiNET.ImGui.EndMenu();
                     }
@@ -92,9 +94,13 @@ namespace SpatialSim.Engine.Rendering
                 ImGuiNET.ImGui.End();
             }
 
-            TicksMenu.Show();
-            CameraMenu.Show();
-            
+            for (int i = 0; i < menus.Count; i++)
+            {
+                if (menus[i].show)
+                {
+                    menus[i].Show();
+                }
+            }
         }
 
         public static void SetImGuiStyle()

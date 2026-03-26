@@ -1,16 +1,17 @@
+using SpatialSim.Engine.Rendering.ImGui;
 using SpatialSim.Game.Math;
 
 namespace SpatialSim.Game.ImGui
 {
-    public static class CameraMenu
+    public class CameraMenu : ImGuiMenu
     {
-        public static bool show;
-
-        public static void Show()
+        public CameraMenu()
         {
-            if(!show)
-                return;
-            
+            name = "Camera";
+        }
+
+        public override void Show()
+        {
             if(!ImGuiNET.ImGui.Begin("Camera Menu", ref show))
             {
                 ImGuiNET.ImGui.End();

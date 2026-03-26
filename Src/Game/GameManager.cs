@@ -2,6 +2,7 @@ using System.Numerics;
 using Silk.NET.Input;
 using SpatialSim.Engine.Core;
 using SpatialSim.Engine.Rendering;
+using SpatialSim.Game.ImGui;
 using SpatialSim.Game.Math;
 using SpatialSim.Game.Rendering;
 
@@ -39,6 +40,7 @@ namespace SpatialSim.Game
                  MathUtil.GetFovFromFocalLength(23.9f, 2400)));
 
             cameraController = new CameraController(cameraRef);
+            MainImgui.menus.Add(new CameraMenu());
             
             Entity mesh = EcsManager.AddEntity();
             EcsComponentRef transform = mesh.AddComponent(new Transform(

@@ -3,15 +3,15 @@ using SpatialSim.Engine.Core.Vulkan;
 
 namespace SpatialSim.Engine.Rendering.ImGui
 {
-    public static class TicksMenu
+    public class TicksMenu : ImGuiMenu
     {
-        public static bool show = false;
-        
-        public static void Show()
+        public TicksMenu()
         {
-            if(!show)
-                return;
-            
+            name = "Ticks";
+        }
+        
+        public override void Show()
+        {
             if(!ImGuiNET.ImGui.Begin("VkTick Menu", ref show))
             {
                 ImGuiNET.ImGui.End();
