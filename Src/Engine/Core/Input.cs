@@ -15,6 +15,8 @@ namespace SpatialSim.Engine.Core
         public static Vector2 lastPosition;
         public static Vector2 lastLocalPosition;
         public static bool uiWantMouse;
+        public static int scroll;
+        static int lastScroll;
 
         public static void Init()
         {
@@ -57,6 +59,8 @@ namespace SpatialSim.Engine.Core
             lastLocalPosition = ((lastPosition * 2) - Window.size) / 2;
             position = mouse.Position * Window.windowScale;
             localPosition = ((position * 2) - Window.size) / 2;
+
+            scroll = (int)mouse.ScrollWheels.FirstOrDefault().Y;
         }
 
         public static bool IsKeyDown(Key key)
@@ -77,6 +81,11 @@ namespace SpatialSim.Engine.Core
                     return true;
             }
             return false;
+        }
+
+        public static bool IsMouseButtonDown(MouseButton button)
+        {
+            return mouse.IsButtonPressed(button);
         }
 
         public static void Clear()

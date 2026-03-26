@@ -76,6 +76,16 @@ namespace SpatialSim.Engine.Rendering
             return defaultPipeline;
         }
 
+        public static void ResetPipelines(CommandBuffer commandBuffer)
+        {
+            for (int i = 0; i < pipelines.Count; i++)
+            {
+                commandBuffer.ResetPipeLine(pipelines[i]);
+            }
+            
+            commandBuffer.ResetPipeLine(defaultPipeline);
+        }
+
         public static void Clean()
         {
             for (int i = 0; i < pipelines.Count; i++)

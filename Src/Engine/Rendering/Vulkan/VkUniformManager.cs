@@ -152,6 +152,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             return uniforms[def.type][def].uniformBuffers[uniforms[def.type][def].currentBuffer];
         }
+        
+        public Buffer<byte> GetBuffer(ShaderDescriptorDef def)
+        {
+            return uniforms[def.type][def].uniformBuffers[uniforms[def.type][def].currentBuffer];
+        }
 
         public DescriptorSet GetDescriptorSet(ShaderDescriptorDef def)
         {

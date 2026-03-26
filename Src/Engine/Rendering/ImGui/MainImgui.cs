@@ -4,6 +4,7 @@ using System.Numerics;
 using ImGuiNET;
 using SpatialSim.Engine.Core;
 using SpatialSim.Engine.Rendering.ImGui;
+using SpatialSim.Game.ImGui;
 
 namespace SpatialSim.Engine.Rendering
 {
@@ -80,6 +81,8 @@ namespace SpatialSim.Engine.Rendering
                     if (ImGuiNET.ImGui.BeginMenu("Menus"))
                     {
                         ImGuiNET.ImGui.MenuItem("VkTicks", null, ref TicksMenu.show);
+                        // TODO Make a generic menu so it can be added without manually needing to do this
+                        ImGuiNET.ImGui.MenuItem("Camera", null, ref CameraMenu.show);
                         
                         ImGuiNET.ImGui.EndMenu();
                     }
@@ -90,6 +93,7 @@ namespace SpatialSim.Engine.Rendering
             }
 
             TicksMenu.Show();
+            CameraMenu.Show();
             
         }
 

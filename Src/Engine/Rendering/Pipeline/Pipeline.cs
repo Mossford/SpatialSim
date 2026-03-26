@@ -33,16 +33,16 @@ namespace SpatialSim.Engine.Rendering
             //default pipeline has default behavior
             
             Shader vertexShader = ShaderManager.RetrieveShader(shaders[0]);
-            vertexShader.AddMat4(binding, meshRenderer.cameraRef.view);
-            vertexShader.AddMat4(binding, meshRenderer.cameraRef.proj);
-            vertexShader.AddMat4(binding, meshRenderer.meshRef.transformRef.GetModelMat());
+            vertexShader.AddData(binding, meshRenderer.cameraRef.view);
+            vertexShader.AddData(binding, meshRenderer.cameraRef.proj);
+            vertexShader.AddData(binding, meshRenderer.meshRef.transformRef.GetModelMat());
             UpdateUniforms(vertexShader, binding);
             commandBuffer.BindVertexUniforms(this, binding);
             Shader fragmentShader = ShaderManager.RetrieveShader(shaders[1]);
-            fragmentShader.AddVec4(binding, new Vector4(meshRenderer.materialRef.diffuse, 1.0f));
-            fragmentShader.AddVec4(binding, new Vector4(1.0f));
-            fragmentShader.AddVec4(binding, new Vector4(1.0f));
-            fragmentShader.AddVec4(binding, new Vector4(1.0f));
+            fragmentShader.AddData(binding, new Vector4(meshRenderer.materialRef.diffuse, 1.0f));
+            fragmentShader.AddData(binding, new Vector4(1.0f));
+            fragmentShader.AddData(binding, new Vector4(1.0f));
+            fragmentShader.AddData(binding, new Vector4(1.0f));
             UpdateUniforms(fragmentShader, binding);
             commandBuffer.BindFragmentUniforms(this, binding);
             commandBuffer.BindTexture(this, TextureManager.RetrieveTexture(meshRenderer.materialRef.textureRef, pipelineName));

@@ -15,11 +15,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static unsafe void CreateInstance()
         {
             AppState.appContext.GetContext<VkContext>().vk = Vk.GetApi();
-
-            if (AppState.EnableVkValidationLayers && !VkValidationLayers.CheckValidationLayerSupport())
+            
+            //if we request validation layers, check for support and keep enabled if we have validation support
+            if (AppState.EnableVkValidationLayers)
             {
-                Debug.Error("Validation layers requested, but not available");
-                throw new Exception("Validation layers requested, but not available");
+                AppState.EnableVkValidationLayers = VkValidationLayers.CheckValidationLayerSupport();
             }
 
             ApplicationInfo appInfo = new()
@@ -29,7 +29,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 ApplicationVersion = new Version32(0, 1, 0),
                 PEngineName = (byte*)Marshal.StringToHGlobalAnsi("SpatialSim Engine"),
                 EngineVersion = new Version32(0, 1, 0),
-                ApiVersion = Vk.Version12
+                ApiVersion = Vk.Version13
             };
 
             InstanceCreateInfo createInfo = new()

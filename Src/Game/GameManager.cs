@@ -1,12 +1,17 @@
 using System.Numerics;
+using Silk.NET.Input;
 using SpatialSim.Engine.Core;
 using SpatialSim.Engine.Rendering;
+using SpatialSim.Game.Math;
 using SpatialSim.Game.Rendering;
 
 namespace SpatialSim.Game
 {
     public static class GameManager
     {
+
+        public static CameraController cameraController;
+        
         public static void Init()
         {
             PipelineManager.LoadPipeline(new VolumetricPipeline("Volumetric"), [
@@ -31,8 +36,10 @@ namespace SpatialSim.Game
                         new Vector3(0f), 
                         Quaternion.CreateFromYawPitchRoll(0, 0, 0), 
                         new Vector3(1.0f))), 
-                2f * MathF.Atan2(23.9f, 2f * 2400) * 180f / MathF.PI));
+                 MathUtil.GetFovFromFocalLength(23.9f, 2400)));
 
+            cameraController = new CameraController(cameraRef);
+            
             Entity mesh = EcsManager.AddEntity();
             EcsComponentRef transform = mesh.AddComponent(new Transform(
                 new Vector3(0, 0, 1),
@@ -62,7 +69,7 @@ namespace SpatialSim.Game
 
         public static void Update(float dt)
         {
-            
+            cameraController.Update();
         }
 
         public static void FixedUpdate(float dt)

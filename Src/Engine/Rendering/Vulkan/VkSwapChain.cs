@@ -33,7 +33,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         static CommandBuffer commandPool;
         public static CommandBuffer[] commandBuffers;
         
-        public const int MAX_FRAMES_IN_FLIGHT = 2;
 
         public static unsafe void CreateSwapChain()
         {
@@ -123,9 +122,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         
         public static unsafe void CreateSyncObjects()
         {
-            imageAvailableSemaphores = new Silk.NET.Vulkan.Semaphore[MAX_FRAMES_IN_FLIGHT];
+            imageAvailableSemaphores = new Silk.NET.Vulkan.Semaphore[VkSettings.MAX_FRAMES_IN_FLIGHT];
             renderFinishedSemaphores = new Silk.NET.Vulkan.Semaphore[swapChainImages.Length];
-            inFlightFences = new Fence[MAX_FRAMES_IN_FLIGHT];
+            inFlightFences = new Fence[VkSettings.MAX_FRAMES_IN_FLIGHT];
             imagesInFlight = new Fence[swapChainImages.Length];
 
             SemaphoreCreateInfo semaphoreInfo = new()
@@ -139,7 +138,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 Flags = FenceCreateFlags.SignaledBit,
             };
 
-            for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+            for (int i = 0; i < VkSettings.MAX_FRAMES_IN_FLIGHT; i++)
             {
                 if (AppState.appContext.GetContext<VkContext>().vk.CreateSemaphore(VkDevices.device, in semaphoreInfo, null, out imageAvailableSemaphores[i]) != Result.Success ||
                     AppState.appContext.GetContext<VkContext>().vk.CreateFence(VkDevices.device, in fenceInfo, null, out inFlightFences[i]) != Result.Success)
@@ -236,7 +235,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             khrSwapChain!.DestroySwapchain(VkDevices.device, swapChain, null);
             
-            for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+            for (int i = 0; i < VkSettings.MAX_FRAMES_IN_FLIGHT; i++)
             {
                 AppState.appContext.GetContext<VkContext>().vk.DestroySemaphore(VkDevices.device, imageAvailableSemaphores[i], null);
                 AppState.appContext.GetContext<VkContext>().vk.DestroyFence(VkDevices.device, inFlightFences[i], null);

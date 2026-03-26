@@ -50,7 +50,7 @@ namespace SpatialSim.Engine.Core
                 Title = AppState.WindowTitle,
                 API = graphicsApi,
                 VSync = true,
-                WindowBorder = WindowBorder.Resizable
+                WindowBorder = WindowBorder.Resizable,
             };
 
             //make sure running on glfw

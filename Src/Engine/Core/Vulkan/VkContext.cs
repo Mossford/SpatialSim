@@ -132,7 +132,7 @@ namespace SpatialSim.Engine.Core.Vulkan
                 );
             
             VkSwapChain.commandBuffers[imageIndex].End();
-            VkSwapChain.commandBuffers[imageIndex].ResetPipeLine(PipelineManager.RetrievePipeline(""));
+            PipelineManager.ResetPipelines(VkSwapChain.commandBuffers[imageIndex]);
             
             SubmitFrame(vkcommandBuffer, (uint)imageIndex);
         }
@@ -225,7 +225,7 @@ namespace SpatialSim.Engine.Core.Vulkan
                 throw new Exception($"Failed to present swap chain image {result}");
             }
 
-            VkSwapChain.currentFrame = (VkSwapChain.currentFrame + 1) % VkSwapChain.MAX_FRAMES_IN_FLIGHT;
+            VkSwapChain.currentFrame = (VkSwapChain.currentFrame + 1) % VkSettings.MAX_FRAMES_IN_FLIGHT;
         }
 
         public void WindowResize()
