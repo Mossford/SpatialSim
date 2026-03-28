@@ -9,7 +9,7 @@ namespace SpatialSim.Engine.Core
         Camera,
         
         //always keep last
-        Empty,
+        Empty = EcsManager.MaxEngineComponentType
     }
 
     public static class EcsComponentTypeExtensions

@@ -5,7 +5,7 @@ namespace SpatialSim.Engine.Rendering
 {
     public class Material : IComponent
     {
-        public EcsComponentType type => EcsComponentType.Material;
+        public int type => EcsComponentType.Material.GetId();
         public int id { get; set; } = -1;
 
         public Vector3 ambient;

@@ -8,7 +8,7 @@ namespace SpatialSim.Engine.Core
         /// <summary>
         /// Will index into which EcsComponent based on the type
         /// </summary>
-        public EcsComponentType type;
+        public int type;
         /// <summary>
         /// The id at which entity this component is attached to
         /// </summary>
@@ -22,17 +22,25 @@ namespace SpatialSim.Engine.Core
         /// </summary>
         public int refId;
 
-        public bool CheckComponent(EcsComponentType otherType)
+        public EcsComponentRef()
+        {
+            type = -1;
+            entity = -1;
+            id = -1;
+            refId = -1;
+        }
+
+        public bool CheckComponent(int otherType)
         {
             if (type != otherType)
             {
-                Debug.Warning($"Input {type} component was not of type {otherType}");
+                Debug.Warning($"Input type {type} component was not of type {otherType}");
                 return false;
             }
             
-            if (id == -1 || id >= EcsManager.componentPools[type.GetId()].components.Count)
+            if (id == -1 || id >= EcsManager.componentPools[type].components.Count)
             {
-                Debug.Warning($"Input {type} Id:{id} component does not have a valid id");
+                Debug.Warning($"Input type {type} Id:{id} component does not have a valid id");
                 return false;
             }
 

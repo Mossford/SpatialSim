@@ -78,11 +78,11 @@ namespace SpatialSim.Game
             }
             if (Input.IsKeyDown(Key.A))
             {
-                camera.transformRef.position += new Vector3(0.001f, 0, 0);
+                camera.transformRef.position -= new Vector3(0.001f, 0, 0);
             }
             if (Input.IsKeyDown(Key.D))
             {
-                camera.transformRef.position -= new Vector3(0.001f, 0, 0);
+                camera.transformRef.position += new Vector3(0.001f, 0, 0);
             }
         }
     }

@@ -4,7 +4,7 @@ namespace SpatialSim.Engine.Core
 {
     public class Transform : IComponent
     {
-        public EcsComponentType type => EcsComponentType.Transform;
+        public int type => EcsComponentType.Transform.GetId();
         public int id { get; set; } = -1;
 
         public Vector3 position;

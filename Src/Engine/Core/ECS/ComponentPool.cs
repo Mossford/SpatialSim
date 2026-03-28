@@ -9,12 +9,12 @@ namespace SpatialSim.Engine.Core
     public struct ComponentPool
     {
         public StableList<IComponent> components;
-        public EcsComponentType poolType;
+        public int poolType;
 
         public ComponentPool()
         {
             components = new StableList<IComponent>();
-            poolType = EcsComponentType.Empty;
+            poolType = EcsComponentType.Empty.GetId();
         }
     }
 }

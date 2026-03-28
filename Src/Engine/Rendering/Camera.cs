@@ -5,7 +5,7 @@ namespace SpatialSim.Engine.Rendering
 {
     public class Camera : IComponent
     {
-        public EcsComponentType type => EcsComponentType.Camera;
+        public int type => EcsComponentType.Camera.GetId();
         public int id { get; set; } = -1;
 
         public EcsComponentRef transform
@@ -28,7 +28,7 @@ namespace SpatialSim.Engine.Rendering
 
         public Camera(EcsComponentRef transform, float fov)
         {
-            transform.CheckComponent(EcsComponentType.Transform);
+            transform.CheckComponent(EcsComponentType.Transform.GetId());
             this.transform = transform;
             this.fov = fov;
         }

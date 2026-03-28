@@ -4,7 +4,7 @@ namespace SpatialSim.Engine.Rendering
 {
     public class Mesh : IComponent
     {
-        public EcsComponentType type => EcsComponentType.Mesh;
+        public int type => EcsComponentType.Mesh.GetId();
         public int id { get; set; } = -1;
 
         public EcsComponentRef transform
@@ -28,7 +28,7 @@ namespace SpatialSim.Engine.Rendering
 
         public Mesh(MeshData meshData, EcsComponentRef transform)
         {
-            transform.CheckComponent(EcsComponentType.Transform);
+            transform.CheckComponent(EcsComponentType.Transform.GetId());
             this.meshData = meshData;
             this.transform = transform;
         }

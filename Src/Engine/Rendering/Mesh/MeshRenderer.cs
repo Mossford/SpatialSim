@@ -6,7 +6,7 @@ namespace SpatialSim.Engine.Rendering
 {
     public class MeshRenderer : IComponent
     {
-        public EcsComponentType type => EcsComponentType.MeshRenderer;
+        public int type => EcsComponentType.MeshRenderer.GetId();
         public int id { get; set; } = -1;
 
         public EcsComponentRef mesh 
@@ -55,8 +55,8 @@ namespace SpatialSim.Engine.Rendering
 
         public MeshRenderer(EcsComponentRef mesh, EcsComponentRef material, EcsComponentRef camera, string pipeline = "")
         {
-            mesh.CheckComponent(EcsComponentType.Mesh);
-            material.CheckComponent(EcsComponentType.Material);
+            mesh.CheckComponent(EcsComponentType.Mesh.GetId());
+            material.CheckComponent(EcsComponentType.Material.GetId());
             this.mesh = mesh;
             this.material = material;
             this.camera = camera;

@@ -1,4 +1,4 @@
-namespace SpatialSim.Game.Simulation
+namespace SpatialSim.Game.Simulation.StarSystem
 {
     public class StarSystem
     {

@@ -16,20 +16,20 @@ namespace SpatialSim.Game
         
         public static void Init()
         {
-            /*PipelineManager.LoadPipeline(new VolumetricPipeline("Volumetric"), [
+            PipelineManager.LoadPipeline(new VolumetricPipeline("Volumetric"), [
                 ShaderManager.RetrieveShader(
                     new ShaderSettings(
                         ShaderType.Vertex,
-                        [new ShaderDescriptorDef(RendererSettings.VertexUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Vertex)],
+                        [new ShaderDescriptorDef(RendererSettings.VertexUniformSet, [0], ShaderDescriptorUsage.Uniform, ShaderType.Vertex)],
                         "volumetric.vert")),
                 ShaderManager.RetrieveShader(
                     new ShaderSettings(ShaderType.Fragment,
                         [
-                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, 0, ShaderDescriptorUsage.Sampler, ShaderType.Fragment), 
-                            new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Fragment)
+                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [0], ShaderDescriptorUsage.Sampler, ShaderType.Fragment), 
+                            new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, [0], ShaderDescriptorUsage.Uniform, ShaderType.Fragment)
                         ],
                         "volumetric.frag"))
-            ]);*/
+            ]);
             
             Entity camera = EcsManager.AddEntity();
             EcsComponentRef cameraRef = camera.AddComponent(new Camera(
@@ -57,7 +57,7 @@ namespace SpatialSim.Game
                 normalMapRef = "moonNormal.png",
             }), cameraRef));
             
-            /*Entity screenQuad = EcsManager.AddEntity();
+            Entity screenQuad = EcsManager.AddEntity();
             transform = screenQuad.AddComponent(new Transform(
                 new Vector3(0, 0, 0),
                 new Vector3(),
@@ -68,7 +68,7 @@ namespace SpatialSim.Game
                 screenQuad.AddComponent(
                     new Material()), 
                 cameraRef,
-                "Volumetric"));*/
+                "Volumetric"));
         }
 
         public static void Update(float dt)

@@ -13,6 +13,9 @@ namespace SpatialSim.Engine.Core
         public static List<ComponentPool> componentPools;
         public static StableList<Entity> entities;
 
+        //Engine defined components have a maximum of 99, user defined is above
+        public const int MaxEngineComponentType = 99;
+        
         public static int totalComponents;
         
         public static void Init()
@@ -25,10 +28,7 @@ namespace SpatialSim.Engine.Core
             for (int i = 0; i < types.Length - 1; i++)
             {
                 Debug.LogDebug($"Created {types[i]} ECS component pool");
-                componentPools.Add(new ComponentPool() with
-                {
-                    poolType = types[i]
-                });
+                RegisterComponentType(types[i].GetId());
             }
             
             Debug.LogDebug($"Set up {componentPools.Count} ECS component pools");
@@ -93,7 +93,11 @@ namespace SpatialSim.Engine.Core
 
         public static EcsComponentRef AddComponent(in IComponent component, int entityId)
         {
-            int poolId = component.type.GetId();
+            int poolId = component.type;
+            
+            if (!CheckComponentTypeBounds(poolId))
+                return new EcsComponentRef();
+            
             int id = componentPools[poolId].components.Add(component);
             componentPools[poolId].components[id].id = id;
             Debug.LogDebug($"Added component of type {component.type} at {id} to Entity [{entityId}]");
@@ -109,9 +113,13 @@ namespace SpatialSim.Engine.Core
         
         public static EcsComponentRef AddComponentThr(in IComponent component, int entityId)
         {
-            int poolId = component.type.GetId();
+            int poolId = component.type;
+            
             lock (componentPools)
             {
+                if (!CheckComponentTypeBounds(poolId))
+                    return new EcsComponentRef();
+                
                 lock (componentPools[poolId].components)
                 {
                     int id = componentPools[poolId].components.Add(component);
@@ -131,7 +139,10 @@ namespace SpatialSim.Engine.Core
 
         public static bool RemoveComponent(in EcsComponentRef componentRef)
         {
-            int poolId = componentRef.type.GetId();
+            int poolId = componentRef.type;
+            if (!CheckComponentTypeBounds(poolId))
+                return false;
+            
             int id = componentRef.id;
             if (id < 0 || id >= componentPools[poolId].components.Count)
                 return false;
@@ -145,9 +156,13 @@ namespace SpatialSim.Engine.Core
         
         public static bool RemoveComponentThr(in EcsComponentRef componentRef)
         {
+            int poolId = componentRef.type;
+            
             lock (componentPools)
             {
-                int poolId = componentRef.type.GetId();
+                if (!CheckComponentTypeBounds(poolId))
+                    return false;
+                
                 lock (componentPools[poolId].components)
                 {
                     int id = componentRef.id;
@@ -165,13 +180,16 @@ namespace SpatialSim.Engine.Core
         
         public static IComponent GetComponent(in EcsComponentRef componentRef)
         {
-            if (componentRef.type == EcsComponentType.Empty)
+            if (componentRef.type == EcsComponentType.Empty.GetId())
             {
                 Debug.Warning("Get Component type was empty, returning an empty component");
                 return new EmptyComponent();
             }
             
-            int poolId = componentRef.type.GetId();
+            int poolId = componentRef.type;
+            if (!CheckComponentTypeBounds(poolId))
+                return new EmptyComponent();
+            
             int id = componentRef.id;
 
             if (id < 0 || id >= componentPools[poolId].components.Count)
@@ -186,13 +204,16 @@ namespace SpatialSim.Engine.Core
         
         public static T GetComponent<T>(in EcsComponentRef componentRef) where T : IComponent
         {
-            if (componentRef.type == EcsComponentType.Empty)
+            if (componentRef.type == EcsComponentType.Empty.GetId())
             {
                 Debug.Error("Get Component type was empty on auto cast");
                 throw new InvalidCastException("Get Component type was empty on auto cast");
             }
             
-            int poolId = componentRef.type.GetId();
+            int poolId = componentRef.type;
+            if (!CheckComponentTypeBounds(poolId))
+                throw new InvalidCastException();
+            
             int id = componentRef.id;
 
             if (id < 0 || id >= componentPools[poolId].components.Count)
@@ -203,6 +224,66 @@ namespace SpatialSim.Engine.Core
             }
 
             return (T)componentPools[poolId].components[id];
+        }
+
+        public static void RegisterComponentType(int type)
+        {
+            if (type < componentPools.Count)
+            {
+                Debug.Error($"Tried to register component type {type} that is already registered, skipping");
+                return;
+            }
+            
+            componentPools.Add(new ComponentPool() with
+            {
+                poolType = type
+            });
+        }
+
+        static bool CheckComponentTypeBounds(int type)
+        {
+            //TODO maybe only run on debug builds?
+            if (type >= componentPools.Count)
+            {
+                Debug.Error($"Tried to access component of type {type} that is not registered");
+                return false;
+            }
+
+            return true;
+        }
+
+        public static IComponent GetFirstComponentOfType(Entity entity, int type)
+        {
+            if (CheckComponentTypeBounds(type))
+            {
+                return new EmptyComponent();
+            }
+            
+            for (int i = 0; i < entity.componentRefs.ValueCount; i++)
+            {
+                if (entity.componentRefs.Get(i).type == type)
+                    return GetComponent(entity.componentRefs[i]);
+            }
+
+            Debug.Warning($"Get First Component type {type} did not match any stored type, returning empty component");
+            return new EmptyComponent();
+        }
+        
+        public static T GetFirstComponent<T>(Entity entity, int type) where T : IComponent
+        {
+            if (CheckComponentTypeBounds(type))
+            {
+                throw new InvalidCastException();
+            }
+            
+            for (int i = 0; i < entity.componentRefs.ValueCount; i++)
+            {
+                if (entity.componentRefs.Get(i).type == type)
+                    return (T)GetComponent(entity.componentRefs[i]);
+            }
+
+            Debug.Error($"Get First Component type {type} did not match any stored type");
+            throw new InvalidCastException($"Get First Component type {type} did not match any stored type");
         }
     }
 }
