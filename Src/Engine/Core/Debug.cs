@@ -59,6 +59,7 @@ namespace SpatialSim.Engine.Core
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine((i == 0 ? msgType : msgType + indent) + msgs[i]);
+                    Console.ResetColor();
                 }
             }
 
@@ -85,6 +86,7 @@ namespace SpatialSim.Engine.Core
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine((i == 0 ? msgType : msgType + indent) + msgs[i]);
+                    Console.ResetColor();
                 }
             }
 
@@ -111,6 +113,7 @@ namespace SpatialSim.Engine.Core
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine((i == 0 ? msgType : msgType + indent) + msgs[i]);
+                    Console.ResetColor();
                 }
             }
 

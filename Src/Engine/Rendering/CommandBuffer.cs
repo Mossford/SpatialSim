@@ -74,9 +74,9 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer?.BindFragmentUniforms(pipeline, binding);
         }
 
-        public void BindTexture(Pipeline pipeline, Texture texture)
+        public void BindSamplers(Pipeline pipeline, Texture[] textures, ShaderType shaderType)
         {
-            commandBuffer?.BindTexture(pipeline, texture);
+            commandBuffer?.BindSamplers(pipeline, textures, shaderType);
         }
 
         /// <summary>

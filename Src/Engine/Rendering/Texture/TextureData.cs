@@ -8,6 +8,7 @@ namespace SpatialSim.Engine.Rendering
         public TextureMemoryUsage memoryUsage;
         public TextureUsage usage;
         public TextureFilter filter;
+        public int binding;
         public byte[] data;
     }
 }

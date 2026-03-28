@@ -21,6 +21,20 @@ namespace SpatialSim.Engine.Rendering
                 new Vector3(0.0f, 0.0f, 1.0f),
                 new Vector3(0.0f, 0.0f, 1.0f),
             };
+            
+            meshData.vertexData.tangents = new[]
+            {
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+            };
+            
+            meshData.vertexData.biTangents = new[]
+            {
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+            };
 
             meshData.vertexData.uvs = new[]
             {
@@ -39,152 +53,133 @@ namespace SpatialSim.Engine.Rendering
         
         public static MeshData CreateSphereMesh(float size, int sphereSubDivide = 2)
         {
-            MeshData meshData = new MeshData();
-            float t = 0.52573111f;
-            float y = 0.850650808f;
-
-            Vertex[] vertexes = 
-            {
-                new Vertex(new Vector3(-t,  y,  0), new Vector3(0), new Vector2(0)),
-                new Vertex(new Vector3(t,  y,  0),  new Vector3(0), new Vector2(0)),
-                new Vertex(new Vector3(-t, -y,  0), new Vector3(0), new Vector2(0)),
-                new Vertex(new Vector3(t, -y,  0),  new Vector3(0), new Vector2(0)),
-                new Vertex(new Vector3(0, -t,  y),  new Vector3(0), new Vector2(0)),
-                new Vertex(new Vector3(0,  t,  y),  new Vector3(0), new Vector2(0)),
-                new Vertex(new Vector3(0, -t, -y),  new Vector3(0), new Vector2(0)),
-                new Vertex(new Vector3(0,  t, -y),  new Vector3(0), new Vector2(0)),
-                new Vertex(new Vector3(y,  0, -t),  new Vector3(0), new Vector2(0)),
-                new Vertex(new Vector3(y,  0,  t),  new Vector3(0), new Vector2(0)),
-                new Vertex(new Vector3(-y,  0, -t), new Vector3(0), new Vector2(0)),
-                new Vertex(new Vector3(-y,  0,  t), new Vector3(0), new Vector2(0))
-            };
-
-            uint[] indices = 
-            {
-                0, 11, 5, 
-                0, 5, 1,
-                0, 1, 7,
-                0, 7, 10,
-                0, 10, 11,
-                
-                1, 5, 9,
-                5, 11, 4,
-                11, 10, 2,
-                10, 7, 6,
-                7, 1, 8,
-                
-                3, 9, 4,
-                3, 4, 2,
-                3, 2, 6,
-                3, 6, 8,
-                3, 8, 9,
-                
-                4, 9, 5,
-                2, 4, 11,
-                6, 2, 10,
-                8, 6, 7,
-                9, 8, 1
-            };
-
+            MeshData meshData = ModelLoader.LoadModelFile("cube.obj");
+            Vertex[] vertexes = meshData.GetVertexes();
+            
             for (int i = 0; i < sphereSubDivide; i++)
             {
-                List<uint> newIndices = new List<uint>();
+                List<int> newIndices = new List<int>();
                 List<Vertex> newVerts = new List<Vertex>();
-                for (int g = 0; g < indices.Length; g += 3)
+                for (int g = 0; g < meshData.indices.Length; g += 3)
                 {
                     //Get the required vertexes
-                    uint ia = indices[g]; 
-                    uint ib = indices[g + 1];
-                    uint ic = indices[g + 2]; 
+                    int ia = meshData.indices[g]; 
+                    int ib = meshData.indices[g + 1];
+                    int ic = meshData.indices[g + 2]; 
                     Vertex aTri = vertexes[ia];
                     Vertex bTri = vertexes[ib];
                     Vertex cTri = vertexes[ic];
+                    
+                    aTri.position = Vector3.Normalize(aTri.position);
+                    bTri.position = Vector3.Normalize(bTri.position);
+                    cTri.position = Vector3.Normalize(cTri.position);
 
                     //Create New Points
                     Vector3 ab = Vector3.Normalize((aTri.position + bTri.position) * 0.5f);
                     Vector3 bc = Vector3.Normalize((bTri.position + cTri.position) * 0.5f);
                     Vector3 ca = Vector3.Normalize((cTri.position + aTri.position) * 0.5f);
-
-                    //Create Normals
-                    Vector3 u = bc - ab;
-                    Vector3 v = ca - ab;
-                    Vector3 normal = Vector3.Normalize(Vector3.Cross(u,v));
+                    
+                    //calculate new uvs
+                    Vector2 aUV = (aTri.uv + bTri.uv) * 0.5f;
+                    
+                    if (MathF.Abs(aTri.uv.X - bTri.uv.X) > 0.5f)
+                    {
+                        if (aTri.uv.X > bTri.uv.X)
+                            aUV.X = ((aTri.uv.X - 1.0f + bTri.uv.X) * 0.5f + 1.0f);
+                        else
+                            aUV.X = ((aTri.uv.X + bTri.uv.X - 1.0f) * 0.5f + 1.0f);
+                    }
+                    
+                    Vector2 bUV = (bTri.uv + cTri.uv) * 0.5f;
+                    
+                    if (MathF.Abs(bTri.uv.X - cTri.uv.X) > 0.5f)
+                    {
+                        if (bTri.uv.X > cTri.uv.X)
+                            bUV.X = ((bTri.uv.X - 1.0f + cTri.uv.X) * 0.5f + 1.0f);
+                        else
+                            bUV.X = ((bTri.uv.X + cTri.uv.X - 1.0f) * 0.5f + 1.0f);
+                    }
+                    
+                    Vector2 cUV = (aTri.uv + cTri.uv) * 0.5f;
+                    
+                    if (MathF.Abs(aTri.uv.X - cTri.uv.X) > 0.5f)
+                    {
+                        if (aTri.uv.X > cTri.uv.X)
+                            cUV.X = ((aTri.uv.X - 1.0f + cTri.uv.X) * 0.5f + 1.0f);
+                        else
+                            cUV.X = ((aTri.uv.X + cTri.uv.X - 1.0f) * 0.5f + 1.0f);
+                    }
 
                     //Add the new vertexes
-                    ia = (uint)newVerts.Count;
+                    ia = newVerts.Count;
                     newVerts.Add(aTri);
-                    ib = (uint)newVerts.Count;
+                    ib = newVerts.Count;
                     newVerts.Add(bTri);
-                    ic = (uint)newVerts.Count;
+                    ic = newVerts.Count;
                     newVerts.Add(cTri);
-                    uint iab = (uint)newVerts.Count;
-                    newVerts.Add(new Vertex(ab, normal, Vector2.Zero));
-                    uint ibc = (uint)newVerts.Count; 
-                    newVerts.Add(new Vertex(bc, normal, Vector2.Zero));
-                    uint ica = (uint)newVerts.Count; 
-                    newVerts.Add(new Vertex(ca, normal, Vector2.Zero));
+                    int iab = newVerts.Count;
+                    newVerts.Add(new Vertex(ab, ab, Vector3.Zero, Vector3.Zero, aUV));
+                    int ibc = newVerts.Count; 
+                    newVerts.Add(new Vertex(bc, bc, Vector3.Zero, Vector3.Zero, bUV));
+                    int ica = newVerts.Count; 
+                    newVerts.Add(new Vertex(ca, ca, Vector3.Zero, Vector3.Zero, cUV));
                     newIndices.Add(ia); newIndices.Add(iab); newIndices.Add(ica);
                     newIndices.Add(ib); newIndices.Add(ibc); newIndices.Add(iab);
                     newIndices.Add(ic); newIndices.Add(ica); newIndices.Add(ibc);
                     newIndices.Add(iab); newIndices.Add(ibc); newIndices.Add(ica);
                 }
-                indices = newIndices.ToArray();
+                meshData.indices = newIndices.ToArray();
                 vertexes = newVerts.ToArray();
             }
-
-            for (int g = 0; g < vertexes.Length; g++)
+            
+            Vector3[] tangents = new Vector3[vertexes.Length];
+            Vector3[] bitangents = new Vector3[vertexes.Length];
+            //fix uv seams and calculate tangent and bitangent
+            for (int i = 0; i < meshData.indices.Length; i += 3)
             {
-                Vector3 normal = Vector3.Zero;
-                for (int i = 0; i < indices.Length; i += 3)
-                {
-                    uint a, b, c;
-                    a = indices[i];
-                    b = indices[i + 1];
-                    c = indices[i + 2];
-                    if (vertexes[g].position == vertexes[a].position)
-                    {
-                        Vector3 u = vertexes[b].position - vertexes[a].position;
-                        Vector3 v = vertexes[c].position - vertexes[a].position;
-                        Vector3 tmpnormal = Vector3.Normalize(Vector3.Cross(u, v));
-                        normal += tmpnormal;
-                    }
+                int ia = meshData.indices[i]; 
+                int ib = meshData.indices[i + 1];
+                int ic = meshData.indices[i + 2];
 
-                    if (vertexes[g].position == vertexes[b].position)
-                    {
-                        Vector3 u = vertexes[c].position - vertexes[b].position;
-                        Vector3 v = vertexes[a].position - vertexes[b].position;
-                        Vector3 tmpnormal = Vector3.Normalize(Vector3.Cross(u, v));
-                        normal += tmpnormal;
-                    }
+                Vector2 aUV = vertexes[ia].uv;
+                Vector2 bUV = vertexes[ib].uv;
+                Vector2 cUV = vertexes[ic].uv;
+                
+                Vector3 pos0 = vertexes[ia].position;
+                Vector3 pos1 = vertexes[ib].position;
+                Vector3 pos2 = vertexes[ic].position;
 
-                    if (vertexes[g].position == vertexes[c].position)
-                    {
-                        Vector3 u = vertexes[a].position - vertexes[c].position;
-                        Vector3 v = vertexes[b].position - vertexes[c].position;
-                        Vector3 tmpnormal = Vector3.Normalize(Vector3.Cross(u, v));
-                        normal += tmpnormal;
-                    }
-                }
-                vertexes[g].normal = Vector3.Normalize(normal);
+                Vector3 edge1 = pos1 - pos0;
+                Vector3 edge2 = pos2 - pos0;
+                Vector2 deltaUV1 = bUV - aUV;
+                Vector2 deltaUV2 = cUV - aUV;
+
+                float f = 1.0f / (deltaUV1.X * deltaUV2.Y - deltaUV2.X * deltaUV1.Y);
+
+                Vector3 tangent = f * (deltaUV2.Y * edge1 - deltaUV1.Y * edge2);
+                Vector3 bitangent = f * (-deltaUV2.X * edge1 + deltaUV1.X * edge2);
+
+                tangents[ia] = tangent;
+                tangents[ib] = tangent;
+                tangents[ic] = tangent;
+
+                bitangents[ia] = bitangent;
+                bitangents[ib] = bitangent;
+                bitangents[ic] = bitangent;
             }
             
             meshData.vertexData.vertices = new Vector3[vertexes.Length];
             meshData.vertexData.normals = new Vector3[vertexes.Length];
+            meshData.vertexData.tangents = new Vector3[vertexes.Length];
+            meshData.vertexData.biTangents = new Vector3[vertexes.Length];
             meshData.vertexData.uvs = new Vector2[vertexes.Length];
-            meshData.indices = new int[indices.Length];
             for (int i = 0; i < vertexes.Length; i++)
             {
                 meshData.vertexData.vertices[i] = vertexes[i].position;
-                meshData.vertexData.normals[i] = vertexes[i].normal;
-                meshData.vertexData.uvs[i] = new Vector2(
-                    0.5f - MathF.Atan2(vertexes[i].position.Z, vertexes[i].position.X) / (2.0f * MathF.PI),
-                    0.5f - MathF.Asin(vertexes[i].position.Y) / MathF.PI
-                );
-            }
-            
-            for (int i = 0; i < indices.Length; i++)
-            {
-                meshData.indices[i] = (int)indices[i];
+                meshData.vertexData.normals[i] = Vector3.Normalize(vertexes[i].normal);
+                meshData.vertexData.tangents[i] = Vector3.Normalize(tangents[i]);
+                meshData.vertexData.biTangents[i] = Vector3.Normalize(bitangents[i]);
+                meshData.vertexData.uvs[i] = vertexes[i].uv;
             }
             
             return meshData;
@@ -203,6 +198,24 @@ namespace SpatialSim.Engine.Rendering
             };
 
             meshData.vertexData.normals = new[]
+            {
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+            };
+            
+            meshData.vertexData.tangents = new[]
+            {
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(0.0f, 0.0f, 1.0f),
+            };
+            
+            meshData.vertexData.biTangents = new[]
             {
                 new Vector3(0.0f, 0.0f, 1.0f),
                 new Vector3(0.0f, 0.0f, 1.0f),

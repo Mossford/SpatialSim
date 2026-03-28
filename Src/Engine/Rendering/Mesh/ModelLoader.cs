@@ -42,12 +42,42 @@ namespace SpatialSim.Engine.Rendering
 
             for (int i = 0; i < textureQueue.Count; i++)
             {
-                TextureManager.LoadTexture(textureQueue.Dequeue(), "");
+                // TODO Make a constant for each binding that a sampler goes to?
+                //just loading in the color which we set at 0
+                TextureManager.LoadTexture(textureQueue.Dequeue(), "", 0, TextureFormat.R8G8B8A8Srgb);
             }
             
             Debug.LogDebug($"Loaded model {modelFile}");
             
             return entity;
+        }
+
+        public static unsafe MeshData LoadModelFile(string modelFile)
+        {
+            MeshData meshData = new MeshData();
+            
+            if (!File.Exists(Resources.ModelPath + modelFile))
+            {
+                Debug.Warning($"Could not file model at path {modelFile} to load");
+                return meshData;
+            }
+            
+            Assimp assimp = Assimp.GetApi();
+            Scene* scene = assimp.ImportFile(Resources.ModelPath + modelFile, (uint)PostProcessPreset.TargetRealTimeMaximumQuality);
+
+            Debug.LogDebug($"Loading model {modelFile}");
+            if (scene->MNumMeshes > 1)
+            {
+                Debug.Warning("Loaded model with more than one mesh, loading first, skipping rest");
+            }
+
+            LoadSubMesh(scene->MMeshes[0], ref meshData);
+            
+            Debug.LogDebug($"Loaded model {modelFile}");
+            
+            assimp.ReleaseImport(scene);
+
+            return meshData;
         }
 
         unsafe static void LoadModel(Entity entity, string modelFile, Transform transform, EcsComponentRef camera)
@@ -102,6 +132,8 @@ namespace SpatialSim.Engine.Rendering
             MeshData meshData = new MeshData();
             List<Vector2> uvs = new List<Vector2>();
             List<Vector3> normals = new List<Vector3>();
+            List<Vector3> tangents = new List<Vector3>();
+            List<Vector3> biTangents = new List<Vector3>();
             List<Vector3> vertices = new List<Vector3>();
             List<int> indices = new List<int>();
 
@@ -119,6 +151,14 @@ namespace SpatialSim.Engine.Rendering
                         normals.Add(mesh->MNormals[index]);
                     else
                         normals.Add(new Vector3(0f));
+                    if(mesh->MTangents != null)
+                        tangents.Add(mesh->MTangents[index]);
+                    else
+                        tangents.Add(new Vector3(0f));
+                    if(mesh->MBitangents != null)
+                        biTangents.Add(mesh->MBitangents[index]);
+                    else
+                        biTangents.Add(new Vector3(0f));
                     if(mesh->MTextureCoords.Element0 != null)
                         uvs.Add(new Vector2(mesh->MTextureCoords.Element0[index].X, mesh->MTextureCoords.Element0[index].Y));
                     else
@@ -128,6 +168,8 @@ namespace SpatialSim.Engine.Rendering
 
             meshData.vertexData.vertices = vertices.ToArray();
             meshData.vertexData.normals = normals.ToArray();
+            meshData.vertexData.tangents = tangents.ToArray();
+            meshData.vertexData.biTangents = biTangents.ToArray();
             meshData.vertexData.uvs = uvs.ToArray();
             meshData.indices = indices.ToArray();
             
@@ -137,6 +179,54 @@ namespace SpatialSim.Engine.Rendering
             Material mat = LoadSubMaterial(assimp, scene, materialIndex);
             
             entity.AddComponentThr(new MeshRenderer(entity.AddComponentThr(meshComp), entity.AddComponentThr(mat), camera));
+            
+            Debug.LogDebug($"Loaded sub mesh {mesh->MName.AsString}");
+        }
+        
+        unsafe static void LoadSubMesh(Silk.NET.Assimp.Mesh* mesh, ref MeshData meshData)
+        {
+            List<Vector2> uvs = new List<Vector2>();
+            List<Vector3> normals = new List<Vector3>();
+            List<Vector3> tangents = new List<Vector3>();
+            List<Vector3> biTangents = new List<Vector3>();
+            List<Vector3> vertices = new List<Vector3>();
+            List<int> indices = new List<int>();
+
+            for (int f = 0; f < mesh->MNumFaces; f++)
+            {
+                Face face = mesh->MFaces[f];
+
+                for (int i = 0; i < face.MNumIndices; i++)
+                {
+                    uint index = face.MIndices[i];
+                    indices.Add(vertices.Count);
+
+                    vertices.Add(mesh->MVertices[index]);
+                    if(mesh->MNormals != null)
+                        normals.Add(mesh->MNormals[index]);
+                    else
+                        normals.Add(new Vector3(0f));
+                    if(mesh->MTangents != null)
+                        tangents.Add(mesh->MTangents[index]);
+                    else
+                        tangents.Add(new Vector3(0f));
+                    if(mesh->MBitangents != null)
+                        biTangents.Add(mesh->MBitangents[index]);
+                    else
+                        biTangents.Add(new Vector3(0f));
+                    if(mesh->MTextureCoords.Element0 != null)
+                        uvs.Add(new Vector2(mesh->MTextureCoords.Element0[index].X, mesh->MTextureCoords.Element0[index].Y));
+                    else
+                        uvs.Add(new Vector2(0f));
+                }
+            }
+
+            meshData.vertexData.vertices = vertices.ToArray();
+            meshData.vertexData.normals = normals.ToArray();
+            meshData.vertexData.tangents = tangents.ToArray();
+            meshData.vertexData.biTangents = biTangents.ToArray();
+            meshData.vertexData.uvs = uvs.ToArray();
+            meshData.indices = indices.ToArray();
             
             Debug.LogDebug($"Loaded sub mesh {mesh->MName.AsString}");
         }

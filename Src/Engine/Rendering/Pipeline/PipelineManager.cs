@@ -16,13 +16,13 @@ namespace SpatialSim.Engine.Rendering
             defaultPipeline.Create(ShaderManager.RetrieveShader(
                     new ShaderSettings(
                         ShaderType.Vertex, 
-                        [new ShaderDescriptorDef(RendererSettings.VertexUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Vertex)],
+                        [new ShaderDescriptorDef(RendererSettings.VertexUniformSet, [0], ShaderDescriptorUsage.Uniform, ShaderType.Vertex)],
                         "base.vert")),
                 ShaderManager.RetrieveShader(
                     new ShaderSettings(ShaderType.Fragment, 
                         [
-                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, 0, ShaderDescriptorUsage.Sampler, ShaderType.Fragment), 
-                            new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Fragment)],
+                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [0, 1], ShaderDescriptorUsage.Sampler, ShaderType.Fragment),
+                            new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, [0], ShaderDescriptorUsage.Uniform, ShaderType.Fragment)],
                         "base.frag")));
             
             Debug.LogInfo("Successful pipeline manager creation");

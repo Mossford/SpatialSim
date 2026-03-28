@@ -7,13 +7,16 @@ namespace SpatialSim.Engine.Rendering
         public struct VertexData
         {
             public Vector3[] vertices;
-            public Vector3[] normals; //offsetted by whole length of vertices
-            public Vector2[] uvs; //offseteed by whole length of vertices and normals
+            public Vector3[] normals;
+            public Vector3[] tangents;
+            public Vector3[] biTangents;
+            public Vector2[] uvs;
 
             public VertexData()
             {
                 vertices = new Vector3[0];
                 normals = new Vector3[0];
+                tangents = new Vector3[0];
                 uvs = new Vector2[0];
             }
         }
@@ -33,7 +36,12 @@ namespace SpatialSim.Engine.Rendering
             
             for (int i = 0; i < vertexes.Length; i++)
             {
-                vertexes[i] = new Vertex(vertexData.vertices[i], vertexData.normals[i], vertexData.uvs[i]);
+                vertexes[i] = new Vertex(
+                    vertexData.vertices[i], 
+                    vertexData.normals[i], 
+                    vertexData.tangents[i],
+                    vertexData.biTangents[i],
+                    vertexData.uvs[i]);
             }
 
             return vertexes;

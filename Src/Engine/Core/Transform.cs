@@ -50,12 +50,12 @@ namespace SpatialSim.Engine.Core
 
         public Vector3 GetRight()
         {
-            return Vector3.Normalize(Vector3.Cross(Vector3.UnitY, forward));
+            return Vector3.Normalize(Vector3.Cross(-Vector3.UnitY, forward));
         }
         
         public Vector3 GetUp()
         {
-            return Vector3.Cross(forward, GetRight());
+            return Vector3.Cross(forward, right);
         }
         
         public void Dispose()

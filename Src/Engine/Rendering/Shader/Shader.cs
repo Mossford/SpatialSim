@@ -187,7 +187,7 @@ namespace SpatialSim.Engine.Rendering
                 return;
             }
 
-            uniformDef.binding = binding;
+            uniformDef.bindings = [binding];
             
             Span<byte> bytes = stackalloc byte[size];
             System.Runtime.InteropServices.MemoryMarshal.Write(bytes, value);

@@ -16,15 +16,15 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public ImageView imageView;
         //to be able to sample texture in shader
         public Sampler sampler;
-
-        public VkDescriptor descriptor;
-        bool hasDescriptor;
+        public int binding;
         
         public unsafe void Create(in TextureData data, string pipeline)
         {
             //create some staging buffer
             //upload to gpu side to store texture memory
             //copy buffer to image
+
+            binding = data.binding;
 
             format = Format.R8G8B8A8Unorm;
             switch (data.format)
@@ -121,12 +121,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             CreateSampler();
 
-            descriptor = new VkDescriptor();
-            descriptor.Create(((VkPipeline)PipelineManager.RetrievePipeline("").pipeline!), 
-                new ShaderDescriptorDef(1, 0, ShaderDescriptorUsage.Sampler, ShaderType.Fragment));
-
-            SetTextureToDescriptorSet();
-            hasDescriptor = true;
+            SetTextureToDescriptorSet(pipeline);
         }
 
         /// <summary>
@@ -393,7 +388,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
         }
 
-        public unsafe void SetTextureToDescriptorSet()
+        // TODO this is hardcoded for samplers fix?
+        public unsafe void SetTextureToDescriptorSet(string pipeline)
         {
             DescriptorImageInfo imageInfo = new()
             {
@@ -401,26 +397,33 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 ImageView = imageView,
                 Sampler = sampler
             };
+
+            VkDescriptor descriptor = ((VkPipeline)PipelineManager.RetrievePipeline(pipeline).pipeline!).descriptorSets[
+                new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [], ShaderDescriptorUsage.Sampler,
+                    ShaderType.Fragment)];
             
             WriteDescriptorSet descriptorWrite = new()
             {
                 SType = StructureType.WriteDescriptorSet,
                 DstSet = descriptor.descriptorSet,
                 //SdlGpu has the binding as i and the array element as 0 look into why
-                DstBinding = 0,
+                DstBinding = (uint)binding,
                 DstArrayElement = 0,
                 DescriptorType = DescriptorType.CombinedImageSampler,
                 DescriptorCount = 1,
                 PImageInfo = &imageInfo
             };
             
-            AppState.appContext.GetContext<VkContext>().vk.UpdateDescriptorSets(VkDevices.device, 1, in descriptorWrite, 0, null);
+            AppState.appContext.GetContext<VkContext>().vk.UpdateDescriptorSets(
+                VkDevices.device,
+                1,
+                in descriptorWrite,
+                0,
+                null);
         }
 
         public unsafe void Clean()
         {
-            if(hasDescriptor)
-                descriptor.Clean();
             AppState.appContext.GetContext<VkContext>().vk.DestroySampler(VkDevices.device, sampler, null);
             AppState.appContext.GetContext<VkContext>().vk.DestroyImageView(VkDevices.device, imageView, null);
             AppState.appContext.GetContext<VkContext>().vk.DestroyImage(VkDevices.device, image, null);

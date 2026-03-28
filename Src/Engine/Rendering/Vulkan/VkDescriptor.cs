@@ -78,7 +78,46 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 }
             }
             
-            Debug.LogDebug($"Created descriptor set {descriptorDef.usage} with layout at set: {descriptorDef.set} and binding: {descriptorDef.binding}");
+            Debug.LogDebug($"Created descriptor set {descriptorDef.usage} with layout at set: {descriptorDef.set} and bindings: {descriptorDef.bindings}");
+        }
+        
+        public unsafe void SetTexturesToDescriptorSet(Texture[] textures)
+        {
+            WriteDescriptorSet[] descriptorWrites = new WriteDescriptorSet[textures.Length];
+
+            for (int i = 0; i < descriptorWrites.Length; i++)
+            {
+                VkTexture texture = ((VkTexture)textures[i].texture);
+                
+                DescriptorImageInfo imageInfo = new()
+                {
+                    ImageLayout = ImageLayout.ShaderReadOnlyOptimal,
+                    ImageView = texture.imageView,
+                    Sampler = texture.sampler
+                };
+            
+                descriptorWrites[i] = new()
+                {
+                    SType = StructureType.WriteDescriptorSet,
+                    DstSet = descriptorSet,
+                    //SdlGpu has the binding as i and the array element as 0 look into why
+                    DstBinding = (uint)textures[i].data.binding,
+                    DstArrayElement = 0,
+                    DescriptorType = DescriptorType.CombinedImageSampler,
+                    DescriptorCount = 1,
+                    PImageInfo = &imageInfo
+                };
+            }
+
+            fixed (WriteDescriptorSet* writes = descriptorWrites)
+            {
+                AppState.appContext.GetContext<VkContext>().vk.UpdateDescriptorSets(
+                    VkDevices.device,
+                    (uint)descriptorWrites.Length,
+                    writes,
+                    0,
+                    null);
+            }
         }
 
         public unsafe void Clean()

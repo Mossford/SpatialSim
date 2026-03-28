@@ -64,5 +64,16 @@ namespace SpatialSim.Engine.Core
 
             return new EmptyComponent();
         }
+        
+        public T? GetFirstComponent<T>(EcsComponentType type) where T : IComponent
+        {
+            for (int i = 0; i < componentRefs.ValueCount; i++)
+            {
+                if (componentRefs.Get(i).type == type)
+                    return (T)EcsManager.GetComponent(componentRefs[i]);
+            }
+
+            return default;
+        }
     }
 }

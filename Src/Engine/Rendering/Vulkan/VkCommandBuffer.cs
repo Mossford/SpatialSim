@@ -311,7 +311,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             ShaderDescriptorDef def = new ShaderDescriptorDef(
                 RendererSettings.VertexUniformSet, 
-                binding, 
+                [binding], 
                 ShaderDescriptorUsage.Uniform, 
                 ShaderType.Vertex);
             DescriptorSet set = vkPipeLine.uniformManager.GetDescriptorSet(def);
@@ -336,7 +336,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             ShaderDescriptorDef def = new ShaderDescriptorDef(
                 RendererSettings.FragmentUniformSet, 
-                binding, 
+                [binding], 
                 ShaderDescriptorUsage.Uniform, 
                 ShaderType.Fragment);
             DescriptorSet set = vkPipeLine.uniformManager.GetDescriptorSet(def);
@@ -354,13 +354,14 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 in dynamicOffset);
         }
         
-        public unsafe void BindTexture(Pipeline pipeline, Texture texture)
+        public unsafe void BindSamplers(Pipeline pipeline, Texture[] textures, ShaderType shaderType)
         {
             VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
-            VkTexture vkTexture = ((VkTexture)texture.texture);
             
-            DescriptorSet set = vkTexture.descriptor.descriptorSet;
-
+            //bindings can be left empty as those dont matter for matching but the set and access modifiers
+            VkDescriptor set = vkPipeLine.descriptorSets[new ShaderDescriptorDef(
+                RendererSettings.FragmentSamplerSet, [], ShaderDescriptorUsage.Sampler, shaderType)];
+            
             //bind only the descriptor set with the one buffer attached vulkan will auto increment
             AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
                 commandBuffer,
@@ -368,7 +369,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 vkPipeLine.pipelineLayout,
                 RendererSettings.FragmentSamplerSet,
                 1,
-                &set,
+                ref set.descriptorSet,
                 0,
                 null);
         }

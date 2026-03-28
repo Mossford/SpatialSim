@@ -88,6 +88,7 @@ namespace SpatialSim.Engine.Core
             
             MainImgui.SetImGuiStyle();
             MainImgui.menus.Add(new TicksMenu());
+            MainImgui.menus.Add(new MeshMenu());
             
             init.Invoke();
             

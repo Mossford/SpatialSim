@@ -49,7 +49,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                         {
                             Debug.Error($"Tried to add a descriptor set layout " +
                                           $"{uniformDescriptions[j].set} " +
-                                          $"{uniformDescriptions[j].binding} " +
+                                          $"{uniformDescriptions[j].bindings} " +
                                           $"{uniformDescriptions[j].usage} that already exists, skipping");
                         }
                         else
@@ -86,8 +86,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             {
                 SType = StructureType.WriteDescriptorSet,
                 DstSet = uniforms[type][def].descriptors[^1].descriptorSet,
-                //SdlGpu has the binding as i and the array element as 0 look into why
-                DstBinding = (uint)def.binding,
+                //This should always have a value?
+                DstBinding = (uint)def.bindings[0],
                 DstArrayElement = 0,
                 DescriptorType = DescriptorType.UniformBufferDynamic,
                 DescriptorCount = 1,

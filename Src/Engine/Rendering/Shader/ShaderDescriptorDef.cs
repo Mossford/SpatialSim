@@ -9,26 +9,26 @@ namespace SpatialSim.Engine.Rendering
     public struct ShaderDescriptorDef : IEquatable<ShaderDescriptorDef>
     {
         public int set;
-        public int binding;
+        public int[] bindings;
         public ShaderDescriptorUsage usage;
         public ShaderType type;
         
-        public ShaderDescriptorDef(int set, int binding, ShaderDescriptorUsage usage, ShaderType type)
+        public ShaderDescriptorDef(int set, int[] bindings, ShaderDescriptorUsage usage, ShaderType type)
         {
             this.set = set;
-            this.binding = binding;
+            this.bindings = bindings;
             this.usage = usage;
             this.type = type;
         }
 
         public override string ToString()
         {
-            return $"{set} {binding} {usage} {type}";
+            return $"{set} {bindings} {usage} {type}";
         }
 
         public bool Equals(ShaderDescriptorDef other)
         {
-            return set == other.set && binding == other.binding && usage == other.usage && type == other.type;
+            return set == other.set && usage == other.usage && type == other.type;
         }
 
         public override bool Equals(object? obj)
@@ -38,7 +38,7 @@ namespace SpatialSim.Engine.Rendering
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(set, binding, (int)usage, (int)type);
+            return HashCode.Combine(set, (int)usage, (int)type);
         }
     }
 }

@@ -12,10 +12,11 @@ namespace SpatialSim.Game
     {
 
         public static CameraController cameraController;
+        static Entity moon;
         
         public static void Init()
         {
-            PipelineManager.LoadPipeline(new VolumetricPipeline("Volumetric"), [
+            /*PipelineManager.LoadPipeline(new VolumetricPipeline("Volumetric"), [
                 ShaderManager.RetrieveShader(
                     new ShaderSettings(
                         ShaderType.Vertex,
@@ -28,7 +29,7 @@ namespace SpatialSim.Game
                             new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, 0, ShaderDescriptorUsage.Uniform, ShaderType.Fragment)
                         ],
                         "volumetric.frag"))
-            ]);
+            ]);*/
             
             Entity camera = EcsManager.AddEntity();
             EcsComponentRef cameraRef = camera.AddComponent(new Camera(
@@ -37,25 +38,26 @@ namespace SpatialSim.Game
                         new Vector3(), 
                         new Vector3(), 
                         new Vector3(1.0f))), 
-                 MathUtil.GetFovFromFocalLength(23.9f, 2400)));
+                 MathUtil.GetFovFromFocalLength(23.9f,2400)));
 
             cameraController = new CameraController(cameraRef);
             MainImgui.menus.Add(new CameraMenu());
             
-            Entity mesh = EcsManager.AddEntity();
-            EcsComponentRef transform = mesh.AddComponent(new Transform(
+            moon = EcsManager.AddEntity();
+            EcsComponentRef transform = moon.AddComponent(new Transform(
                 new Vector3(0, 0, 1),
-                new Vector3(90 * MathF.PI / 180f, 0, 0),
-                new Vector3(MathF.Tan(31 / 60f * MathF.PI / 180f / 2f))));
-            EcsComponentRef meshRef = mesh.AddComponent(
-                new Mesh(MeshGeneration.CreateSphereMesh(1f, 4),
+                new Vector3(85 * MathF.PI / 180f, 253 * MathF.PI / 180f, 0),
+                new Vector3(MathF.Tan(35 / 60f * MathF.PI / 180f / 2f))));
+            EcsComponentRef meshRef = moon.AddComponent(
+                new Mesh(ModelLoader.LoadModelFile("UvSphere.fbx"),
                     transform));
-            mesh.AddComponent(new MeshRenderer(meshRef, mesh.AddComponent(new Material
+            moon.AddComponent(new MeshRenderer(meshRef, moon.AddComponent(new Material
             {
-                textureRef = "3840px-Moon_texture.jpg"
+                textureRef = "moonColor.png",
+                normalMapRef = "moonNormal.png",
             }), cameraRef));
             
-            Entity screenQuad = EcsManager.AddEntity();
+            /*Entity screenQuad = EcsManager.AddEntity();
             transform = screenQuad.AddComponent(new Transform(
                 new Vector3(0, 0, 0),
                 new Vector3(),
@@ -66,7 +68,7 @@ namespace SpatialSim.Game
                 screenQuad.AddComponent(
                     new Material()), 
                 cameraRef,
-                "Volumetric"));
+                "Volumetric"));*/
         }
 
         public static void Update(float dt)

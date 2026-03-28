@@ -40,12 +40,21 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer.BindVertexUniforms(this, binding);
             Shader fragmentShader = ShaderManager.RetrieveShader(shaders[1]);
             fragmentShader.AddData(binding, new Vector4(meshRenderer.materialRef.diffuse, 1.0f));
-            fragmentShader.AddData(binding, new Vector4(1.0f));
-            fragmentShader.AddData(binding, new Vector4(1.0f));
-            fragmentShader.AddData(binding, new Vector4(1.0f));
+            fragmentShader.AddData(binding, new Vector4(meshRenderer.materialRef.ambient, 1.0f));
+            fragmentShader.AddData(binding, meshRenderer.materialRef.specular);
+            fragmentShader.AddData(binding, meshRenderer.materialRef.specularExp);
+            fragmentShader.AddData(binding, new Vector4(meshRenderer.cameraRef.transformRef.position, 0.0f));
+            fragmentShader.AddData(binding, new Vector4(
+                    5, 
+                    2f,
+                    -4f, 0.0f));
             UpdateUniforms(fragmentShader, binding);
             commandBuffer.BindFragmentUniforms(this, binding);
-            commandBuffer.BindTexture(this, TextureManager.RetrieveTexture(meshRenderer.materialRef.textureRef, pipelineName));
+            commandBuffer.BindSamplers(
+                this, 
+                [TextureManager.RetrieveTexture(meshRenderer.materialRef.textureRef, pipelineName, 0, TextureFormat.R8G8B8A8Srgb), 
+                    TextureManager.RetrieveTexture(meshRenderer.materialRef.normalMapRef, pipelineName, 1, TextureFormat.R8G8B8A8Unorm)], 
+                ShaderType.Fragment);
         }
 
         public void UpdateUniforms(in Shader shader, int binding)
@@ -57,7 +66,7 @@ namespace SpatialSim.Engine.Rendering
                 set = RendererSettings.FragmentUniformSet;
             }
             
-            ShaderDescriptorDef def = new ShaderDescriptorDef(set, binding, ShaderDescriptorUsage.Uniform, shader.settings.type);
+            ShaderDescriptorDef def = new ShaderDescriptorDef(set, [binding], ShaderDescriptorUsage.Uniform, shader.settings.type);
             pipeline?.UpdateUniforms(shader, binding);
             shader.uniformData[def].Clear();
         }

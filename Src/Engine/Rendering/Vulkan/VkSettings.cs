@@ -11,7 +11,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static ColorSpaceKHR SwapchainColorSpaceFormat = ColorSpaceKHR.SpaceSrgbNonlinearKhr;
         //immediate but no tearing for mailbox
         public static PresentModeKHR SwapchainPresentMode = PresentModeKHR.FifoKhr;
-        public static int MAX_FRAMES_IN_FLIGHT = 1;
+        public static int MAX_FRAMES_IN_FLIGHT = 2;
 
         #endregion
 
