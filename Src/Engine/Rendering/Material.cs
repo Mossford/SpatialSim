@@ -16,13 +16,11 @@ namespace SpatialSim.Engine.Rendering
 
         public string textureRef;
         public string normalMapRef;
-        public string displacementRef;
 
         public Material()
         {
             textureRef = "";
-            textureRef = "";
-            displacementRef = "";
+            normalMapRef = "";
             ambient = new Vector3(0.1f);
             diffuse = new Vector3(1f);
             specular = new Vector3(0f);

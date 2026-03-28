@@ -51,7 +51,7 @@ namespace SpatialSim.Engine.Rendering
             UpdateUniforms(fragmentShader, binding);
             commandBuffer.BindFragmentUniforms(this, binding);
             commandBuffer.BindSamplers(
-                this, 
+                this,
                 [TextureManager.RetrieveTexture(meshRenderer.materialRef.textureRef, pipelineName, 0, TextureFormat.R8G8B8A8Srgb), 
                     TextureManager.RetrieveTexture(meshRenderer.materialRef.normalMapRef, pipelineName, 1, TextureFormat.R8G8B8A8Unorm)], 
                 ShaderType.Fragment);
