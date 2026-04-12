@@ -13,7 +13,7 @@ namespace SpatialSim.Engine.Core
 
         #region Information
 
-        public const string Version = "0.09";
+        public const string Version = "0.10";
         public static string gpuDeviceName;
         public static string Api;
 
@@ -45,6 +45,7 @@ namespace SpatialSim.Engine.Core
         public static bool EnableLogging = true;
         public static bool EnableConsoleLogging = true;
         public static bool EnableDebugLogging = true;
+        public static bool EnableImguiDebugLogging = false;
 
         #endregion
     }

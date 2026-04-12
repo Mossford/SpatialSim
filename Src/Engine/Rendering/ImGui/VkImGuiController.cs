@@ -588,13 +588,16 @@ namespace SpatialSim.Engine.Rendering.ImGui
         /// <summary>
         /// Renders the ImGui draw list data.
         /// </summary>
-        public void Render(Silk.NET.Vulkan.CommandBuffer commandBuffer, ImageView color, ImageView depth, Extent2D swapChainExtent)
+        public void Render(Silk.NET.Vulkan.CommandBuffer commandBuffer, ImageView color, ImageView depth, Extent2D swapChainExtent, Vector2 windowScale)
         {
             if (_frameBegun)
             {
                 _frameBegun = false;
                 ImGuiNET.ImGui.Render();
-                RenderImDrawData(ImGuiNET.ImGui.GetDrawData(), commandBuffer, color, depth, swapChainExtent);
+                ImDrawDataPtr drawDataPtr = ImGuiNET.ImGui.GetDrawData();
+                //adjust for scaling by setting framebuffer scale (Will make text blurry)
+                drawDataPtr.FramebufferScale = windowScale;
+                RenderImDrawData(drawDataPtr, commandBuffer, color, depth, swapChainExtent);
             }
         }
 

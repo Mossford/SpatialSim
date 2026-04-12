@@ -48,9 +48,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                         if (!uniforms[shaderTypes[i]].TryAdd(uniformDescriptions[j], new VkUniformStageData()))
                         {
                             Debug.Error($"Tried to add a descriptor set layout " +
-                                          $"{uniformDescriptions[j].set} " +
-                                          $"{uniformDescriptions[j].bindings} " +
-                                          $"{uniformDescriptions[j].usage} that already exists, skipping");
+                                          $"{uniformDescriptions[j]} " + "that already exists, skipping");
                         }
                         else
                         {

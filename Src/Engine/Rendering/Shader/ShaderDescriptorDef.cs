@@ -23,7 +23,7 @@ namespace SpatialSim.Engine.Rendering
 
         public override string ToString()
         {
-            return $"{set} {bindings} {usage} {type}";
+            return $"<{set}, <{string.Join(',', bindings)}>, {usage}, {type}>";
         }
 
         public bool Equals(ShaderDescriptorDef other)

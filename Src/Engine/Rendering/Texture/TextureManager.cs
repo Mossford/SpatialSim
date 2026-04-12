@@ -1,4 +1,5 @@
 using SpatialSim.Engine.Core;
+using SpatialSim.Engine.Rendering.Vulkan;
 
 namespace SpatialSim.Engine.Rendering
 {
@@ -6,15 +7,14 @@ namespace SpatialSim.Engine.Rendering
     {
         public static Dictionary<string, int> textureLocToIndex;
         public static List<Texture> textures;
-        static Texture missingTexture;
         
         public static void Init()
         {
             textureLocToIndex = new Dictionary<string, int>();
             textures = new List<Texture>();
-            missingTexture = new Texture();
+            textures.Add(new Texture());
             // TODO If sampler is not at binding 0 this causes issues
-            missingTexture.LoadTexture("", "", 0, TextureFormat.R8G8B8A8Srgb);
+            textures[^1].LoadTexture("", TextureFormat.R8G8B8A8Unorm);
             
             Debug.LogInfo("Successful texture manager creation");
         }
@@ -24,7 +24,7 @@ namespace SpatialSim.Engine.Rendering
             return textureLocToIndex.ContainsKey(texture);
         }
 
-        public static bool LoadTexture(string texture, string pipeline, int binding, TextureFormat format)
+        public static bool LoadTexture(string texture, TextureFormat format)
         {
             if (!File.Exists(Resources.ImagePath + texture) && texture.Length != 0)
             {
@@ -35,7 +35,7 @@ namespace SpatialSim.Engine.Rendering
             if (textureLocToIndex.TryAdd(texture, textures.Count))
             {
                 textures.Add(new Texture());
-                textures[^1].LoadTexture(texture, pipeline, binding, format);
+                textures[^1].LoadTexture(texture, format);
                 return true;
             }
 
@@ -43,7 +43,7 @@ namespace SpatialSim.Engine.Rendering
             return false;
         }
 
-        public static Texture RetrieveTexture(string texture, string pipeline, int binding, TextureFormat format)
+        public static Texture RetrieveTexture(string texture, TextureFormat format = TextureFormat.R8G8B8A8Unorm)
         {
             if (textureLocToIndex.TryGetValue(texture, out int index))
             {
@@ -51,14 +51,14 @@ namespace SpatialSim.Engine.Rendering
             }
             else
             {
-                if (LoadTexture(texture, pipeline, binding, format))
+                if (LoadTexture(texture, format))
                 {
                     return textures[textureLocToIndex[texture]];
                 }
             }
             
             //return a missing texture
-            return missingTexture;
+            return textures[0];
         }
         
         public static Texture RetrieveTexture(int texture)
@@ -69,7 +69,17 @@ namespace SpatialSim.Engine.Rendering
             }
             
             //return a missing texture
-            return missingTexture;
+            return textures[0];
+        }
+
+        public static int RetrieveTextureIndex(string texture)
+        {
+            if (textureLocToIndex.TryGetValue(texture, out int index))
+            {
+                return index;
+            }
+            
+            return 0;
         }
 
         public static void Clean()
@@ -78,8 +88,6 @@ namespace SpatialSim.Engine.Rendering
             {
                 textures[i].Clean();
             }
-            
-            missingTexture.Clean();
             
             Debug.LogInfo("Cleaned up texture manager");
         }

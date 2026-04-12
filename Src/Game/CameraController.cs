@@ -60,6 +60,10 @@ namespace SpatialSim.Game
                 Vector2 mousePosMoved = Input.position - Input.lastPosition;
                 mousePosMoved *= camera.fov * sensitivity;
                 camera.transformRef.rotation += new Vector3(-mousePosMoved.X, mousePosMoved.Y, 0f);
+                if(camera.transformRef.rotation.Y > 89.0f)
+                    camera.transformRef.rotation.Y =  89.0f;
+                if(camera.transformRef.rotation.Y < -89.0f)
+                    camera.transformRef.rotation.Y = -89.0f;
 
                 if (Input.scroll != 0)
                 {

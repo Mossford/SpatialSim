@@ -151,6 +151,16 @@ namespace SpatialSim.Engine.Core
             dataIdNonStable.RemoveAt(lastIndex);
         }
 
+        public bool Contains(int i)
+        {
+            if (i < 0 || i >= dataIds.Count)
+                return false;
+            int index = dataIds[i];
+            if (index == -1)
+                return false;
+            return true;
+        }
+
         public T[] ToArray()
         {
             return data.ToArray();

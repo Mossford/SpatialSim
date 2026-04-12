@@ -18,19 +18,20 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         #region Uniforms
         
         //This is what sdlgpu has set to the maxuniform size
-        public const uint MaxUniformSize = 1 << 15;
+        public static uint MaxUniformSize = 1 << 15;
         //max of 8 shaders for the pipeline
-        public const int MaxUniformsPerStage = 1;
+        public static uint MaxUniformsPerStage = 1;
         /// <summary>
         /// Max uniform section size of 4096 bytes
         /// </summary>
-        public const uint MaxBlockUniformMemory = 1 << 12;
+        public static uint MaxBlockUniformMemory = 1 << 12;
 
         #endregion
 
         #region Descriptors
 
-        public const int MaxDescriptorsInPool = 1000;
+        public static uint MaxDescriptorsInPool = 1 << 16;
+        public static uint MaxSamplers = 1 << 9;
 
         #endregion
 
@@ -42,7 +43,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             KhrDeferredHostOperations.ExtensionName,
             KhrDynamicRendering.ExtensionName,
             KhrAccelerationStructure.ExtensionName,
-            "VK_KHR_ray_query" //will need to find the actual class referencing this but this works for now
+            "VK_KHR_ray_query", //will need to find the actual class referencing this but this works for now
         };
         
         public static readonly PhysicalDeviceFeatures physicalDeviceFeatures = new PhysicalDeviceFeatures() with

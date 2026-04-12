@@ -21,7 +21,7 @@ namespace SpatialSim.Engine.Rendering
                 ShaderManager.RetrieveShader(
                     new ShaderSettings(ShaderType.Fragment, 
                         [
-                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [0, 1], ShaderDescriptorUsage.Sampler, ShaderType.Fragment),
+                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [0], ShaderDescriptorUsage.Sampler, ShaderType.Fragment),
                             new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, [0], ShaderDescriptorUsage.Uniform, ShaderType.Fragment)],
                         "base.frag")));
             

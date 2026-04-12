@@ -42,7 +42,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                         SType = StructureType.DescriptorPoolCreateInfo,
                         PoolSizeCount = (uint)poolSizes.Length,
                         PPoolSizes = poolSizesPtr,
-                        MaxSets = (uint)(VkSettings.MaxDescriptorsInPool * poolSizes.Length)
+                        MaxSets = (uint)(VkSettings.MaxDescriptorsInPool * poolSizes.Length),
+                        //TODO decide to restrict only to the samplers
+                        Flags = DescriptorPoolCreateFlags.UpdateAfterBindBit
                     };
 
                     Result resultPool = AppState.appContext.GetContext<VkContext>().vk.CreateDescriptorPool(
@@ -78,11 +80,17 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 }
             }
             
-            Debug.LogDebug($"Created descriptor set {descriptorDef.usage} with layout at set: {descriptorDef.set} and bindings: {descriptorDef.bindings}");
+            Debug.LogDebug($"Created descriptor set with def {descriptorDef}");
         }
         
-        public unsafe void SetTexturesToDescriptorSet(Texture[] textures)
+        public unsafe void SetTexturesToDescriptorSet(Texture[] textures, int[] bindings)
         {
+            if (textures.Length != bindings.Length)
+            {
+                Debug.Error("Passed in textures to set descriptor set does not match count of bindings, skipping");
+                return;
+            }
+            
             WriteDescriptorSet[] descriptorWrites = new WriteDescriptorSet[textures.Length];
 
             for (int i = 0; i < descriptorWrites.Length; i++)
@@ -101,7 +109,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     SType = StructureType.WriteDescriptorSet,
                     DstSet = descriptorSet,
                     //SdlGpu has the binding as i and the array element as 0 look into why
-                    DstBinding = (uint)textures[i].data.binding,
+                    DstBinding = (uint)bindings[i],
                     DstArrayElement = 0,
                     DescriptorType = DescriptorType.CombinedImageSampler,
                     DescriptorCount = 1,

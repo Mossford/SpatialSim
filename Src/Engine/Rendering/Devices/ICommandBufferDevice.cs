@@ -20,7 +20,7 @@ namespace SpatialSim.Engine.Rendering
         public void SetScissor(Vector2 size);
         public void BindVertexUniforms(Pipeline pipeline, int binding);
         public void BindFragmentUniforms(Pipeline pipeline, int binding);
-        public void BindSamplers(Pipeline pipeline, Texture[] textures, ShaderType shaderType);
+        public void BindSamplers(Pipeline pipeline, Texture[] textures, int[] bindings, ShaderType shaderType);
         public void Draw(int indexCount);
         public void ResetPipeLine(Pipeline pipeline);
     }

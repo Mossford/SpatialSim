@@ -170,11 +170,15 @@ namespace SpatialSim.Engine.Rendering
 
             return shaderProgram;
         }
-
-        public unsafe void AddData<T>(int binding, T value) where T : unmanaged
+        
+        public unsafe void AddData<T>(int binding, T value, bool pad = false) where T : unmanaged
         {
             int size = sizeof(T);
-            
+            if (pad && size % 16 != 0)
+            {
+                size += 16 % size;
+            }
+
             if (uniformData[uniformDef].Count + size > VkSettings.MaxBlockUniformMemory)
             {
                 Debug.Warning("Tried to push uniform data past max block memory limit");

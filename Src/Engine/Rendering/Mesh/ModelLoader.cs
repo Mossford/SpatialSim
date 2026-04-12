@@ -44,7 +44,7 @@ namespace SpatialSim.Engine.Rendering
             {
                 // TODO Make a constant for each binding that a sampler goes to?
                 //just loading in the color which we set at 0
-                TextureManager.LoadTexture(textureQueue.Dequeue(), "", 0, TextureFormat.R8G8B8A8Srgb);
+                TextureManager.LoadTexture(textureQueue.Dequeue(), TextureFormat.R8G8B8A8Unorm);
             }
             
             Debug.LogDebug($"Loaded model {modelFile}");

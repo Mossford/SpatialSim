@@ -12,6 +12,8 @@ namespace SpatialSim.Engine.Rendering
     {
         public static bool ShowMainWindow = true;
         public static List<ImGuiMenu> menus = new List<ImGuiMenu>();
+        public static List<ImguiPopup> popups = new List<ImguiPopup>();
+        public const int MAXPOPUPS = 10;
         
         static uint frameCount;
         static double frameAvg;
@@ -101,6 +103,23 @@ namespace SpatialSim.Engine.Rendering
                     menus[i].Show();
                 }
             }
+
+            for (int i = 0; i < popups.Count; i++)
+            {
+                popups[i].Show();
+                if (popups[i].removed)
+                {
+                    popups.RemoveAt(i);
+                }
+            }
+        }
+
+        public static void CreatePopup(string title, string msg)
+        {
+            if(popups.Count > MAXPOPUPS)
+                return;
+            
+            popups.Add(new ImguiPopup(title, msg));
         }
 
         public static void SetImGuiStyle()

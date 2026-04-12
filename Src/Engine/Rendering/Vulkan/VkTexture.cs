@@ -16,18 +16,15 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public ImageView imageView;
         //to be able to sample texture in shader
         public Sampler sampler;
-        public int binding;
         
-        public unsafe void Create(in TextureData data, string pipeline)
+        public void Create(in TextureData data)
         {
             //create some staging buffer
             //upload to gpu side to store texture memory
             //copy buffer to image
 
-            binding = data.binding;
-
             format = Format.R8G8B8A8Unorm;
-            switch (data.format)
+            switch (data.info.format)
             {
                 case TextureFormat.R8G8B8A8Unorm:
                 {
@@ -54,7 +51,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             // TODO make it possible that there might be multiple usages attached?
             //Texture is set as the destination as we wont need to read back from it most of the time
             usage = ImageUsageFlags.TransferDstBit;
-            switch (data.usage)
+            switch (data.info.usage)
             {
                 case TextureUsage.Sampler:
                 {
@@ -74,7 +71,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
             
             MemoryPropertyFlags memUsage = MemoryPropertyFlags.DeviceLocalBit;
-            switch (data.memoryUsage)
+            switch (data.info.memoryUsage)
             {
                 case TextureMemoryUsage.cpu:
                 {
@@ -88,7 +85,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 }
             }
 
-            Create(data.width, data.height, format, ImageTiling.Optimal, usage, memUsage);
+            Create(data.info.width, data.info.height, format, ImageTiling.Optimal, usage, memUsage);
             
             //create the staging buffer
             Buffer<byte> stagingBuffer = new Buffer<byte>();
@@ -105,7 +102,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             CreateImageView(ImageAspectFlags.ColorBit);
 
             filter = Filter.Linear;
-            switch (data.filter)
+            switch (data.info.filter)
             {
                 case TextureFilter.Linear:
                 {
@@ -120,8 +117,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
             
             CreateSampler();
-
-            SetTextureToDescriptorSet(pipeline);
         }
 
         /// <summary>
@@ -320,7 +315,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         }
 
         /// <summary>
-        /// Internal vulkan use
+        /// Internal vulkaneedDescriptorUpdaten use
         /// </summary>
         public unsafe void CreateImageView(ImageAspectFlags imageAspectFlags)
         {
@@ -387,9 +382,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 }
             }
         }
-
-        // TODO this is hardcoded for samplers fix?
-        public unsafe void SetTextureToDescriptorSet(string pipeline)
+        
+        public unsafe void SetTextureToDescriptorSet(VkDescriptor descriptor, int binding)
         {
             DescriptorImageInfo imageInfo = new()
             {
@@ -397,18 +391,14 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 ImageView = imageView,
                 Sampler = sampler
             };
-
-            VkDescriptor descriptor = ((VkPipeline)PipelineManager.RetrievePipeline(pipeline).pipeline!).descriptorSets[
-                new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [], ShaderDescriptorUsage.Sampler,
-                    ShaderType.Fragment)];
             
             WriteDescriptorSet descriptorWrite = new()
             {
                 SType = StructureType.WriteDescriptorSet,
                 DstSet = descriptor.descriptorSet,
                 //SdlGpu has the binding as i and the array element as 0 look into why
-                DstBinding = (uint)binding,
-                DstArrayElement = 0,
+                DstBinding = 0,
+                DstArrayElement = (uint)binding,
                 DescriptorType = DescriptorType.CombinedImageSampler,
                 DescriptorCount = 1,
                 PImageInfo = &imageInfo

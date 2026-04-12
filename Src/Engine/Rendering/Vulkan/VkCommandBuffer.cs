@@ -354,24 +354,30 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 in dynamicOffset);
         }
         
-        public unsafe void BindSamplers(Pipeline pipeline, Texture[] textures, ShaderType shaderType)
+        public unsafe void BindSamplers(Pipeline pipeline, Texture[] textures, int[] bindings, ShaderType shaderType)
         {
             VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
             
-            //bindings can be left empty as those dont matter for matching but the set and access modifiers
-            VkDescriptor set = vkPipeLine.descriptorSets[new ShaderDescriptorDef(
-                RendererSettings.FragmentSamplerSet, [], ShaderDescriptorUsage.Sampler, shaderType)];
-            
-            //bind only the descriptor set with the one buffer attached vulkan will auto increment
-            AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
-                commandBuffer,
-                PipelineBindPoint.Graphics,
-                vkPipeLine.pipelineLayout,
-                RendererSettings.FragmentSamplerSet,
-                1,
-                ref set.descriptorSet,
-                0,
-                null);
+            for (int i = 0; i < textures.Length; i++)
+            {
+                // TODO this binds to the fragment sampler set which should change based on the shader type
+
+                ShaderDescriptorDef def = new (RendererSettings.FragmentSamplerSet, bindings, ShaderDescriptorUsage.Sampler, shaderType);
+                
+                VkTexture texture = ((VkTexture)textures[i].texture);
+                VkDescriptor set = vkPipeLine.GetDescriptor(def);
+                texture.SetTextureToDescriptorSet(set, bindings[i]);
+                
+                AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
+                    commandBuffer,
+                    PipelineBindPoint.Graphics,
+                    vkPipeLine.pipelineLayout,
+                    RendererSettings.FragmentSamplerSet,
+                    1,
+                    ref set.descriptorSet,
+                    0,
+                    null);
+            }
         }
 
         /// <summary>

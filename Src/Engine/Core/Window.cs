@@ -63,8 +63,8 @@ namespace SpatialSim.Engine.Core
             AppState.Api = AppState.window.API.API + " " + AppState.window.API.Version.MajorVersion + "." +
                            AppState.window.API.Version.MinorVersion;
             
-            Debug.LogInfo("Running on Api " + AppState.Api);
-            Debug.LogInfo("Running on Windowing Backend " + AppState.window.GetType().Name);
+            Debug.LogInfo("Running on Api: " + AppState.Api);
+            Debug.LogInfo("Running on Windowing Backend: " + AppState.window.GetType().Name);
             
             AppState.window.Load += Load;
             AppState.window.Update += Update;
@@ -83,6 +83,9 @@ namespace SpatialSim.Engine.Core
             Input.Init();
             
             AppState.appContext.Init();
+            
+            Debug.LogInfo("Running on Device: " + AppState.gpuDeviceName);
+            
             PipelineManager.Init();
             TextureManager.Init();
             

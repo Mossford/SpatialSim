@@ -1,4 +1,5 @@
 using System.Numerics;
+using ImGuiNET;
 using Silk.NET.Vulkan;
 using Silk.NET.Windowing;
 using SpatialSim.Engine.Rendering;
@@ -117,7 +118,12 @@ namespace SpatialSim.Engine.Core.Vulkan
             
             EcsManager.Render(VkSwapChain.commandBuffers[imageIndex], (int)imageIndex);
             
-            imGuiController.Render(vkcommandBuffer, VkSwapChain.swapChainImageViews[imageIndex], VkDepthBuffer.texture.imageView, VkSwapChain.swapChainExtent);
+            imGuiController.Render(
+                vkcommandBuffer,
+                VkSwapChain.swapChainImageViews[imageIndex],
+                VkDepthBuffer.texture.imageView,
+                VkSwapChain.swapChainExtent,
+                Window.windowScale);
 
             VkTexture.TransitionImageLayout(
                 VkSwapChain.commandBuffers[imageIndex], 

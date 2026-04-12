@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Unicode;
+using SpatialSim.Engine.Rendering;
 
 namespace SpatialSim.Engine.Core
 {
@@ -124,6 +125,11 @@ namespace SpatialSim.Engine.Core
                 {
                     WriteToLog((i == 0 ? msgType : msgType + indent) + msgs[i]);
                 }
+            }
+
+            if (AppState.EnableImguiDebugLogging)
+            {
+                MainImgui.CreatePopup("Error", msg);
             }
         }
 

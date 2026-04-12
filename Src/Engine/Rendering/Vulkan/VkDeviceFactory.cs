@@ -39,10 +39,10 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             return buffer;
         }
 
-        public ITextureDevice CreateTextureDevice(in TextureData data, string pipeline)
+        public ITextureDevice CreateTextureDevice(in TextureData data)
         {
             VkTexture texture = new VkTexture();
-            texture.Create(data, pipeline);
+            texture.Create(data);
             return texture;
         }
     }

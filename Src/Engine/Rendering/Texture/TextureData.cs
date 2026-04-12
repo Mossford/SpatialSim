@@ -1,6 +1,6 @@
 namespace SpatialSim.Engine.Rendering
 {
-    public struct TextureData
+    public struct TextureInfo
     {
         public uint width;
         public uint height;
@@ -8,7 +8,27 @@ namespace SpatialSim.Engine.Rendering
         public TextureMemoryUsage memoryUsage;
         public TextureUsage usage;
         public TextureFilter filter;
-        public int binding;
+
+        public TextureInfo()
+        {
+            width = 0;
+            height = 0;
+            format = default;
+            memoryUsage = default;
+            usage = default;
+            filter = default;
+        }
+    }
+    
+    public struct TextureData
+    {
+        public TextureInfo info;
         public byte[] data;
+
+        public TextureData()
+        {
+            info = new TextureInfo();
+            data = new byte[0];
+        }
     }
 }

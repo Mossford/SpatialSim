@@ -48,6 +48,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 }
             }
 
+            //This wont happen on mesa drivers*, as it might switch to llvm pipe
             if (physicalDevice.Handle == 0)
             {
                 Debug.Error("Failed to find a suitable GPU");
@@ -58,6 +59,14 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.GetContext<VkContext>().vk.GetPhysicalDeviceProperties2(physicalDevice, out properties2);
             fixed(PhysicalDeviceProperties* ptr = &properties)
                 AppState.gpuDeviceName = Encoding.UTF8.GetString(ptr->DeviceName, (int)Vk.MaxPhysicalDeviceNameSize);
+            
+            //check limits
+            if (properties.Limits.MaxDescriptorSetSamplers < VkSettings.MaxSamplers)
+            {
+                Debug.Warning($"Device limit for max samplers {properties.Limits.MaxDescriptorSetSamplers} is lower than set value of {VkSettings.MaxSamplers}, " +
+                              $"Setting down to lower value");
+                VkSettings.MaxSamplers = properties.Limits.MaxDescriptorSetSamplers;
+            }
             
             Debug.LogInfo("Successful physical device creation");
         }
@@ -92,10 +101,33 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             DeviceCreateInfo createInfo;
 
+            PhysicalDeviceRayQueryFeaturesKHR rayQueryFeaturesKhr = new()
+            {
+                SType = StructureType.PhysicalDeviceRayQueryFeaturesKhr,
+                RayQuery = true
+            };
+            
+            PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures = new ()
+            {
+                SType = StructureType.PhysicalDeviceDescriptorIndexingFeatures,
+                RuntimeDescriptorArray = true,
+                DescriptorBindingPartiallyBound = true,
+                DescriptorBindingVariableDescriptorCount = true,
+                DescriptorBindingSampledImageUpdateAfterBind = true,
+                DescriptorBindingStorageBufferUpdateAfterBind = true,
+                DescriptorBindingStorageImageUpdateAfterBind = true,
+                DescriptorBindingStorageTexelBufferUpdateAfterBind = true,
+                DescriptorBindingUniformBufferUpdateAfterBind = true,
+                DescriptorBindingUniformTexelBufferUpdateAfterBind = true,
+                DescriptorBindingUpdateUnusedWhilePending = true,
+                PNext = &rayQueryFeaturesKhr
+            };
+            
             PhysicalDeviceVulkan13Features features = new PhysicalDeviceVulkan13Features()
             {
                 SType = StructureType.PhysicalDeviceVulkan13Features,
                 DynamicRendering = true,
+                PNext = &descriptorIndexingFeatures
             };
 
             fixed (PhysicalDeviceFeatures* deviceFeatures = &VkSettings.physicalDeviceFeatures)
@@ -152,6 +184,13 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         static bool IsDeviceSuitable(PhysicalDevice device)
         {
+            AppState.appContext.GetContext<VkContext>().vk.GetPhysicalDeviceProperties(device, out PhysicalDeviceProperties deviceProperties);
+            uint minor = (deviceProperties.ApiVersion >> 12) & 0x3FF;
+            if (minor < 3)
+            {
+                return false;
+            }
+            
             QueueFamilyIndices indices = FindQueueFamilies(device);
 
             bool extensionsSupported = CheckDeviceExtensionsSupport(device);

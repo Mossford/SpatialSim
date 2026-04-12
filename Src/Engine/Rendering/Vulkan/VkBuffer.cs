@@ -322,7 +322,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     LayerCount = 1,
                 },
                 ImageOffset = new Offset3D(0, 0, 0),
-                ImageExtent = new Extent3D(destData.width, destData.height, 1),
+                ImageExtent = new Extent3D(destData.info.width, destData.info.height, 1),
 
             };
 

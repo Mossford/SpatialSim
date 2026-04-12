@@ -38,37 +38,41 @@ namespace SpatialSim.Game
                         new Vector3(), 
                         new Vector3(), 
                         new Vector3(1.0f))), 
-                 MathUtil.GetFovFromFocalLength(23.9f,2400)));
+                 MathUtil.GetFovFromFocalLength(23.9f,130)));
 
             cameraController = new CameraController(cameraRef);
             MainImgui.menus.Add(new CameraMenu());
             
             moon = EcsManager.AddEntity();
-            EcsComponentRef transform = moon.AddComponent(new Transform(
-                new Vector3(0, 0, 1),
-                new Vector3(85 * MathF.PI / 180f, 253 * MathF.PI / 180f, 0),
-                new Vector3(MathF.Tan(35 / 60f * MathF.PI / 180f / 2f))));
-            EcsComponentRef meshRef = moon.AddComponent(
-                new Mesh(ModelLoader.LoadModelFile("UvSphere.fbx"),
-                    transform));
-            moon.AddComponent(new MeshRenderer(meshRef, moon.AddComponent(new Material
             {
-                textureRef = "moonColor.png",
-                normalMapRef = "moonNormal.png",
-            }), cameraRef));
+                EcsComponentRef transform = moon.AddComponent(new Transform(
+                    new Vector3(0, 0, 1),
+                    new Vector3(85 * MathF.PI / 180f, 253 * MathF.PI / 180f, 0),
+                    new Vector3(MathF.Tan(35 / 60f * MathF.PI / 180f / 2f))));
+                EcsComponentRef meshRef = moon.AddComponent(
+                    new Mesh(ModelLoader.LoadModelFile("UvSphere.fbx"),
+                        transform));
+                moon.AddComponent(new MeshRenderer(meshRef, moon.AddComponent(new Material
+                {
+                    textureRef = "moonColor.png",
+                    normalMapRef = "moonNormal.png",
+                }), cameraRef));   
+            }
             
             Entity screenQuad = EcsManager.AddEntity();
-            transform = screenQuad.AddComponent(new Transform(
-                new Vector3(0, 0, 0),
-                new Vector3(),
-                new Vector3(1f)));
-            meshRef = screenQuad.AddComponent(new Mesh(MeshGeneration.Create2DQuad(), transform));
-            screenQuad.AddComponent(new MeshRenderer(
-                meshRef, 
-                screenQuad.AddComponent(
-                    new Material()), 
-                cameraRef,
-                "Volumetric"));
+            {
+                EcsComponentRef transform = screenQuad.AddComponent(new Transform(
+                    new Vector3(0, 0, 0),
+                    new Vector3(),
+                    new Vector3(1f)));
+                EcsComponentRef meshRef = screenQuad.AddComponent(new Mesh(MeshGeneration.Create2DQuad(), transform));
+                screenQuad.AddComponent(new MeshRenderer(
+                    meshRef, 
+                    screenQuad.AddComponent(
+                        new Material()), 
+                    cameraRef,
+                    "Volumetric"));
+            }
         }
 
         public static void Update(float dt)
