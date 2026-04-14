@@ -1,4 +1,5 @@
 using System.Numerics;
+using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
@@ -6,6 +7,7 @@ using SpatialSim.Engine.Core.Vulkan;
 using SpatialSim.Engine.Rendering;
 using SpatialSim.Engine.Rendering.Vulkan;
 using Silk.NET.Windowing.Glfw;
+using SpatialSim.Engine.Core.SDLGpu;
 using SpatialSim.Engine.Rendering.ImGui;
 
 
@@ -37,21 +39,36 @@ namespace SpatialSim.Engine.Core
             Window.update = update;
             Window.fixedUpdate = fixedUpdate;
 
-            GraphicsAPI graphicsApi = GraphicsAPI.DefaultVulkan with
+            GraphicsAPI graphicsApi = default;
+
+            //If we select sdlGpu, we might have to use sdl as the windowing platform
+            switch (AppState.renderingApi)
             {
-                Version = new APIVersion(1, 4)
-            };
+                case RenderingApi.Vulkan:
+                {
+                    graphicsApi = GraphicsAPI.DefaultVulkan with
+                    {
+                        Version = new APIVersion(1, 4)
+                    };
+                    AppState.appContext = new VkContext(graphicsApi);
+                    break;
+                }
+                case RenderingApi.SDLGpu:
+                {
+                    AppState.appContext = new SDLGpuContext();
+                    break;
+                }
+            }
             
-            //switch based on api but only vulkan for now
-            AppState.appContext = new VkContext(graphicsApi);
             size = AppState.WindowStartSize;
-            WindowOptions options = WindowOptions.DefaultVulkan with
+            WindowOptions options = WindowOptions.Default with
             {
                 Size = new Vector2D<int>((int)size.X, (int)size.Y),
                 Title = AppState.WindowTitle,
                 API = graphicsApi,
                 VSync = true,
                 WindowBorder = WindowBorder.Resizable,
+                TransparentFramebuffer = false,
             };
 
             //make sure running on glfw
@@ -89,9 +106,7 @@ namespace SpatialSim.Engine.Core
             PipelineManager.Init();
             TextureManager.Init();
             
-            MainImgui.SetImGuiStyle();
-            MainImgui.menus.Add(new TicksMenu());
-            MainImgui.menus.Add(new MeshMenu());
+            MainImgui.Init();
             
             init.Invoke();
             

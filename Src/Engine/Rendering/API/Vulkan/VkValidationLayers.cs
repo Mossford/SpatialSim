@@ -41,7 +41,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public static unsafe void SetupDebugMessenger()
         {
-            if (!AppState.EnableVkValidationLayers) return;
+            if (!AppState.EnableValidationLayers) return;
 
             //TryGetInstanceExtension equivilant to method CreateDebugUtilsMessengerEXT from original tutorial.
             if (!AppState.appContext.GetContext<VkContext>().vk.TryGetInstanceExtension(AppState.appContext.GetContext<VkContext>().instance, out debugUtils))

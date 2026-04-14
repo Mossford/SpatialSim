@@ -8,6 +8,7 @@ namespace SpatialSim.Engine.Rendering.ImGui
     {
         int selectedMesh;
         MeshRenderer meshRef;
+        bool showMesh;
         
         public MeshMenu()
         {
@@ -27,6 +28,7 @@ namespace SpatialSim.Engine.Rendering.ImGui
                 {
                     for (int i = 0; i < EcsManager.componentPools[EcsComponentType.MeshRenderer.GetId()].components.ValueCount; i++)
                     {
+                        ImGuiNET.ImGui.PushID(i);
                         ImGuiNET.ImGui.TextWrapped($"Mesh {i}");
                         ImGuiNET.ImGui.SameLine();
                         if (ImGuiNET.ImGui.Button("Select"))
@@ -34,7 +36,9 @@ namespace SpatialSim.Engine.Rendering.ImGui
                             selectedMesh = i;
                             meshRef = (MeshRenderer)EcsManager.componentPools[EcsComponentType.MeshRenderer.GetId()].components
                                 .Get(i);
+                            showMesh = true;
                         }
+                        ImGuiNET.ImGui.PopID();
                     }
                     ImGuiNET.ImGui.TreePop();
                 }
@@ -42,9 +46,9 @@ namespace SpatialSim.Engine.Rendering.ImGui
                 ImGuiNET.ImGui.End();
             }
 
-            if (selectedMesh != -1)
+            if (selectedMesh != -1 && showMesh)
             {
-                if(!ImGuiNET.ImGui.Begin($"Mesh {selectedMesh}", ref show))
+                if(!ImGuiNET.ImGui.Begin("Selected Mesh", ref showMesh))
                 {
                     ImGuiNET.ImGui.End();
                 }

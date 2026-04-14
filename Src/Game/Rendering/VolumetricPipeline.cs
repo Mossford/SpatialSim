@@ -1,14 +1,15 @@
 using System.Numerics;
 using SpatialSim.Engine.Core;
 using SpatialSim.Engine.Rendering;
+using SpatialSim.Game.Math;
 
 namespace SpatialSim.Game.Rendering
 {
     public class VolumetricPipeline : Pipeline
     {
-        public VolumetricPipeline(string pipelineName) : base(pipelineName)
+        public VolumetricPipeline(string name) : base(name)
         {
-            this.pipelineName = pipelineName;
+            this.name = name;
         }
 
         public override void SetDrawData(in CommandBuffer commandBuffer, in MeshRenderer meshRenderer, int binding)
@@ -21,6 +22,7 @@ namespace SpatialSim.Game.Rendering
             fragmentShader.AddData(binding, Window.size);
             fragmentShader.AddData(binding, meshRenderer.cameraRef.fov);
             fragmentShader.AddData(binding, (uint)100);
+            fragmentShader.AddData(binding, new Vector4(0, 0, 1, MathUtil.GetScaleFromAngularSize(80 / 60f)));
             UpdateUniforms(fragmentShader, binding);
             commandBuffer.BindFragmentUniforms(this, binding);
         }

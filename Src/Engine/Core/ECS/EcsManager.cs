@@ -31,6 +31,8 @@ namespace SpatialSim.Engine.Core
                 RegisterComponentType(types[i].GetId());
             }
             
+            EcsRendererManager.Init();
+            
             Debug.LogDebug($"Set up {componentPools.Count} ECS component pools");
         }
 
@@ -41,18 +43,13 @@ namespace SpatialSim.Engine.Core
                 Camera camera = (Camera)componentPools[EcsComponentType.Camera.GetId()].components.Get(i);
                 camera.GenerateTransforms();
             }
+            
+            EcsRendererManager.UpdateOrder();
         }
 
         public static void Render(CommandBuffer commandBuffer, int frame)
         {
-            // TODO This should have some ordering system where we can then draw by a layer system or match by transparency
-            commandBuffer.BeginRendering(frame);
-            for (int i = 0; i < componentPools[EcsComponentType.MeshRenderer.GetId()].components.ValueCount; i++)
-            {
-                MeshRenderer renderer = (MeshRenderer)componentPools[EcsComponentType.MeshRenderer.GetId()].components.Get(i);
-                renderer.Draw(commandBuffer, frame);
-            }
-            commandBuffer.EndRendering();
+            EcsRendererManager.Render(commandBuffer, frame);
         }
 
         public static void Clean()

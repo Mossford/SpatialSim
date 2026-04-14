@@ -14,7 +14,7 @@ namespace SpatialSim.Engine.Rendering
             textures = new List<Texture>();
             textures.Add(new Texture());
             // TODO If sampler is not at binding 0 this causes issues
-            textures[^1].LoadTexture("", TextureFormat.R8G8B8A8Unorm);
+            textures[^1].LoadMissingTexture();
             
             Debug.LogInfo("Successful texture manager creation");
         }
@@ -32,10 +32,16 @@ namespace SpatialSim.Engine.Rendering
                 return false;
             }
             
-            if (textureLocToIndex.TryAdd(texture, textures.Count))
+            if (!textureLocToIndex.ContainsKey(texture))
             {
                 textures.Add(new Texture());
-                textures[^1].LoadTexture(texture, format);
+                if (!textures[^1].LoadTexture(texture, format))
+                {
+                    textures.RemoveAt(textures.Count - 1);
+                    return false;
+                }
+
+                textureLocToIndex.Add(texture, textures.Count - 1);
                 return true;
             }
 

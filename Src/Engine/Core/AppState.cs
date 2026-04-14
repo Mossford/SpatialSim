@@ -1,7 +1,6 @@
 using System.Numerics;
 using Silk.NET.Input;
 using Silk.NET.Maths;
-using Silk.NET.SDL;
 using Silk.NET.Vulkan;
 using Silk.NET.Windowing;
 using SpatialSim.Engine.Rendering.ImGui;
@@ -13,7 +12,7 @@ namespace SpatialSim.Engine.Core
 
         #region Information
 
-        public const string Version = "0.10";
+        public const string Version = "0.11";
         public static string gpuDeviceName;
         public static string Api;
 
@@ -25,6 +24,7 @@ namespace SpatialSim.Engine.Core
         public static AppContext appContext;
         public static string WindowTitle = "Spatial Sim - " + Version;
         public static Vector2 WindowStartSize = new Vector2(1920, 1080);
+        public static RenderingApi renderingApi = RenderingApi.Vulkan;
 
         #endregion
 
@@ -41,7 +41,7 @@ namespace SpatialSim.Engine.Core
 
         #region Debug
 
-        public static bool EnableVkValidationLayers = true;
+        public static bool EnableValidationLayers = true;
         public static bool EnableLogging = true;
         public static bool EnableConsoleLogging = true;
         public static bool EnableDebugLogging = true;

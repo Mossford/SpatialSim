@@ -1,4 +1,4 @@
-using Silk.NET.SDL;
+using SDL3;
 
 namespace SpatialSim.Engine.Core
 {
@@ -12,7 +12,7 @@ namespace SpatialSim.Engine.Core
 
         public static void Init()
         {
-            BasePath = Sdl.GetApi().GetBasePathS() + "res/";
+            BasePath = SDL.GetBasePath() + "res/";
             ShaderPath = BasePath + "Shaders/";
             LogPath = BasePath + "Logs/";
             ImagePath = BasePath + "Images/";

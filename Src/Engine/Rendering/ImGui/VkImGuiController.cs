@@ -298,7 +298,7 @@ namespace SpatialSim.Engine.Rendering.ImGui
             ms_info.RasterizationSamples = SampleCountFlags.Count1Bit;
 
             var color_attachment = new PipelineColorBlendAttachmentState();
-            color_attachment.BlendEnable = new Silk.NET.Core.Bool32(true);
+            color_attachment.BlendEnable = true;
             color_attachment.SrcColorBlendFactor = BlendFactor.SrcAlpha;
             color_attachment.DstColorBlendFactor = BlendFactor.OneMinusSrcAlpha;
             color_attachment.ColorBlendOp = BlendOp.Add;

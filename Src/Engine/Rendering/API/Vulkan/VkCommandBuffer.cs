@@ -74,6 +74,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         
         public unsafe void Clean()
         {
+            AppState.appContext.GetContext<VkContext>().vk.DeviceWaitIdle(VkDevices.device);
+            
             if (!submittedCommandBuffer)
             {
                 fixed (Silk.NET.Vulkan.CommandBuffer* commandBuffersPtr = &commandBuffer)

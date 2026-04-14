@@ -29,6 +29,13 @@ namespace SpatialSim.Engine.Core
             this.rotation = rotation;
             this.scale = scale;
         }
+        
+        public Transform(Vector3 position, Vector3 rotation, float scale)
+        {
+            this.position = position;
+            this.rotation = rotation;
+            this.scale = new Vector3(scale);
+        }
 
         public Matrix4x4 GetModelMat()
         {

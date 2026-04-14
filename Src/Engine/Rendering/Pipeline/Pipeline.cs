@@ -10,21 +10,38 @@ namespace SpatialSim.Engine.Rendering
         public IPipelineDevice? pipeline;
         public List<string> shaders;
         
-        public string pipelineName;
+        public string name;
+        public PipelineSettings settings;
+        public int layer;
 
-        public Pipeline(string pipelineName)
+        public Pipeline(string name)
         {
-            this.pipelineName = pipelineName;
+            this.name = name;
+            settings = new PipelineSettings();
+            layer = 0;
         }
         
         public void Create(in Shader vertex, in Shader fragment)
         {
             shaders = new List<string>();
-            pipeline = AppState.appContext.DeviceFactory.CreatePipelineDevice(vertex, fragment);
+            pipeline = AppState.appContext.DeviceFactory.CreatePipelineDevice(vertex, fragment, settings);
             shaders.Add(vertex.settings.file);
             shaders.Add(fragment.settings.file);
             Ticks.pipelineCount.created++;
             Debug.LogDebug($"Created pipeline with {vertex.settings.file} and {fragment.settings.file}");
+        }
+
+        public void Recreate()
+        {
+            if (pipeline is null)
+            {
+                Debug.Warning($"Tried to recreate pipeline {name}, but pipeline was not created in first place");
+                return;
+            }
+            
+            Clean();
+            
+            Create(ShaderManager.RetrieveShader(shaders[0]), ShaderManager.RetrieveShader(shaders[1]));
         }
 
         // TODO maybe move this into separate functions for vertex and fragment
@@ -45,7 +62,7 @@ namespace SpatialSim.Engine.Rendering
             fragmentShader.AddData(binding, meshRenderer.cameraRef.transformRef.position);
             int colorTextureIndex = TextureManager.RetrieveTextureIndex(meshRenderer.materialRef.textureRef);
             fragmentShader.AddData(binding, (uint)colorTextureIndex);
-            fragmentShader.AddData(binding, meshRenderer.cameraRef.transformRef.position + new Vector3(MathF.Sin((float)AppState.GetSeconds()) * 5f, 0.5f, MathF.Cos((float)AppState.GetSeconds()) * 5f));
+            fragmentShader.AddData(binding, new Vector3(0f));
             int normalTextureIndex = TextureManager.RetrieveTextureIndex(meshRenderer.materialRef.normalMapRef);
             fragmentShader.AddData(binding, (uint)normalTextureIndex);
             UpdateUniforms(fragmentShader, binding);

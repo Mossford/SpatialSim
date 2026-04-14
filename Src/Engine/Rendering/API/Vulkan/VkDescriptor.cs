@@ -135,6 +135,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public static unsafe void CleanPool()
         {
+            AppState.appContext.GetContext<VkContext>().vk.DeviceWaitIdle(VkDevices.device);
+            
             if(!createdPool)
                 return;
             

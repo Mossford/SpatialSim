@@ -1,4 +1,5 @@
 using Silk.NET.Windowing;
+using SpatialSim.Engine.Core.SDLGpu;
 using SpatialSim.Engine.Core.Vulkan;
 using SpatialSim.Engine.Rendering;
 
@@ -16,6 +17,6 @@ namespace SpatialSim.Engine.Core
         public unsafe void CleanObjects();
         public unsafe void CleanContext();
         
-        public T GetContext<T>() where T : VkContext;
+        public T GetContext<T>() where T : AppContext;
     }
 }

@@ -399,6 +399,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public void Clean()
         {
+            AppState.appContext.GetContext<VkContext>().vk.DeviceWaitIdle(VkDevices.device);
+            
             //if this buffer is visible to the cpu unmap the pointer to the memory
             if(memoryUsage == BufferMemoryUsage.Cpu)
                 AppState.appContext.GetContext<VkContext>().vk.UnmapMemory(VkDevices.device, bufferMemory);

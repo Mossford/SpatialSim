@@ -11,10 +11,10 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             return shader;
         }
 
-        public IPipelineDevice CreatePipelineDevice(in Shader vertex, in Shader fragment)
+        public IPipelineDevice CreatePipelineDevice(in Shader vertex, in Shader fragment, in PipelineSettings settings)
         {
             VkPipeline pipeline = new VkPipeline();
-            pipeline.Create(vertex, fragment);
+            pipeline.Create(vertex, fragment, settings);
             return pipeline;
         }
 

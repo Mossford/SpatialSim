@@ -146,7 +146,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 };
             }
 
-            if (AppState.EnableVkValidationLayers)
+            if (AppState.EnableValidationLayers)
             {
                 createInfo.EnabledLayerCount = (uint)VkSettings.validationLayers.Length;
                 createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(VkSettings.validationLayers);
@@ -167,7 +167,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.GetContext<VkContext>().vk.GetDeviceQueue(device, indices.GraphicsFamily!.Value, 0, out graphicsQueue);
             AppState.appContext.GetContext<VkContext>().vk.GetDeviceQueue(device, indices.PresentFamily!.Value, 0, out VkSurface.presentQueue);
 
-            if (AppState.EnableVkValidationLayers)
+            if (AppState.EnableValidationLayers)
             {
                 SilkMarshal.Free((nint)createInfo.PpEnabledLayerNames);
             }

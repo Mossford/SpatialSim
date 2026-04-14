@@ -16,7 +16,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public Dictionary<ShaderDescriptorDef, DescriptorSetLayout> descriptorSetLayouts;
         public Dictionary<ShaderDescriptorDef, VkDescriptor> descriptorSets;
         
-        public unsafe void Create(in Shader vertex, in Shader fragment)
+        public unsafe void Create(in Shader vertex, in Shader fragment, in PipelineSettings settings)
         {
             CreateDescriptors(vertex, fragment);
             
@@ -143,7 +143,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 SType = StructureType.PipelineRasterizationStateCreateInfo,
                 DepthClampEnable = false,
                 RasterizerDiscardEnable = false,
-                PolygonMode = PolygonMode.Fill,
+                PolygonMode = settings.rasterizationMode switch
+                {
+                    RasterizationMode.Triangle => PolygonMode.Fill,
+                    RasterizationMode.Line => PolygonMode.Line,
+                    _ => PolygonMode.Fill
+                },
                 LineWidth = 1,
                 CullMode = CullModeFlags.BackBit,
                 FrontFace = FrontFace.Clockwise,
@@ -160,8 +165,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             PipelineDepthStencilStateCreateInfo depthStencil = new()
             {
                 SType = StructureType.PipelineDepthStencilStateCreateInfo,
-                DepthTestEnable = true,
-                DepthWriteEnable = true,
+                DepthTestEnable = settings.depthTest,
+                DepthWriteEnable = settings.depthTest,
                 DepthCompareOp = CompareOp.Less,
                 DepthBoundsTestEnable = false,
                 StencilTestEnable = false,
@@ -169,8 +174,14 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             PipelineColorBlendAttachmentState colorBlendAttachment = new()
             {
+                BlendEnable = settings.blendColor,
+                SrcColorBlendFactor = BlendFactor.SrcAlpha,
+                DstColorBlendFactor = BlendFactor.OneMinusSrcAlpha,
+                ColorBlendOp = BlendOp.Add,
+                SrcAlphaBlendFactor = BlendFactor.One,
+                DstAlphaBlendFactor = BlendFactor.OneMinusSrcAlpha,
+                AlphaBlendOp = BlendOp.Add,
                 ColorWriteMask = ColorComponentFlags.RBit | ColorComponentFlags.GBit | ColorComponentFlags.BBit | ColorComponentFlags.ABit,
-                BlendEnable = false,
             };
 
             PipelineColorBlendStateCreateInfo colorBlending = new()
@@ -196,7 +207,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 DepthAttachmentFormat = VkDepthBuffer.FindDepthFormat()
             };
 
-            DynamicState[] dynamicStates = { DynamicState.Viewport, DynamicState.Scissor };
+            DynamicState[] dynamicStates =
+            {
+                DynamicState.Viewport,
+                DynamicState.Scissor,
+                
+            };
 
             PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo;
             fixed (DynamicState* states = dynamicStates)
@@ -392,6 +408,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public unsafe void Clean()
         {
             uniformManager.Clean();
+            
+            AppState.appContext.GetContext<VkContext>().vk.DeviceWaitIdle(VkDevices.device);
             
             DescriptorSetLayout[] layouts = descriptorSetLayouts.Values.ToArray();
             for (int i = 0; i < layouts.Length; i++)

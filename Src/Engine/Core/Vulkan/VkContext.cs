@@ -260,7 +260,7 @@ namespace SpatialSim.Engine.Core.Vulkan
             
             vk.DestroyDevice(VkDevices.device, null);
 
-            if (AppState.EnableVkValidationLayers)
+            if (AppState.EnableValidationLayers)
             {
                 VkValidationLayers.debugUtils.DestroyDebugUtilsMessenger(instance, VkValidationLayers.debugMessenger, null);
             }
@@ -281,7 +281,7 @@ namespace SpatialSim.Engine.Core.Vulkan
                 throw new Exception($"Type {typeof(T)} does not match contained type {nameof(VkContext)}");
             }
             
-            return (T)this;
+            return (T)(object)this;
         }
     }
 }

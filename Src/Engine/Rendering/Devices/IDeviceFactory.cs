@@ -7,7 +7,7 @@ namespace SpatialSim.Engine.Rendering
     public interface IDeviceFactory
     {
         public IShaderDevice CreateShaderDevice(ShaderSettings settings, in byte[] code);
-        public IPipelineDevice CreatePipelineDevice(in Shader vertex, in Shader fragment);
+        public IPipelineDevice CreatePipelineDevice(in Shader vertex, in Shader fragment, in PipelineSettings settings);
         public ICommandBufferDevice CreateCommandBufferDevice();
         public IBufferDevice<T> CreateBufferDevice<T>(in Span<T> data, BufferUsage usage, BufferMemoryUsage memoryUsage) where T : unmanaged;
         public IBufferDevice<T> CreateBufferDevice<T>(uint dataLength, BufferUsage usage, BufferMemoryUsage memoryUsage) where T : unmanaged;

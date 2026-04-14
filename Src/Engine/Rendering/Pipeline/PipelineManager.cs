@@ -6,23 +6,34 @@ namespace SpatialSim.Engine.Rendering
     {
         public static Dictionary<string, int> pipelineToIndex;
         public static List<Pipeline> pipelines;
-        static Pipeline defaultPipeline;
         
         public static void Init()
         {
             pipelineToIndex = new Dictionary<string, int>();
             pipelines = new List<Pipeline>();
-            defaultPipeline = new Pipeline("");
-            defaultPipeline.Create(ShaderManager.RetrieveShader(
+            pipelines.Add(new Pipeline("Default") {
+                settings = new PipelineSettings()
+                {
+                    blendColor = false,
+                    depthTest = true
+                }
+            });
+            pipelines[^1].Create(ShaderManager.RetrieveShader(
                     new ShaderSettings(
-                        ShaderType.Vertex, 
-                        [new ShaderDescriptorDef(RendererSettings.VertexUniformSet, [0], ShaderDescriptorUsage.Uniform, ShaderType.Vertex)],
+                        ShaderType.Vertex,
+                        [
+                            new ShaderDescriptorDef(RendererSettings.VertexUniformSet, [0],
+                                ShaderDescriptorUsage.Uniform, ShaderType.Vertex)
+                        ],
                         "base.vert")),
                 ShaderManager.RetrieveShader(
-                    new ShaderSettings(ShaderType.Fragment, 
+                    new ShaderSettings(ShaderType.Fragment,
                         [
-                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [0], ShaderDescriptorUsage.Sampler, ShaderType.Fragment),
-                            new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, [0], ShaderDescriptorUsage.Uniform, ShaderType.Fragment)],
+                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [0],
+                                ShaderDescriptorUsage.Sampler, ShaderType.Fragment),
+                            new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, [0],
+                                ShaderDescriptorUsage.Uniform, ShaderType.Fragment)
+                        ],
                         "base.frag")));
             
             Debug.LogInfo("Successful pipeline manager creation");
@@ -42,7 +53,7 @@ namespace SpatialSim.Engine.Rendering
                 return false;
             }
             
-            if (pipelineToIndex.TryAdd(pipeline.pipelineName, pipelines.Count))
+            if (pipelineToIndex.TryAdd(pipeline.name, pipelines.Count))
             {
                 pipelines.Add(pipeline);
                 //TODO make the pipeline accept an array of shaders and a usage and infer what to then do
@@ -50,7 +61,7 @@ namespace SpatialSim.Engine.Rendering
                 return true;
             }
 
-            Debug.Warning($"Could not add pipeline {pipeline.pipelineName} possible duplicate");
+            Debug.Warning($"Could not add pipeline {pipeline.name} possible duplicate");
             return false;
         }
 
@@ -62,7 +73,7 @@ namespace SpatialSim.Engine.Rendering
             }
             
             //return default pipeline
-            return defaultPipeline;
+            return pipelines[0];
         }
         
         public static Pipeline RetrievePipeline(int pipeline)
@@ -73,7 +84,7 @@ namespace SpatialSim.Engine.Rendering
             }
             
             //return default pipeline
-            return defaultPipeline;
+            return pipelines[0];
         }
 
         public static void ResetPipelines(CommandBuffer commandBuffer)
@@ -82,8 +93,6 @@ namespace SpatialSim.Engine.Rendering
             {
                 commandBuffer.ResetPipeLine(pipelines[i]);
             }
-            
-            commandBuffer.ResetPipeLine(defaultPipeline);
         }
 
         public static void Clean()
@@ -92,8 +101,6 @@ namespace SpatialSim.Engine.Rendering
             {
                 pipelines[i].Clean();
             }
-            
-            defaultPipeline.Clean();
             
             Debug.LogInfo("Cleaned up pipeline manager");
         }

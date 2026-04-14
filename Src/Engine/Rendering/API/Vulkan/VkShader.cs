@@ -22,6 +22,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public unsafe void Clean()
         {
+            AppState.appContext.GetContext<VkContext>().vk.DeviceWaitIdle(VkDevices.device);
             AppState.appContext.GetContext<VkContext>().vk.DestroyShaderModule(VkDevices.device, program, null);
         }
 

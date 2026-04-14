@@ -16,5 +16,10 @@ namespace SpatialSim.Game.Math
         {
             return sensorHeight / (2f * MathF.Tan(fov * MathF.PI / 360f));
         }
+        
+        public static float GetScaleFromAngularSize(float angularSize, float distance = 1.0f)
+        {
+            return distance * MathF.Tan(angularSize * MathF.PI / 180f / 2f);
+        }
     }
 }

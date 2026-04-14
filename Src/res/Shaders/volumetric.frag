@@ -14,6 +14,7 @@ layout(set = 2) uniform UniformBufferObject
     //resolution x, y, and fov in z
     vec3 resFov;
     uint rayMarchCount;
+    vec4 aabb;
 } ubo;
 
 float RaySphereIntersection(vec3 center, float radius, vec3 rayDir)
@@ -52,13 +53,13 @@ float DensityAtPoint(vec3 point, vec3 boxMin, vec3 boxMax)
 {
     vec3 center = (boxMin + boxMax) * 0.5f;
     vec3 extents = (boxMax - boxMin) * 0.5f;
-    vec3 rel = abs(point - center + vec3(cos(ubo.time) * 0.5f, sin(ubo.time) * 0.5f, 0)) / extents;
+    vec3 rel = abs(point - center) / extents;
     
     float density = length(rel);
     return clamp(1.0f - density, 0.0f, 1.0f);
 }
 
-vec3 RayMarchVolume(vec3 rayStart, vec3 rayEnd, vec3 boxMin, vec3 boxMax)
+vec4 RayMarchVolume(vec3 rayStart, vec3 rayEnd, vec3 boxMin, vec3 boxMax)
 {
     float density = 0.0f;
     vec3 step = (rayEnd - rayStart) / ubo.rayMarchCount;
@@ -70,7 +71,7 @@ vec3 RayMarchVolume(vec3 rayStart, vec3 rayEnd, vec3 boxMin, vec3 boxMax)
         pos += step;
     }
     
-    return vec3(density);
+    return vec4(0, 0, density, density);
 }
 
 vec4 hash43x(vec3 p)
@@ -136,8 +137,8 @@ void main()
     target /= target.w;
     vec3 rayDir = normalize((inverse(ubo.view) * vec4(target.xyz, 0.0f)).xyz);
 
-    vec3 boxMax = vec3(0.5) + vec3(1, 0, 10);
-    vec3 boxMin = vec3(-0.5) + vec3(1, 0, 10);
+    vec3 boxMax = ubo.aabb.w + ubo.aabb.xyz;
+    vec3 boxMin = -ubo.aabb.w + ubo.aabb.xyz;
     vec2 intersection = RayAabbIntersect(ubo.camPos.xyz, rayDir, boxMin, boxMax);
 
     vec2 angles = GetAnglesFromVector(rayDir);
@@ -150,11 +151,10 @@ void main()
         vec3 rayStart = ubo.camPos.xyz + rayDir * max(intersection.x, 0.0f);
         vec3 rayEnd = ubo.camPos.xyz + rayDir * intersection.y;
         
-        outColor = vec4(RayMarchVolume(rayStart, rayEnd, boxMin, boxMax), 1.0f);
+        outColor = RayMarchVolume(rayStart, rayEnd, boxMin, boxMax);
     }
     else
-            discard;
-    
-    float gamma = 2.2;
-    outColor.rgb = pow(outColor.rgb, vec3(1.0 / gamma));
+    {
+        discard;
+    }
 }

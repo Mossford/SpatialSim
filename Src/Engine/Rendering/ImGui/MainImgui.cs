@@ -21,6 +21,14 @@ namespace SpatialSim.Engine.Rendering
         static double renderAvg;
         static float fpsMax;
         static float fpsTime;
+
+        public static void Init()
+        {
+            SetImGuiStyle();
+            menus.Add(new TicksMenu());
+            menus.Add(new MeshMenu());
+            menus.Add(new PipelineMenu());
+        }
         
         public static void MainMenu()
         {
@@ -30,7 +38,9 @@ namespace SpatialSim.Engine.Rendering
             
             if(!ShowMainWindow)
                 return;
-
+            
+            ImGuiNET.ImGui.SetNextWindowSize(new Vector2(500, 400), ImGuiCond.FirstUseEver);
+            
             if(!ImGuiNET.ImGui.Begin("SpatialSim", ref ShowMainWindow, window_flags))
             {
                 ImGuiNET.ImGui.End();
@@ -100,6 +110,7 @@ namespace SpatialSim.Engine.Rendering
             {
                 if (menus[i].show)
                 {
+                    ImGuiNET.ImGui.SetNextWindowSize(new Vector2(500, 400), ImGuiCond.FirstUseEver);
                     menus[i].Show();
                 }
             }

@@ -414,6 +414,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         public unsafe void Clean()
         {
+            AppState.appContext.GetContext<VkContext>().vk.DeviceWaitIdle(VkDevices.device);
             AppState.appContext.GetContext<VkContext>().vk.DestroySampler(VkDevices.device, sampler, null);
             AppState.appContext.GetContext<VkContext>().vk.DestroyImageView(VkDevices.device, imageView, null);
             AppState.appContext.GetContext<VkContext>().vk.DestroyImage(VkDevices.device, image, null);

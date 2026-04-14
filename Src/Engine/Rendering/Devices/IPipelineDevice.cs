@@ -2,7 +2,7 @@ namespace SpatialSim.Engine.Rendering
 {
     public interface IPipelineDevice
     {
-        public void Create(in Shader vertex, in Shader fragment);
+        public void Create(in Shader vertex, in Shader fragment, in PipelineSettings settings);
         public void Bind();
         public void UpdateUniforms(in Shader shader, int binding);
         public void Clean();

@@ -5,24 +5,29 @@ namespace SpatialSim.Engine.Rendering
 {
     public sealed class Texture : IDisposable
     {
-        public ITextureDevice texture;
+        public ITextureDevice? texture;
         public TextureData data;
         public ulong dataSize;
         
-        public void LoadTexture(string file, TextureFormat format)
+        public bool LoadTexture(string file, TextureFormat format)
         {
+            //check if we can load the image
+            try
+            {
+                FileStream stream = File.Open(Resources.ImagePath + file, FileMode.Open);
+                stream.Close();
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+            
             data = new TextureData();
             if (!File.Exists(Resources.ImagePath + file))
             {
                 if(file != "")
                     Debug.Warning($"Loaded image with no found path at {file}, loading missing texture");
-                MissingTextureData.Create();
-                data.data = MissingTextureData.pixels;
-                data.info.width = (uint)MissingTextureData.size;
-                data.info.height = (uint)MissingTextureData.size;
-                data.info.format = TextureFormat.R8G8B8A8Srgb;
-                data.info.usage = TextureUsage.Sampler;
-                data.info.memoryUsage = TextureMemoryUsage.gpu;
+                return false;
             }
             else
             {
@@ -40,21 +45,34 @@ namespace SpatialSim.Engine.Rendering
                 catch (Exception e)
                 {
                     Debug.Error($"Tried to load image with error, {e}");
-                    MissingTextureData.Create();
-                    data.data = MissingTextureData.pixels;
-                    data.info.width = (uint)MissingTextureData.size;
-                    data.info.height = (uint)MissingTextureData.size;
-                    data.info.format = TextureFormat.R8G8B8A8Srgb;
-                    data.info.usage = TextureUsage.Sampler;
-                    data.info.memoryUsage = TextureMemoryUsage.gpu;
+                    return false;
                 }
             }
-            
+
             texture = AppState.appContext.DeviceFactory.CreateTextureDevice(data);
             dataSize = (ulong)data.data.Length;
             Ticks.gpuMemoryAllocation.created += dataSize;
             
             Debug.LogDebug($"Loaded texture at {file}");
+
+            return true;
+        }
+        
+        public bool LoadMissingTexture()
+        {
+            data = new TextureData();
+            MissingTextureData.Create();
+            data.data = MissingTextureData.pixels;
+            data.info.width = (uint)MissingTextureData.size;
+            data.info.height = (uint)MissingTextureData.size;
+            data.info.format = TextureFormat.R8G8B8A8Unorm;
+            data.info.usage = TextureUsage.Sampler;
+            data.info.memoryUsage = TextureMemoryUsage.gpu;
+            texture = AppState.appContext.DeviceFactory.CreateTextureDevice(data);
+            dataSize = (ulong)data.data.Length;
+            Ticks.gpuMemoryAllocation.created += dataSize;
+
+            return true;
         }
 
         public void Clean()

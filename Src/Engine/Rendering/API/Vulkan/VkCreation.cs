@@ -17,9 +17,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.GetContext<VkContext>().vk = Vk.GetApi();
             
             //if we request validation layers, check for support and keep enabled if we have validation support
-            if (AppState.EnableVkValidationLayers)
+            if (AppState.EnableValidationLayers)
             {
-                AppState.EnableVkValidationLayers = VkValidationLayers.CheckValidationLayerSupport();
+                AppState.EnableValidationLayers = VkValidationLayers.CheckValidationLayerSupport();
             }
 
             ApplicationInfo appInfo = new()
@@ -42,7 +42,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             createInfo.EnabledExtensionCount = (uint)extensions.Length;
             createInfo.PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(extensions); ;
 
-            if (AppState.EnableVkValidationLayers)
+            if (AppState.EnableValidationLayers)
             {
                 createInfo.EnabledLayerCount = (uint)VkSettings.validationLayers.Length;
                 createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(VkSettings.validationLayers);
@@ -81,7 +81,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             Marshal.FreeHGlobal((IntPtr)appInfo.PEngineName);
             SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
 
-            if (AppState.EnableVkValidationLayers)
+            if (AppState.EnableValidationLayers)
             {
                 SilkMarshal.Free((nint)createInfo.PpEnabledLayerNames);
             }
@@ -102,8 +102,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 VkDepthBuffer.FindDepthFormat()
             );
             
-            ImGuiNET.ImGui.StyleColorsDark();
-            
             Debug.LogInfo("Successful imgui creation");
         }
         
@@ -112,7 +110,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             byte** glfwExtensions = AppState.window.VkSurface!.GetRequiredExtensions(out uint glfwExtensionCount);
             string[] extensions = SilkMarshal.PtrToStringArray((nint)glfwExtensions, (int)glfwExtensionCount);
 
-            if (AppState.EnableVkValidationLayers)
+            if (AppState.EnableValidationLayers)
             {
                 return extensions.Append(ExtDebugUtils.ExtensionName).ToArray();
             }

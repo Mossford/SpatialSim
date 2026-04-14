@@ -1,5 +1,4 @@
 using System.Numerics;
-using Silk.NET.SDL;
 
 namespace SpatialSim.Engine.Rendering
 {
