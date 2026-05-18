@@ -13,9 +13,15 @@ namespace SpatialSim.Engine.Core
         public void Init();
         public void Update(float delta);
         public void Render();
+        public void FinishRender();
         public void WindowResize();
         public unsafe void CleanObjects();
         public unsafe void CleanContext();
+
+        /// <summary>
+        /// Manual cleanup is needed
+        /// </summary>
+        public Texture GetRenderTexture();
         
         public T GetContext<T>() where T : AppContext;
     }

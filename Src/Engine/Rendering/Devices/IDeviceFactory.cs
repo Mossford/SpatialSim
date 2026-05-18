@@ -12,5 +12,6 @@ namespace SpatialSim.Engine.Rendering
         public IBufferDevice<T> CreateBufferDevice<T>(in Span<T> data, BufferUsage usage, BufferMemoryUsage memoryUsage) where T : unmanaged;
         public IBufferDevice<T> CreateBufferDevice<T>(uint dataLength, BufferUsage usage, BufferMemoryUsage memoryUsage) where T : unmanaged;
         public ITextureDevice CreateTextureDevice(in TextureData data);
+        public IPostProcessDevice CreatePostProcessDevice(ref Texture texture);
     }
 }

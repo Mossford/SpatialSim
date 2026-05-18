@@ -16,6 +16,10 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public ImageView imageView;
         //to be able to sample texture in shader
         public Sampler sampler;
+
+        public ImageLayout currentLayout = ImageLayout.Undefined;
+        public AccessFlags currentAccessFlags = 0;
+        public PipelineStageFlags currentPipelineStageFlags = PipelineStageFlags.TopOfPipeBit;
         
         public void Create(in TextureData data)
         {
@@ -49,8 +53,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
 
             // TODO make it possible that there might be multiple usages attached?
-            //Texture is set as the destination as we wont need to read back from it most of the time
-            usage = ImageUsageFlags.TransferDstBit;
+            usage = ImageUsageFlags.TransferDstBit | ImageUsageFlags.TransferSrcBit;
             switch (data.info.usage)
             {
                 case TextureUsage.Sampler:
@@ -90,12 +93,20 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             //create the staging buffer
             Buffer<byte> stagingBuffer = new Buffer<byte>();
             stagingBuffer.Create(new Span<byte>(data.data), BufferUsage.Transfer, BufferMemoryUsage.Cpu);
-
-            TransitionImageLayout(ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
+            
+            TransitionImageLayout(
+                ImageLayout.TransferDstOptimal,
+                AccessFlags.TransferWriteBit,
+                PipelineStageFlags.TransferBit,
+                ImageAspectFlags.ColorBit);
             
             stagingBuffer.CopyToTexture(this, data);
             
-            TransitionImageLayout(ImageLayout.TransferDstOptimal, ImageLayout.ShaderReadOnlyOptimal);
+            TransitionImageLayout(
+                ImageLayout.ShaderReadOnlyOptimal,
+                AccessFlags.ShaderReadBit,
+                PipelineStageFlags.FragmentShaderBit,
+                ImageAspectFlags.ColorBit);
             
             stagingBuffer.Clean();
             
@@ -117,6 +128,191 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
             
             CreateSampler();
+        }
+
+        public void CreateImage(in TextureData data)
+        {
+            format = Format.R8G8B8A8Unorm;
+            switch (data.info.format)
+            {
+                case TextureFormat.R8G8B8A8Unorm:
+                {
+                    format = Format.R8G8B8A8Unorm;
+                    break;
+                }
+                case TextureFormat.R8G8B8A8Srgb:
+                {
+                    format = Format.R8G8B8A8Srgb;
+                    break;
+                }
+                case TextureFormat.R8G8B8Uint:
+                {
+                    format = Format.R8G8B8Uint;
+                    break;
+                }
+                case TextureFormat.R8G8B8A8Uint:
+                {
+                    format = Format.R8G8B8A8Uint;
+                    break;
+                }
+            }
+
+            // TODO make it possible that there might be multiple usages attached?
+            usage = ImageUsageFlags.TransferDstBit | ImageUsageFlags.TransferSrcBit;
+            switch (data.info.usage)
+            {
+                case TextureUsage.Sampler:
+                {
+                    usage |= ImageUsageFlags.SampledBit;
+                    break;
+                }
+                case TextureUsage.Storage:
+                {
+                    usage |= ImageUsageFlags.StorageBit;
+                    break;
+                }
+                case TextureUsage.ColorFramebuffer:
+                {
+                    usage |= ImageUsageFlags.ColorAttachmentBit;
+                    break;
+                }
+            }
+            
+            MemoryPropertyFlags memUsage = MemoryPropertyFlags.DeviceLocalBit;
+            switch (data.info.memoryUsage)
+            {
+                case TextureMemoryUsage.cpu:
+                {
+                    memUsage = MemoryPropertyFlags.HostVisibleBit;
+                    break;
+                }
+                case TextureMemoryUsage.gpu:
+                {
+                    memUsage = MemoryPropertyFlags.DeviceLocalBit;
+                    break;
+                }
+            }
+
+            Create(data.info.width, data.info.height, format, ImageTiling.Optimal, usage, memUsage);
+            CreateImageView(ImageAspectFlags.ColorBit);
+        }
+
+        public void WriteGpuToCpu(ref TextureData data)
+        {
+            Buffer<byte> stagingBuffer = new Buffer<byte>();
+            int bpp = data.info.format switch
+            {
+                TextureFormat.R8G8B8A8Uint => 4,
+                TextureFormat.R8G8B8A8Srgb => 4,
+                TextureFormat.R8G8B8A8Unorm => 4,
+                TextureFormat.R8G8B8Uint => 3,
+                _ => 4
+            };
+            stagingBuffer.Create((uint)(data.info.width * data.info.height * bpp), BufferUsage.Transfer, BufferMemoryUsage.Cpu);
+            AccessFlags oldFlag = currentAccessFlags;
+            ImageLayout oldLayout = currentLayout;
+            PipelineStageFlags oldStage = currentPipelineStageFlags;
+            TransitionImageLayout(oldLayout,
+                ImageLayout.TransferSrcOptimal,
+                oldFlag,
+                AccessFlags.TransferReadBit,
+                oldStage,
+                PipelineStageFlags.TransferBit,
+                ImageAspectFlags.ColorBit);
+            stagingBuffer.TextureToCopy(this, data);
+            data.data = stagingBuffer.CopyToArray();
+            TransitionImageLayout(currentLayout,
+                oldLayout,
+                currentAccessFlags,
+                oldFlag,
+                currentPipelineStageFlags,
+                oldStage,
+                ImageAspectFlags.ColorBit);
+            
+            stagingBuffer.Clean();
+        }
+
+        public void CopyImageToImage(in ITextureDevice src, in TextureData srcData)
+        {
+            CommandBuffer commandBuffer = new CommandBuffer();
+            commandBuffer.Create();
+            commandBuffer.BeginOneUse();
+            
+            ImageCopy region = new()
+            {
+                SrcOffset = new Offset3D(0, 0, 0),
+                DstOffset = new Offset3D(0, 0, 0),
+                SrcSubresource = new ImageSubresourceLayers()
+                {
+                    //TODO This might not be true for all
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                    MipLevel = 0
+                },
+                DstSubresource = new ImageSubresourceLayers()
+                {
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                    MipLevel = 0
+                },
+                Extent = new Extent3D(srcData.info.width, srcData.info.height, 1)
+            };
+            
+            AppState.appContext.GetContext<VkContext>().vk.CmdCopyImage(
+                ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
+                ((VkTexture)src).image,
+                ((VkTexture)src).currentLayout,
+                image,
+                currentLayout,
+                1,
+                in region);
+            
+            commandBuffer.EndSubmitClean(); 
+        }
+        
+        /// <summary>
+        /// Internal Vulkan use
+        /// </summary>
+        public void CopyImageToImage(in Image src, in ImageLayout srcLayout, in TextureData srcData)
+        {
+            CommandBuffer commandBuffer = new CommandBuffer();
+            commandBuffer.Create();
+            commandBuffer.BeginOneUse();
+            
+            ImageCopy region = new()
+            {
+                SrcOffset = new Offset3D(0, 0, 0),
+                DstOffset = new Offset3D(0, 0, 0),
+                SrcSubresource = new ImageSubresourceLayers()
+                {
+                    //TODO This might not be true for all
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                    MipLevel = 0
+                },
+                DstSubresource = new ImageSubresourceLayers()
+                {
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                    MipLevel = 0
+                },
+                Extent = new Extent3D(srcData.info.width, srcData.info.height, 1)
+            };
+            
+            AppState.appContext.GetContext<VkContext>().vk.CmdCopyImage(
+                ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
+                src,
+                srcLayout,
+                image,
+                currentLayout,
+                1,
+                in region);
+            
+            commandBuffer.EndSubmitClean();
         }
 
         /// <summary>
@@ -199,13 +395,23 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             AppState.appContext.GetContext<VkContext>().vk.BindImageMemory(VkDevices.device, image, memory, 0);
         }
-
-        public unsafe void TransitionImageLayout(ImageLayout oldLayout, ImageLayout newLayout)
+        
+        public unsafe void TransitionImageLayout(
+            ImageLayout oldLayout,
+            ImageLayout newLayout,
+            AccessFlags oldAccessMask,
+            AccessFlags newAccessMask,
+            PipelineStageFlags oldStage,
+            PipelineStageFlags newStage,
+            ImageAspectFlags aspectFlags
+        )
         {
+
             CommandBuffer commandBuffer = new CommandBuffer();
             commandBuffer.Create();
             commandBuffer.BeginOneUse();
 
+            
             ImageMemoryBarrier barrier = new()
             {
                 SType = StructureType.ImageMemoryBarrier,
@@ -214,57 +420,136 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 SrcQueueFamilyIndex = Vk.QueueFamilyIgnored,
                 DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
                 Image = image,
-                SubresourceRange =
+                SubresourceRange = new()
                 {
-                    //TODO make this a parameter
-                    AspectMask = ImageAspectFlags.ColorBit,
-                    BaseMipLevel = 0,
-                    LevelCount = 1,
+                    AspectMask     = aspectFlags,
+                    BaseMipLevel   = 0,
+                    LevelCount     = 1,
                     BaseArrayLayer = 0,
-                    LayerCount = 1,
+                    LayerCount     = 1
                 },
+                SrcAccessMask = oldAccessMask,
+                DstAccessMask = newAccessMask
             };
-
-            PipelineStageFlags sourceStage;
-            PipelineStageFlags destinationStage;
-
-            if (oldLayout == ImageLayout.Undefined && newLayout == ImageLayout.TransferDstOptimal)
-            {
-                barrier.SrcAccessMask = 0;
-                barrier.DstAccessMask = AccessFlags.TransferWriteBit;
-
-                sourceStage = PipelineStageFlags.TopOfPipeBit;
-                destinationStage = PipelineStageFlags.TransferBit;
-            }
-            else if (oldLayout == ImageLayout.TransferDstOptimal && newLayout == ImageLayout.ShaderReadOnlyOptimal)
-            {
-                barrier.SrcAccessMask = AccessFlags.TransferWriteBit;
-                barrier.DstAccessMask = AccessFlags.ShaderReadBit;
-
-                sourceStage = PipelineStageFlags.TransferBit;
-                destinationStage = PipelineStageFlags.FragmentShaderBit;
-            }
-            else
-            {
-                Debug.Error("Unsupported layout transition");
-                throw new Exception("Unsupported layout transition");
-            }
 
             AppState.appContext.GetContext<VkContext>().vk.CmdPipelineBarrier(
                 ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
-                sourceStage, 
-                destinationStage, 
-                0, 
-                0, 
-                null, 
-                0, 
-                null, 
-                1, 
-                in barrier);
+                oldStage,
+                newStage,
+                0,
+                0,
+                null,
+                0,
+                null,
+                1,
+                in barrier
+            );
+            
+            commandBuffer.EndSubmitClean();
 
-            commandBuffer.End();
-            commandBuffer.Submit();
-            commandBuffer.Clean();
+            currentLayout = newLayout;
+            currentAccessFlags = newAccessMask;
+            currentPipelineStageFlags = newStage;
+        }
+        
+        public unsafe void TransitionImageLayout(
+            ImageLayout newLayout,
+            AccessFlags newAccessMask,
+            PipelineStageFlags newStage,
+            ImageAspectFlags aspectFlags
+        )
+        {
+
+            CommandBuffer commandBuffer = new CommandBuffer();
+            commandBuffer.Create();
+            commandBuffer.BeginOneUse();
+
+            
+            ImageMemoryBarrier barrier = new()
+            {
+                SType = StructureType.ImageMemoryBarrier,
+                OldLayout = currentLayout,
+                NewLayout = newLayout,
+                SrcQueueFamilyIndex = Vk.QueueFamilyIgnored,
+                DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
+                Image = image,
+                SubresourceRange = new()
+                {
+                    AspectMask     = aspectFlags,
+                    BaseMipLevel   = 0,
+                    LevelCount     = 1,
+                    BaseArrayLayer = 0,
+                    LayerCount     = 1
+                },
+                SrcAccessMask = currentAccessFlags,
+                DstAccessMask = newAccessMask
+            };
+
+            AppState.appContext.GetContext<VkContext>().vk.CmdPipelineBarrier(
+                ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
+                currentPipelineStageFlags,
+                newStage,
+                0,
+                0,
+                null,
+                0,
+                null,
+                1,
+                in barrier
+            );
+            
+            commandBuffer.EndSubmitClean();
+
+            currentLayout = newLayout;
+            currentAccessFlags = newAccessMask;
+            currentPipelineStageFlags = newStage;
+        }
+        
+        public unsafe void TransitionImageLayout(
+            CommandBuffer commandBuffer,
+            ImageLayout newLayout,
+            AccessFlags newAccessMask,
+            PipelineStageFlags newStage,
+            ImageAspectFlags aspectFlags
+        )
+        {
+            
+            ImageMemoryBarrier barrier = new()
+            {
+                SType = StructureType.ImageMemoryBarrier,
+                OldLayout = currentLayout,
+                NewLayout = newLayout,
+                SrcQueueFamilyIndex = Vk.QueueFamilyIgnored,
+                DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
+                Image = image,
+                SubresourceRange = new()
+                {
+                    AspectMask     = aspectFlags,
+                    BaseMipLevel   = 0,
+                    LevelCount     = 1,
+                    BaseArrayLayer = 0,
+                    LayerCount     = 1
+                },
+                SrcAccessMask = currentAccessFlags,
+                DstAccessMask = newAccessMask
+            };
+
+            AppState.appContext.GetContext<VkContext>().vk.CmdPipelineBarrier(
+                ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
+                currentPipelineStageFlags,
+                newStage,
+                0,
+                0,
+                null,
+                0,
+                null,
+                1,
+                in barrier
+            );
+
+            currentLayout = newLayout;
+            currentAccessFlags = newAccessMask;
+            currentPipelineStageFlags = newStage;
         }
         
         public static unsafe void TransitionImageLayout(

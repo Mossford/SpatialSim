@@ -47,9 +47,21 @@ namespace SpatialSim.Engine.Core
             EcsRendererManager.UpdateOrder();
         }
 
+        /// <summary>
+        /// Render to swapchain
+        /// TODO Remove once swapchain gets textures instead
+        /// </summary>
         public static void Render(CommandBuffer commandBuffer, int frame)
         {
             EcsRendererManager.Render(commandBuffer, frame);
+        }
+        
+        /// <summary>
+        /// Render to a texture
+        /// </summary>
+        public static void Render(CommandBuffer commandBuffer, Texture texture)
+        {
+            EcsRendererManager.Render(commandBuffer, texture);
         }
 
         public static void Clean()

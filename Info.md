@@ -8,4 +8,9 @@
 ## [DONE] Pipeline layers
 ### Sort mesh renderers by pipeline layers, sort when meshrenderer added or layer change
 
+## Pipeline vertex attributes need abstracting
+
+## PostProcess and RenderTextures
+### Make it easier to get rendered images at some point
+### Normal world render goes to some texture, post process grabs this and runs potentiall multiple times, and on last render it goes to swapchain
 

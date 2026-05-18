@@ -203,7 +203,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
         }
 
-        public unsafe void BeingRendering(int frame)
+        public unsafe void BeginRendering(int frame)
         {
             ClearValue[] clearValues = new ClearValue[]
             {
@@ -221,7 +221,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 {
                     DepthStencil = new ()
                     {
-                        Depth = 1, 
+                        Depth = 0, 
                         Stencil = 0
                     }
                 }
@@ -257,6 +257,53 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 ColorAttachmentCount = 1,
                 PColorAttachments = &colorAttachmentInfo,
                 PDepthAttachment = &depthAttachmentInfo
+            };
+            
+            VkDevices.dynamicRendering.CmdBeginRendering(commandBuffer, &renderingInfo);
+        }
+        
+        public unsafe void BeginRendering(Texture colorWrite)
+        {
+            ClearValue[] clearValues = new ClearValue[]
+            {
+                new()
+                {
+                    Color = new ()
+                    {
+                        Float32_0 = 0, 
+                        Float32_1 = 0, 
+                        Float32_2 = 0, 
+                        Float32_3 = 1
+                    },
+                },
+                new()
+                {
+                    DepthStencil = new ()
+                    {
+                        Depth = 0, 
+                        Stencil = 0
+                    }
+                }
+            };
+            
+            RenderingAttachmentInfo colorAttachmentInfo = new()
+            {
+                SType = StructureType.RenderingAttachmentInfo,
+                ImageView = ((VkTexture)colorWrite.texture!).imageView,
+                ImageLayout = ImageLayout.ColorAttachmentOptimal,
+                LoadOp = AttachmentLoadOp.Clear,
+                StoreOp = AttachmentStoreOp.Store,
+                ClearValue = clearValues[0],
+                ResolveMode = ResolveModeFlags.None
+            };
+            
+            RenderingInfo renderingInfo = new()
+            {
+                SType = StructureType.RenderingInfo,
+                RenderArea = new Rect2D(new Offset2D(0, 0), VkSwapChain.swapChainExtent),
+                LayerCount = 1,
+                ColorAttachmentCount = 1,
+                PColorAttachments = &colorAttachmentInfo,
             };
             
             VkDevices.dynamicRendering.CmdBeginRendering(commandBuffer, &renderingInfo);

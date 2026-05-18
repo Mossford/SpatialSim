@@ -12,19 +12,19 @@ namespace SpatialSim.Game.Rendering
             this.name = name;
         }
 
-        public override void SetDrawData(in CommandBuffer commandBuffer, in MeshRenderer meshRenderer, int binding)
+        public override void SetDrawData(in CommandBuffer commandBuffer, in MeshRenderer meshRenderer, int uniformBinding)
         {
             Shader fragmentShader = ShaderManager.RetrieveShader(shaders[1]);
-            fragmentShader.AddData(binding, meshRenderer.cameraRef.proj);
-            fragmentShader.AddData(binding, meshRenderer.cameraRef.view);
-            fragmentShader.AddData(binding, meshRenderer.cameraRef.transformRef.position);
-            fragmentShader.AddData(binding, (float)AppState.GetSeconds());
-            fragmentShader.AddData(binding, Window.size);
-            fragmentShader.AddData(binding, meshRenderer.cameraRef.fov);
-            fragmentShader.AddData(binding, (uint)100);
-            fragmentShader.AddData(binding, new Vector4(0, 0, 1, MathUtil.GetScaleFromAngularSize(80 / 60f)));
-            UpdateUniforms(fragmentShader, binding);
-            commandBuffer.BindFragmentUniforms(this, binding);
+            fragmentShader.AddData(uniformBinding, meshRenderer.cameraRef.proj);
+            fragmentShader.AddData(uniformBinding, meshRenderer.cameraRef.view);
+            fragmentShader.AddData(uniformBinding, meshRenderer.cameraRef.transformRef.position);
+            fragmentShader.AddData(uniformBinding, (float)AppState.GetSeconds());
+            fragmentShader.AddData(uniformBinding, Window.size);
+            fragmentShader.AddData(uniformBinding, meshRenderer.cameraRef.fov);
+            fragmentShader.AddData(uniformBinding, (uint)100);
+            fragmentShader.AddData(uniformBinding, new Vector4(0, 0, 1, MathUtil.GetScaleFromAngularSize(80 / 60f)));
+            UpdateUniforms(fragmentShader, uniformBinding);
+            commandBuffer.BindFragmentUniforms(this, uniformBinding);
         }
     }
 }

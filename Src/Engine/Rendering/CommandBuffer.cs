@@ -39,6 +39,13 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer?.Submit();
         }
 
+        public void EndSubmitClean()
+        {
+            End();
+            Submit();
+            Clean();
+        }
+
         public void BindPipeLine(Pipeline pipeline)
         {
             commandBuffer?.BindPipeLine(pipeline);
@@ -54,9 +61,18 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer?.SetScissor(size);
         }
         
+        /// <summary>
+        /// Meant to write to a swapchain
+        /// TODO Remove once swapchain gets texture
+        /// </summary>
         public void BeginRendering(int frame)
         {
-            commandBuffer?.BeingRendering(frame);
+            commandBuffer?.BeginRendering(frame);
+        }
+
+        public void BeginRendering(Texture colorWrite)
+        {
+            commandBuffer?.BeginRendering(colorWrite);
         }
 
         public void EndRendering()

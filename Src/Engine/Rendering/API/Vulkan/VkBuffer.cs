@@ -58,21 +58,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 }
             }
             
-            switch (memoryUsage)
-            {
-                case BufferMemoryUsage.Cpu:
-                {
-                    //if we are on cpu this buffer will always act as a source buffer
-                    bufferUsage |= BufferUsageFlags.TransferSrcBit;
-                    break;
-                }
-                case BufferMemoryUsage.Gpu:
-                {
-                    //if we are on gpu this buffer will always be able to be written too
-                    bufferUsage |= BufferUsageFlags.TransferDstBit;
-                    break;
-                }
-            }
+            bufferUsage |= BufferUsageFlags.TransferSrcBit;
+            bufferUsage |= BufferUsageFlags.TransferDstBit;
 
             size = (ulong)(sizeof(T) * data.Length);
             BufferCreateInfo bufferInfo = new()
@@ -177,21 +164,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 }
             }
             
-            switch (memoryUsage)
-            {
-                case BufferMemoryUsage.Cpu:
-                {
-                    //if we are on cpu this buffer will always act as a source buffer
-                    bufferUsage |= BufferUsageFlags.TransferSrcBit;
-                    break;
-                }
-                case BufferMemoryUsage.Gpu:
-                {
-                    //if we are on gpu this buffer will always be able to be written too
-                    bufferUsage |= BufferUsageFlags.TransferDstBit;
-                    break;
-                }
-            }
+            bufferUsage |= BufferUsageFlags.TransferSrcBit;
+            bufferUsage |= BufferUsageFlags.TransferDstBit;
 
             size = (ulong)(sizeof(T) * dataLength);
             BufferCreateInfo bufferInfo = new()
@@ -303,7 +277,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             commandBuffer.Clean();
         }
 
-        public void CopyToTexture(ITextureDevice dest, in TextureData destData)
+        public void CopyToTexture(ITextureDevice dest, in TextureData srcData)
         {
             CommandBuffer commandBuffer = new CommandBuffer();
             commandBuffer.Create();
@@ -322,8 +296,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     LayerCount = 1,
                 },
                 ImageOffset = new Offset3D(0, 0, 0),
-                ImageExtent = new Extent3D(destData.info.width, destData.info.height, 1),
-
+                ImageExtent = new Extent3D(srcData.info.width, srcData.info.height, 1),
             };
 
             AppState.appContext.GetContext<VkContext>().vk.CmdCopyBufferToImage(
@@ -334,9 +307,68 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 1,
                 in region);
 
-            commandBuffer.End();
-            commandBuffer.Submit();
-            commandBuffer.Clean();
+            commandBuffer.EndSubmitClean();
+        }
+
+        /// <summary>
+        /// Will use information stored in the destination data
+        /// </summary>
+        public void TextureToCopy(ITextureDevice src, in TextureData destData)
+        {
+            CommandBuffer commandBuffer = new CommandBuffer();
+            commandBuffer.Create();
+            commandBuffer.BeginOneUse();
+            
+            BufferImageCopy region = new()
+            {
+                BufferOffset = 0,
+                BufferRowLength = 0,
+                BufferImageHeight = 0,
+                ImageSubresource =
+                {
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    MipLevel = 0,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                },
+                ImageOffset = new Offset3D(0, 0, 0),
+                ImageExtent = new Extent3D(destData.info.width, destData.info.height, 1),
+            };
+            
+            AppState.appContext.GetContext<VkContext>().vk.CmdCopyImageToBuffer(
+                ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
+                ((VkTexture)src).image,
+                ImageLayout.TransferSrcOptimal,
+                buffer,
+                1,
+                in region);
+            
+            commandBuffer.EndSubmitClean();
+        }
+
+        public T[] CopyToArray()
+        {
+            T[] data = new T[size / (ulong)sizeof(T)];
+            if (memoryUsage == BufferMemoryUsage.Gpu)
+            {
+                VkBuffer<T> stagingBuffer = new VkBuffer<T>();
+                stagingBuffer.Create(new Span<T>(data), BufferUsage.Transfer, BufferMemoryUsage.Cpu);
+                CopyTo(stagingBuffer);
+                fixed (T* dst = data)
+                {
+                    System.Buffer.MemoryCopy((T*)stagingBuffer.memoryMap,dst, size,size);
+                }
+                stagingBuffer.Clean();
+            }
+            else
+            {
+                fixed (T* dst = data)
+                {
+                    System.Buffer.MemoryCopy((T*)memoryMap,dst, size,size);
+                }
+            }
+
+            return data;
         }
 
         uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)

@@ -17,7 +17,7 @@ namespace SpatialSim.Engine.Rendering.API.SDLGpu
                 Debug.Error($"SDL could not create window {error}");
                 throw new Exception($"SDL could not create window {error}");
             }
-            
+
             AppState.appContext.GetContext<SDLGpuContext>().gpuDevice =
                 SDL.CreateGPUDevice(SDL.GPUShaderFormat.SPIRV, AppState.EnableValidationLayers, null);
 

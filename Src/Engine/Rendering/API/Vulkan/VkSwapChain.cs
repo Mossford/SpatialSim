@@ -18,6 +18,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         
         public static KhrSwapchain? khrSwapChain;
         public static SwapchainKHR swapChain;
+        //TODO replace this with textures or vktexture or some shit
         public static Image[] swapChainImages;
         public static Format swapChainImageFormat;
         public static Extent2D swapChainExtent;
@@ -210,7 +211,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             CreateSwapChain();
             CreateImageViews();
-            TransitionSwapChainImages();
             
             VkDepthBuffer.CreateDepthBuffers();
             
@@ -344,53 +344,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
 
             return details;
-        }
-        
-        public static unsafe void TransitionSwapChainImages()
-        {
-            for (int i = 0; i < swapChainImages.Length; i++)
-            {
-                CommandBuffer commandBuffer = new CommandBuffer();
-                commandBuffer.Create();
-                commandBuffer.BeginOneUse();
-
-                ImageMemoryBarrier barrier = new ImageMemoryBarrier
-                {
-                    SType = StructureType.ImageMemoryBarrier,
-                    OldLayout = ImageLayout.Undefined,
-                    NewLayout = ImageLayout.ColorAttachmentOptimal,
-                    SrcQueueFamilyIndex = Vk.QueueFamilyIgnored,
-                    DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
-                    Image = swapChainImages[i],
-                    SubresourceRange =
-                    {
-                        AspectMask = ImageAspectFlags.ColorBit,
-                        BaseMipLevel = 0,
-                        LevelCount = 1,
-                        BaseArrayLayer = 0,
-                        LayerCount = 1
-                    },
-                    SrcAccessMask = 0,
-                    DstAccessMask = AccessFlags.ColorAttachmentReadBit | AccessFlags.ColorAttachmentWriteBit
-                };
-
-                AppState.appContext.GetContext<VkContext>().vk.CmdPipelineBarrier(
-                    ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
-                    PipelineStageFlags.TopOfPipeBit,
-                    PipelineStageFlags.ColorAttachmentOutputBit,
-                    0, 
-                    0, 
-                    null, 
-                    0, 
-                    null, 
-                    1, 
-                    in barrier
-                );
-
-                commandBuffer.End();
-                commandBuffer.Submit();
-                commandBuffer.Clean();
-            }
         }
         
         public static unsafe void CreateImageViews()

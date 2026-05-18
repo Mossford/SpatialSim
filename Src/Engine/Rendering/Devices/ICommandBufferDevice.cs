@@ -13,7 +13,8 @@ namespace SpatialSim.Engine.Rendering
         public void BeginOneUse();
         public void EndCommandBuffer();
         public void Submit();
-        public void BeingRendering(int frame);
+        public void BeginRendering(int frame);
+        public void BeginRendering(Texture colorWrite);
         public void EndRendering();
         public void BindPipeLine(Pipeline pipeline);
         public void SetViewport(Vector2 size);

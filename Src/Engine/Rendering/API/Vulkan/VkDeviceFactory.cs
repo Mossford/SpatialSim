@@ -45,5 +45,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             texture.Create(data);
             return texture;
         }
+
+        public IPostProcessDevice CreatePostProcessDevice(ref Texture texture)
+        {
+            VkPostProcess postProcess = new VkPostProcess();
+            postProcess.Create(ref texture);
+            return postProcess;
+        }
     }
 }

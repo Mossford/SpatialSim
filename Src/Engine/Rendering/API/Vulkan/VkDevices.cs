@@ -41,6 +41,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             foreach (PhysicalDevice device in devices)
             {
+                AppState.appContext.GetContext<VkContext>().vk.GetPhysicalDeviceProperties(device, out properties);
+                fixed(PhysicalDeviceProperties* ptr = &properties)
+                    AppState.gpuDeviceName = Encoding.UTF8.GetString(ptr->DeviceName, (int)Vk.MaxPhysicalDeviceNameSize);
+                
+                Debug.LogInfo("Detected GPU: " + AppState.gpuDeviceName);
                 if (IsDeviceSuitable(device))
                 {
                     physicalDevice = device;
@@ -146,16 +151,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 };
             }
 
-            if (AppState.EnableValidationLayers)
-            {
-                createInfo.EnabledLayerCount = (uint)VkSettings.validationLayers.Length;
-                createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(VkSettings.validationLayers);
-            }
-            else
-            {
-                createInfo.EnabledLayerCount = 0;
-            }
-
             Result result = AppState.appContext.GetContext<VkContext>().vk
                 .CreateDevice(physicalDevice, in createInfo, null, out device);
             if (result != Result.Success)
@@ -166,11 +161,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             AppState.appContext.GetContext<VkContext>().vk.GetDeviceQueue(device, indices.GraphicsFamily!.Value, 0, out graphicsQueue);
             AppState.appContext.GetContext<VkContext>().vk.GetDeviceQueue(device, indices.PresentFamily!.Value, 0, out VkSurface.presentQueue);
-
-            if (AppState.EnableValidationLayers)
-            {
-                SilkMarshal.Free((nint)createInfo.PpEnabledLayerNames);
-            }
+            
 
             AppState.appContext.GetContext<VkContext>().vk
                 .TryGetDeviceExtension(AppState.appContext.GetContext<VkContext>().instance, device,
@@ -195,6 +186,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             bool extensionsSupported = CheckDeviceExtensionsSupport(device);
 
+            if (!extensionsSupported)
+            {
+                Debug.Error("Extensions were not supported");
+            }
+            
             bool swapChainAdequate = false;
             if (extensionsSupported)
             {
@@ -202,7 +198,18 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 swapChainAdequate = swapChainSupport.Formats.Any() && swapChainSupport.PresentModes.Any();
             }
 
-            return indices.IsComplete() && extensionsSupported && swapChainAdequate && CheckDeviceFeatureSupport(device);
+            if (!swapChainAdequate)
+            {
+                Debug.Error("Swapchain was not supported");
+            }
+
+            bool deviceFeatureSupported = CheckDeviceFeatureSupport(device);
+            if (!deviceFeatureSupported)
+            {
+                Debug.Error("Device features were not supported");
+            }
+
+            return indices.IsComplete() && extensionsSupported && swapChainAdequate && deviceFeatureSupported;
         }
         
         public static uint FindMemoryType(uint typeFilter, MemoryPropertyFlags selProperties)
@@ -265,7 +272,17 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             HashSet<string?> availableExtensionNames = availableExtensions.Select(extension => Marshal.PtrToStringAnsi((IntPtr)extension.ExtensionName)).ToHashSet();
 
-            return VkSettings.deviceExtensions.All(availableExtensionNames.Contains);
+            bool hasExtensions = true;
+            for (int i = 0; i < VkSettings.deviceExtensions.Length; i++)
+            {
+                if (!availableExtensionNames.Contains(VkSettings.deviceExtensions[i]))
+                {
+                    Debug.Error("Device does not have extension " + VkSettings.deviceExtensions[i]);
+                    hasExtensions = false;
+                }
+            }
+            
+            return hasExtensions;
         }
 
         public static bool CheckDeviceFeatureSupport(PhysicalDevice device)

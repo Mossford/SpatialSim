@@ -31,6 +31,11 @@ namespace SpatialSim.Engine.Core.SDLGpu
             
         }
 
+        public void FinishRender()
+        {
+            
+        }
+
         public void WindowResize()
         {
             
@@ -44,6 +49,11 @@ namespace SpatialSim.Engine.Core.SDLGpu
         public unsafe void CleanContext()
         {
             SDLGpuCreation.CleanInstance();
+        }
+
+        public Texture GetRenderTexture()
+        {
+            throw new NotImplementedException();
         }
 
         T AppContext.GetContext<T>()

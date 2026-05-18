@@ -23,6 +23,7 @@ namespace SpatialSim.Game.ImGui
                 ImGuiNET.ImGui.TextWrapped($"Camera fov " +
                                            $"{GameManager.cameraController.camera.fov:N1}");
                 ImGuiNET.ImGui.TextWrapped($"Camera dir {GameManager.cameraController.camera.transformRef.GetForward()}");
+                ImGuiNET.ImGui.TextWrapped($"Camera pos {GameManager.cameraController.camera.transformRef.position}");
                 
                 ImGuiNET.ImGui.End();
             }

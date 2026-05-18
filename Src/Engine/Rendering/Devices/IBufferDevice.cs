@@ -7,7 +7,9 @@ namespace SpatialSim.Engine.Rendering
         public void BindVertexBuffer(ICommandBufferDevice commandBufferDevice);
         public void BindBuffer(ICommandBufferDevice commandBufferDevice);
         public void CopyTo(IBufferDevice<T> dest);
-        public void CopyToTexture(ITextureDevice dest, in TextureData destData);
+        public void CopyToTexture(ITextureDevice dest, in TextureData srcData);
+        public void TextureToCopy(ITextureDevice src, in TextureData destData);
+        public T[] CopyToArray();
         public void UpdateData(in Span<T> data);
         public void UpdateUniformData(in Span<T> data);
         public void Clean();

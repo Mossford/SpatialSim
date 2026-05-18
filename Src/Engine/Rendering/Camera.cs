@@ -40,10 +40,28 @@ namespace SpatialSim.Engine.Rendering
             if (fov < 0.001f)
                 fov = 0.001f;
             proj = Matrix4x4.CreatePerspectiveFieldOfView(
-                fov * MathF.PI / 180.0f, 
-                Window.size.X / Window.size.Y, 
-                0.01f, 
-                10.0f);
+                fov * MathF.PI / 180.0f,
+                Window.size.X / Window.size.Y,
+                0.1f,
+                10f);
+            
+            //apply reverse depth buffer
+            Matrix4x4 transform = new Matrix4x4(
+                1.0f, 0.0f,  0.0f, 0.0f,
+                0.0f, 1.0f,  0.0f, 0.0f,
+                0.0f, 0.0f, -1.0f, 0.0f,
+                0.0f, 0.0f,  1.0f, 1.0f);
+            
+            proj *= transform;
+            
+            transform = new Matrix4x4(
+                1.0f, 0.0f, 0.0f, 0.0f,
+                0.0f, 1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, 0.5f, 0.0f,
+                0.0f, 0.0f, 0.5f, 1.0f);
+            
+            proj *= transform;
+            
         }
 
         public void Dispose()

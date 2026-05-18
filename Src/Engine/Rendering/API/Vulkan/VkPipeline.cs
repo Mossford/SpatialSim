@@ -167,7 +167,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 SType = StructureType.PipelineDepthStencilStateCreateInfo,
                 DepthTestEnable = settings.depthTest,
                 DepthWriteEnable = settings.depthTest,
-                DepthCompareOp = CompareOp.Less,
+                DepthCompareOp = CompareOp.Greater,
                 DepthBoundsTestEnable = false,
                 StencilTestEnable = false,
             };

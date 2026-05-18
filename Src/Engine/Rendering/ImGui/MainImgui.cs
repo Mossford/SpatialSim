@@ -39,7 +39,7 @@ namespace SpatialSim.Engine.Rendering
             if(!ShowMainWindow)
                 return;
             
-            ImGuiNET.ImGui.SetNextWindowSize(new Vector2(500, 400), ImGuiCond.FirstUseEver);
+            ImGuiNET.ImGui.SetNextWindowSize(new Vector2(350, 250), ImGuiCond.FirstUseEver);
             
             if(!ImGuiNET.ImGui.Begin("SpatialSim", ref ShowMainWindow, window_flags))
             {
@@ -110,7 +110,7 @@ namespace SpatialSim.Engine.Rendering
             {
                 if (menus[i].show)
                 {
-                    ImGuiNET.ImGui.SetNextWindowSize(new Vector2(500, 400), ImGuiCond.FirstUseEver);
+                    ImGuiNET.ImGui.SetNextWindowSize(new Vector2(350, 250), ImGuiCond.FirstUseEver);
                     menus[i].Show();
                 }
             }

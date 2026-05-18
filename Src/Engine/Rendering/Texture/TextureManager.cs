@@ -48,6 +48,25 @@ namespace SpatialSim.Engine.Rendering
             Debug.Warning($"Could not add texture {texture} possible duplicate");
             return false;
         }
+        
+        public static bool LoadTexture(string textureRef, Texture texture)
+        {
+            if (!File.Exists(Resources.ImagePath + textureRef) && textureRef.Length != 0)
+            {
+                Debug.Warning($"Could not find file at path {Resources.ImagePath + textureRef}");
+                return false;
+            }
+            
+            if (!textureLocToIndex.ContainsKey(textureRef))
+            {
+                textures.Add(texture);
+                textureLocToIndex.Add(textureRef, textures.Count - 1);
+                return true;
+            }
+
+            Debug.Warning($"Could not add texture {textureRef} possible duplicate");
+            return false;
+        }
 
         public static Texture RetrieveTexture(string texture, TextureFormat format = TextureFormat.R8G8B8A8Unorm)
         {

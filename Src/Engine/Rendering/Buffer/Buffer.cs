@@ -55,6 +55,19 @@ namespace SpatialSim.Engine.Rendering
             buffer?.CopyToTexture(dest, in destData);
         }
 
+        /// <summary>
+        /// Will use information stored in the destination data
+        /// </summary>
+        public void TextureToCopy(ITextureDevice src, in TextureData destData)
+        {
+            buffer?.TextureToCopy(src, destData);
+        }
+
+        public T[] CopyToArray()
+        {
+            return buffer?.CopyToArray() ?? Array.Empty<T>();
+        }
+
         public void UpdateData(in Span<T> data)
         {
             buffer?.UpdateData(data);

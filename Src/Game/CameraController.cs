@@ -19,6 +19,7 @@ namespace SpatialSim.Game
         }
 
         public float sensitivity = 0.003f;
+        public float speed = 0.0001f;
         private static bool keyUp;
 
         public CameraController(EcsComponentRef cameraRef)
@@ -36,7 +37,7 @@ namespace SpatialSim.Game
                 
                     Vector2 mousePosMoved = Input.position - Input.lastPosition;
                     mousePosMoved *= camera.fov * sensitivity;
-                    camera.transformRef.rotation += new Vector3(mousePosMoved.X, -mousePosMoved.Y, 0f);
+                    camera.transformRef.rotation += new Vector3(-mousePosMoved.X, mousePosMoved.Y, 0f);
 
                     if (Input.scroll != 0)
                     {
@@ -74,19 +75,19 @@ namespace SpatialSim.Game
 
             if (Input.IsKeyDown(Key.W))
             {
-                camera.transformRef.position += new Vector3(0, 0, 0.001f);
+                camera.transformRef.position += camera.transformRef.GetForward() * speed;
             }
             if (Input.IsKeyDown(Key.S))
             {
-                camera.transformRef.position -= new Vector3(0, 0, 0.001f);
+                camera.transformRef.position -= camera.transformRef.GetForward() * speed;
             }
             if (Input.IsKeyDown(Key.A))
             {
-                camera.transformRef.position -= new Vector3(0.001f, 0, 0);
+                camera.transformRef.position += camera.transformRef.GetRight() * speed;
             }
             if (Input.IsKeyDown(Key.D))
             {
-                camera.transformRef.position += new Vector3(0.001f, 0, 0);
+                camera.transformRef.position -= camera.transformRef.GetRight() * speed;
             }
         }
     }

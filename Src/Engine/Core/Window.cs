@@ -74,9 +74,9 @@ namespace SpatialSim.Engine.Core
             //make sure running on glfw
             GlfwWindowing.RegisterPlatform();
             GlfwWindowing.Use();
-            
+
             AppState.window = Silk.NET.Windowing.Window.Create(options);
-            
+
             AppState.Api = AppState.window.API.API + " " + AppState.window.API.Version.MajorVersion + "." +
                            AppState.window.API.Version.MinorVersion;
             
@@ -105,6 +105,7 @@ namespace SpatialSim.Engine.Core
             
             PipelineManager.Init();
             TextureManager.Init();
+            PostProcessManager.Init();
             
             MainImgui.Init();
             
@@ -152,6 +153,7 @@ namespace SpatialSim.Engine.Core
             renderStartTime = AppState.window.Time * 1000000;
             MainImgui.MainMenu();
             AppState.appContext.Render();
+            AppState.appContext.FinishRender();
             renderTime = AppState.window.Time * 1000000 - renderStartTime;
         }
 
@@ -162,6 +164,7 @@ namespace SpatialSim.Engine.Core
             AppState.appContext.CleanObjects();
             PipelineManager.Clean();
             TextureManager.Clean();
+            PostProcessManager.Clean();
             EcsManager.Clean();
             AppState.appContext.CleanContext();
             AppState.window.Dispose();

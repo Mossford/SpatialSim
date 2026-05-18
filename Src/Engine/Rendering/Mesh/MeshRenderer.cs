@@ -57,9 +57,22 @@ namespace SpatialSim.Engine.Rendering
         {
             mesh.CheckComponent(EcsComponentType.Mesh.GetId());
             material.CheckComponent(EcsComponentType.Material.GetId());
+            camera.CheckComponent(EcsComponentType.Camera.GetId());
             this.mesh = mesh;
             this.material = material;
             this.camera = camera;
+            pipelineRef = pipeline;
+            
+            Create();
+        }
+        
+        public MeshRenderer(EcsComponentRef mesh, EcsComponentRef material, string pipeline = "")
+        {
+            mesh.CheckComponent(EcsComponentType.Mesh.GetId());
+            material.CheckComponent(EcsComponentType.Material.GetId());
+            this.mesh = mesh;
+            this.material = material;
+            camera = new EcsComponentRef();
             pipelineRef = pipeline;
             
             Create();
@@ -79,7 +92,7 @@ namespace SpatialSim.Engine.Rendering
             indexBuffer.UpdateData(meshRef.meshData.indices);
         }
 
-        public void Draw(CommandBuffer commandBuffer, int frame)
+        public void Draw(CommandBuffer commandBuffer)
         {
             Pipeline pipeline = PipelineManager.RetrievePipeline(pipelineRef);
             commandBuffer.BindPipeLine(pipeline);

@@ -1,5 +1,7 @@
 using SpatialSim.Engine.Core;
 using StbImageSharp;
+using StbImageWriteSharp;
+using ColorComponents = StbImageSharp.ColorComponents;
 
 namespace SpatialSim.Engine.Rendering
 {
@@ -8,6 +10,11 @@ namespace SpatialSim.Engine.Rendering
         public ITextureDevice? texture;
         public TextureData data;
         public ulong dataSize;
+
+        public void Create()
+        {
+            texture = AppState.appContext.DeviceFactory.CreateTextureDevice(new TextureData());
+        }
         
         public bool LoadTexture(string file, TextureFormat format)
         {
@@ -73,6 +80,41 @@ namespace SpatialSim.Engine.Rendering
             Ticks.gpuMemoryAllocation.created += dataSize;
 
             return true;
+        }
+
+        public async void SaveToFile(string path, string file)
+        {
+            SaveToInternalData();
+            
+            try
+            {
+
+                await Task.Run(() =>
+                {
+                    ImageWriter writer = new ImageWriter();
+                    using var stream = File.Open(path + file, FileMode.Create);
+
+                    writer.WritePng(
+                        data.data,
+                        (int)data.info.width,
+                        (int)data.info.height,
+                        StbImageWriteSharp.ColorComponents.RedGreenBlueAlpha,
+                        stream
+                    );
+                });
+            }
+            catch (Exception e)
+            {
+                Debug.Error("Could not save texture to png " + e);
+            }
+        }
+
+        /// <summary>
+        /// Writes whats stored on the gpu side to the internal texture data
+        /// </summary>
+        public void SaveToInternalData()
+        {
+            texture?.WriteGpuToCpu(ref data);
         }
 
         public void Clean()

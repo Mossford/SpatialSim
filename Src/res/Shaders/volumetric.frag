@@ -71,7 +71,7 @@ vec4 RayMarchVolume(vec3 rayStart, vec3 rayEnd, vec3 boxMin, vec3 boxMax)
         pos += step;
     }
     
-    return vec4(0, 0, density, density);
+    return vec4(density, density, 0, density);
 }
 
 vec4 hash43x(vec3 p)
@@ -140,11 +140,6 @@ void main()
     vec3 boxMax = ubo.aabb.w + ubo.aabb.xyz;
     vec3 boxMin = -ubo.aabb.w + ubo.aabb.xyz;
     vec2 intersection = RayAabbIntersect(ubo.camPos.xyz, rayDir, boxMin, boxMax);
-
-    vec2 angles = GetAnglesFromVector(rayDir);
-    outColor.r = -sin(angles.x) * cos(angles.y);
-    outColor.g = sin(angles.y);
-    outColor.b = cos(angles.x) * cos(angles.y);
     
     if (intersection.x <= intersection.y && intersection.y > 0.0f)
     {

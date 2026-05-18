@@ -42,8 +42,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             KhrSwapchain.ExtensionName,
             KhrDeferredHostOperations.ExtensionName,
             KhrDynamicRendering.ExtensionName,
-            KhrAccelerationStructure.ExtensionName,
-            "VK_KHR_ray_query", //will need to find the actual class referencing this but this works for now
         };
         
         public static readonly PhysicalDeviceFeatures physicalDeviceFeatures = new PhysicalDeviceFeatures() with

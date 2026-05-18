@@ -43,6 +43,12 @@ namespace SpatialSim.Engine.Core
             }
         }
 
+        /// <summary>
+        /// Render to swapchain
+        /// TODO Remove one swapchain gets texture
+        /// </summary>
+        /// <param name="commandBuffer"></param>
+        /// <param name="frame"></param>
         public static void Render(CommandBuffer commandBuffer, int frame)
         {
             commandBuffer.BeginRendering(frame);
@@ -53,7 +59,26 @@ namespace SpatialSim.Engine.Core
                 {
                     int index = indexes[j];
                     MeshRenderer renderer = (MeshRenderer)EcsManager.componentPools[EcsComponentType.MeshRenderer.GetId()].components.Get(index);
-                    renderer.Draw(commandBuffer, frame);
+                    renderer.Draw(commandBuffer);
+                }
+            }
+            commandBuffer.EndRendering();
+        }
+        
+        /// <summary>
+        /// Render to a texture
+        /// </summary>
+        public static void Render(CommandBuffer commandBuffer, Texture texture)
+        {
+            commandBuffer.BeginRendering(texture);
+            for (int i = 0; i < renderOrder.Count; i++)
+            {
+                List<int> indexes = renderOrder.GetValueAtIndex(i);
+                for (int j = 0; j < indexes.Count; j++)
+                {
+                    int index = indexes[j];
+                    MeshRenderer renderer = (MeshRenderer)EcsManager.componentPools[EcsComponentType.MeshRenderer.GetId()].components.Get(index);
+                    renderer.Draw(commandBuffer);
                 }
             }
             commandBuffer.EndRendering();
