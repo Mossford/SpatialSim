@@ -300,7 +300,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             RenderingInfo renderingInfo = new()
             {
                 SType = StructureType.RenderingInfo,
-                RenderArea = new Rect2D(new Offset2D(0, 0), VkSwapChain.swapChainExtent),
+                RenderArea = new Rect2D(new Offset2D(0, 0), new Extent2D(colorWrite.data.info.width, colorWrite.data.info.height)),
                 LayerCount = 1,
                 ColorAttachmentCount = 1,
                 PColorAttachments = &colorAttachmentInfo,

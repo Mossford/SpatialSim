@@ -31,7 +31,15 @@ namespace SpatialSim.Engine.Rendering
         /// </summary>
         public static void RecreatePostProcesses()
         {
+            for (int i = 0; i < postProcesses.Count; i++)
+            {
+                postProcesses.GetValueAtIndex(i).Clean();
+            }
             
+            for (int i = 0; i < postProcesses.Count; i++)
+            {
+                postProcesses.GetValueAtIndex(i).Create();
+            }
         }
 
         public static bool LoadPostProcessEffect(PostProcessEffect effect, Shader fragShader)

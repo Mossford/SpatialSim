@@ -26,6 +26,8 @@ namespace SpatialSim.Engine.Rendering
         public void Create()
         {
             texture = new Texture();
+            texture.data.info.width = (uint)Window.size.X;
+            texture.data.info.height = (uint)Window.size.Y;
             postProcess = AppState.appContext.DeviceFactory.CreatePostProcessDevice(ref texture);
         }
 

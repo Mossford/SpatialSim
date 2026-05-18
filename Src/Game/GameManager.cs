@@ -71,7 +71,7 @@ namespace SpatialSim.Game
                 }), cameraRef));
             }
             
-            Entity screenQuad = EcsManager.AddEntity();
+            /*Entity screenQuad = EcsManager.AddEntity();
             {
                 EcsComponentRef transform = screenQuad.AddComponent(new Transform(
                     new Vector3(0, 0, 0),
@@ -84,7 +84,7 @@ namespace SpatialSim.Game
                         new Material()), 
                     cameraRef,
                     "Volumetric"));
-            }
+            }*/
 
             PostProcessManager.LoadPostProcessEffect(new PostProcessEffect("testeffect"), 
                 ShaderManager.RetrieveShader(

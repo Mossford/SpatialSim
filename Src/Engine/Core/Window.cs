@@ -146,6 +146,7 @@ namespace SpatialSim.Engine.Core
             scaleFromBase = size / AppState.WindowStartSize;
             
             AppState.appContext.WindowResize();
+            PostProcessManager.RecreatePostProcesses();
         }
 
         static void Render(double delta)
