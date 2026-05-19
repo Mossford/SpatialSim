@@ -34,7 +34,9 @@ namespace SpatialSim.Engine.Core
             Resources.Init();
             //load logging before anything
             Debug.Init();
-            
+
+            Ticks.startUpTimer.SignalStart(Timer.TimerMode.Milliseconds);
+
             Window.init = init;
             Window.update = update;
             Window.fixedUpdate = fixedUpdate;
@@ -115,6 +117,10 @@ namespace SpatialSim.Engine.Core
             size = (Vector2)AppState.window.FramebufferSize;
             windowScale = size / (Vector2)AppState.window.Size;
             scaleFromBase = size / AppState.WindowStartSize;
+
+            Ticks.startUpTimer.SignalEnd();
+
+            Debug.LogInfo($"Load time took {Ticks.startUpTimer.elapsed}ms");
         }
 
         static void Update(double delta)

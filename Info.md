@@ -10,7 +10,10 @@
 
 ## Pipeline vertex attributes need abstracting
 
-## PostProcess and RenderTextures
+## [DONE] PostProcess and RenderTextures
 ### Make it easier to get rendered images at some point
 ### Normal world render goes to some texture, post process grabs this and runs potentiall multiple times, and on last render it goes to swapchain
 
+## Swap to SDL3 for windowing
+
+## Make texture loading threaded

@@ -44,7 +44,7 @@ namespace SpatialSim.Engine.Core
         public static bool EnableValidationLayers = true;
         public static bool EnableLogging = true;
         public static bool EnableConsoleLogging = true;
-        public static bool EnableDebugLogging = true;
+        public static bool EnableDebugLogging = false;
         public static bool EnableImguiDebugLogging = false;
 
         #endregion

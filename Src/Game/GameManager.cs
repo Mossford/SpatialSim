@@ -55,7 +55,7 @@ namespace SpatialSim.Game
             cameraController = new CameraController(cameraRef);
             MainImgui.menus.Add(new CameraMenu());
             
-            moon = EcsManager.AddEntity();
+            /*moon = EcsManager.AddEntity();
             {
                 EcsComponentRef transform = moon.AddComponent(new Transform(
                     new Vector3(0, 0, 1),
@@ -69,9 +69,9 @@ namespace SpatialSim.Game
                     textureRef = "moonColor.png",
                     normalMapRef = "moonNormal.png",
                 }), cameraRef));
-            }
+            }*/
             
-            /*Entity screenQuad = EcsManager.AddEntity();
+            Entity screenQuad = EcsManager.AddEntity();
             {
                 EcsComponentRef transform = screenQuad.AddComponent(new Transform(
                     new Vector3(0, 0, 0),
@@ -84,16 +84,16 @@ namespace SpatialSim.Game
                         new Material()), 
                     cameraRef,
                     "Volumetric"));
-            }*/
+            }
 
-            PostProcessManager.LoadPostProcessEffect(new PostProcessEffect("testeffect"), 
+            /*PostProcessManager.LoadPostProcessEffect(new PostProcessEffect("testeffect"), 
                 ShaderManager.RetrieveShader(
                 new ShaderSettings(ShaderType.Fragment,
                     [
                         new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [0],
                             ShaderDescriptorUsage.Sampler, ShaderType.Fragment)
                     ],
-                    "testeffect.frag")));
+                    "testeffect.frag")));*/
 
             //AppState.appContext.GetRenderTexture().SaveToFile(Resources.ImagePath, "savedImage.png");
         }

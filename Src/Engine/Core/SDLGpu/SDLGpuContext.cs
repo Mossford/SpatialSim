@@ -1,7 +1,7 @@
 using Silk.NET.Windowing;
 using SpatialSim.Engine.Core.Vulkan;
 using SpatialSim.Engine.Rendering;
-using SDL3;
+using SDL;
 using SpatialSim.Engine.Rendering.API.SDLGpu;
 
 namespace SpatialSim.Engine.Core.SDLGpu
@@ -11,10 +11,10 @@ namespace SpatialSim.Engine.Core.SDLGpu
         public GraphicsAPI graphicsApi { get; set; }
         public IDeviceFactory DeviceFactory { get; }
 
-        public IntPtr window;
+        public unsafe SDL_Window* window;
         
-        public SDL.GPUViewport gpuViewport;
-        public IntPtr gpuDevice;
+        public unsafe SDL_GPUViewport* gpuViewport;
+        public unsafe SDL_GPUDevice* gpuDevice;
         
         public void Init()
         {
