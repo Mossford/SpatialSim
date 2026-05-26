@@ -22,7 +22,7 @@ namespace SpatialSim.Game.Rendering
             fragmentShader.AddData(uniformBinding, Window.size);
             fragmentShader.AddData(uniformBinding, meshRenderer.cameraRef.fov);
             fragmentShader.AddData(uniformBinding, (uint)100);
-            fragmentShader.AddData(uniformBinding, new Vector4(0, 0, 1, MathUtil.GetScaleFromAngularSize(80 / 60f)));
+            fragmentShader.AddData(uniformBinding, new Vector4(0, 0, 0.3f, MathUtil.GetScaleFromAngularSize(80 / 60f)));
             UpdateUniforms(fragmentShader, uniformBinding);
             commandBuffer.BindFragmentUniforms(this, uniformBinding);
         }

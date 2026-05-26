@@ -15,11 +15,13 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             texture = new VkTexture();
             texture.Create(
                 VkSwapChain.swapChainExtent.Width, 
-                VkSwapChain.swapChainExtent.Height, 
-                depthFormat, 
+                VkSwapChain.swapChainExtent.Height,
+                1,
+                depthFormat,
                 ImageTiling.Optimal, 
                 ImageUsageFlags.DepthStencilAttachmentBit | ImageUsageFlags.TransferSrcBit, 
-                MemoryPropertyFlags.DeviceLocalBit);
+                MemoryPropertyFlags.DeviceLocalBit,
+                ImageType.Type2D);
             TransitionDepthLayout();
             texture.CreateImageView(ImageAspectFlags.DepthBit);
             

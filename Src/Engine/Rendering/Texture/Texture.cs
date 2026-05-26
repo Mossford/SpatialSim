@@ -45,6 +45,7 @@ namespace SpatialSim.Engine.Rendering
                     data.data = result.Data;
                     data.info.width = (uint)result.Width;
                     data.info.height = (uint)result.Height;
+                    data.info.depth = 1;
                     data.info.format = format;
                     data.info.usage = TextureUsage.Sampler;
                     data.info.memoryUsage = TextureMemoryUsage.gpu;
@@ -72,6 +73,7 @@ namespace SpatialSim.Engine.Rendering
             data.data = MissingTextureData.pixels;
             data.info.width = (uint)MissingTextureData.size;
             data.info.height = (uint)MissingTextureData.size;
+            data.info.depth = 1;
             data.info.format = TextureFormat.R8G8B8A8Unorm;
             data.info.usage = TextureUsage.Sampler;
             data.info.memoryUsage = TextureMemoryUsage.gpu;

@@ -4,19 +4,23 @@ namespace SpatialSim.Engine.Rendering
     {
         public uint width;
         public uint height;
+        public uint depth;
         public TextureFormat format;
         public TextureMemoryUsage memoryUsage;
         public TextureUsage usage;
         public TextureFilter filter;
+        public TextureType type;
 
         public TextureInfo()
         {
             width = 0;
             height = 0;
+            depth = 0;
             format = default;
             memoryUsage = default;
             usage = default;
             filter = default;
+            type = default;
         }
     }
     

@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using ImGuiNET;
+using SDL;
 using Silk.NET.Core.Native;
 using Silk.NET.Input;
 using Silk.NET.Input.Extensions;
@@ -14,6 +15,7 @@ using Silk.NET.Windowing;
 using SpatialSim.Engine.Core;
 using SpatialSim.Engine.Rendering.Vulkan;
 using Buffer = Silk.NET.Vulkan.Buffer;
+using Window = SpatialSim.Engine.Core.Window;
 
 //Taken from https://github.com/dotnet/Silk.NET/blob/main/src/Lab/Experiments/ImGuiVulkan/Lib/ImGuiController.cs
 
@@ -22,13 +24,10 @@ namespace SpatialSim.Engine.Rendering.ImGui
     public class VkImGuiController : IDisposable
     {
         private Vk _vk;
-        private IView _view;
-        private IInputContext _input;
         private Device _device;
         private PhysicalDevice _physicalDevice;
         private bool _frameBegun;
         private readonly List<char> _pressedChars = new List<char>();
-        private IKeyboard _keyboard;
         private DescriptorPool _descriptorPool;
         private int _windowWidth;
         private int _windowHeight;
@@ -58,7 +57,7 @@ namespace SpatialSim.Engine.Rendering.ImGui
         /// <param name="swapChainImageCt">The number of images used in the swap chain</param>
         /// <param name="swapChainFormat">The image format used by the swap chain</param>
         /// <param name="depthBufferFormat">The image formate used by the depth buffer, or null if no depth buffer is used</param>
-        public VkImGuiController(Vk vk, IView view, IInputContext input, PhysicalDevice physicalDevice, uint graphicsFamilyIndex, int swapChainImageCt, Format swapChainFormat, Format? depthBufferFormat)
+        public VkImGuiController(Vk vk, PhysicalDevice physicalDevice, uint graphicsFamilyIndex, int swapChainImageCt, Format swapChainFormat, Format? depthBufferFormat)
         {
             var context = ImGuiNET.ImGui.CreateContext();
             ImGuiNET.ImGui.SetCurrentContext(context);
@@ -68,7 +67,7 @@ namespace SpatialSim.Engine.Rendering.ImGui
             io.Fonts.AddFontDefault();
             io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
 
-            Init(vk, view, input, physicalDevice, graphicsFamilyIndex, swapChainImageCt, swapChainFormat, depthBufferFormat);
+            Init(vk, physicalDevice, graphicsFamilyIndex, swapChainImageCt, swapChainFormat, depthBufferFormat);
 
             SetKeyMappings();
 
@@ -102,7 +101,7 @@ namespace SpatialSim.Engine.Rendering.ImGui
                 throw new Exception($"Failed to load ImGui font");
             }
 
-            Init(vk, view, input, physicalDevice, graphicsFamilyIndex, swapChainImageCt, swapChainFormat, depthBufferFormat);
+            Init(vk, physicalDevice, graphicsFamilyIndex, swapChainImageCt, swapChainFormat, depthBufferFormat);
 
             SetKeyMappings();
 
@@ -111,14 +110,12 @@ namespace SpatialSim.Engine.Rendering.ImGui
             BeginFrame();
         }
 
-        private unsafe void Init(Vk vk, IView view, IInputContext input, PhysicalDevice physicalDevice, uint graphicsFamilyIndex, int swapChainImageCt, Format swapChainFormat, Format? depthBufferFormat)
+        private unsafe void Init(Vk vk, PhysicalDevice physicalDevice, uint graphicsFamilyIndex, int swapChainImageCt, Format swapChainFormat, Format? depthBufferFormat)
         {
             _vk = vk;
-            _view = view;
-            _input = input;
             _physicalDevice = physicalDevice;
-            _windowWidth = view.Size.X;
-            _windowHeight = view.Size.Y;
+            _windowWidth = (int)Window.size.X;
+            _windowHeight = (int)Window.size.Y;
             _swapChainImageCt = swapChainImageCt;
 
             if (swapChainImageCt < 2)
@@ -569,20 +566,18 @@ namespace SpatialSim.Engine.Rendering.ImGui
         {
             ImGuiNET.ImGui.NewFrame();
             _frameBegun = true;
-            _keyboard = Input.keyboard;
-            _view.Resize += WindowResized;
-            _keyboard.KeyChar += OnKeyChar;
+            //_keyboard = Input.keyboard;
         }
 
-        private void OnKeyChar(IKeyboard arg1, char arg2)
+        private void OnKeyChar(char arg2)
         {
             _pressedChars.Add(arg2);
         }
 
-        private void WindowResized(Vector2D<int> size)
+        private void WindowResized()
         {
-            _windowWidth = size.X;
-            _windowHeight = size.Y;
+            _windowWidth = (int)Window.size.X;
+            _windowHeight = (int)Window.size.Y;
         }
 
         /// <summary>
@@ -625,7 +620,7 @@ namespace SpatialSim.Engine.Rendering.ImGui
 
             if (_windowWidth > 0 && _windowHeight > 0)
             {
-                io.DisplayFramebufferScale = new Vector2(_view.FramebufferSize.X / _windowWidth, _view.FramebufferSize.Y / _windowHeight);
+                io.DisplayFramebufferScale = Window.windowScale;
             }
 
             io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
@@ -635,17 +630,14 @@ namespace SpatialSim.Engine.Rendering.ImGui
         {
             var io = ImGuiNET.ImGui.GetIO();
 
-            var mouseState = _input.Mice[0].CaptureState();
-            var keyboardState = _input.Keyboards[0];
+            io.MouseDown[0] = Input.IsMouseButtonDown(SDLButton.SDL_BUTTON_LEFT);
+            io.MouseDown[1] = Input.IsMouseButtonDown(SDLButton.SDL_BUTTON_RIGHT);
+            io.MouseDown[2] = Input.IsMouseButtonDown(SDLButton.SDL_BUTTON_MIDDLE);
 
-            io.MouseDown[0] = mouseState.IsButtonPressed(MouseButton.Left);
-            io.MouseDown[1] = mouseState.IsButtonPressed(MouseButton.Right);
-            io.MouseDown[2] = mouseState.IsButtonPressed(MouseButton.Middle);
-
-            var point = new Point((int)mouseState.Position.X, (int)mouseState.Position.Y);
+            var point = new Point((int)Input.mousePosition.X, (int)Input.mousePosition.Y);
             io.MousePos = new Vector2(point.X, point.Y);
 
-            var wheel = mouseState.GetScrollWheels()[0];
+            var wheel = Input.mouseWheel;
             io.MouseWheel = wheel.Y;
             io.MouseWheelH = wheel.X;
 
@@ -665,10 +657,10 @@ namespace SpatialSim.Engine.Rendering.ImGui
 
             _pressedChars.Clear();
 
-            io.KeyCtrl = keyboardState.IsKeyPressed(Key.ControlLeft) || keyboardState.IsKeyPressed(Key.ControlRight);
-            io.KeyAlt = keyboardState.IsKeyPressed(Key.AltLeft) || keyboardState.IsKeyPressed(Key.AltRight);
-            io.KeyShift = keyboardState.IsKeyPressed(Key.ShiftLeft) || keyboardState.IsKeyPressed(Key.ShiftRight);
-            io.KeySuper = keyboardState.IsKeyPressed(Key.SuperLeft) || keyboardState.IsKeyPressed(Key.SuperRight);
+            io.KeyCtrl = Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_LCTRL) || Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_RCTRL);
+            io.KeyAlt = Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_LALT) || Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_RALT);
+            io.KeyShift = Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_LSHIFT) || Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_RSHIFT);
+            io.KeySuper = Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_LGUI) || Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_RGUI);
         }
 
         internal void PressChar(char keyChar)
@@ -951,9 +943,6 @@ namespace SpatialSim.Engine.Rendering.ImGui
         /// </summary>
         public unsafe void Dispose()
         {
-            _view.Resize -= WindowResized;
-            _keyboard.KeyChar -= OnKeyChar;
-
             for (uint n = 0; n < _mainWindowRenderBuffers.Count; n++)
             {
                 _vk.DestroyBuffer(_device, _mainWindowRenderBuffers.FrameRenderBuffers[n].VertexBuffer, default);

@@ -23,34 +23,17 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         
         public void Create(in TextureData data)
         {
-            //create some staging buffer
-            //upload to gpu side to store texture memory
-            //copy buffer to image
-
-            format = Format.R8G8B8A8Unorm;
-            switch (data.info.format)
+            format = data.info.format switch
             {
-                case TextureFormat.R8G8B8A8Unorm:
-                {
-                    format = Format.R8G8B8A8Unorm;
-                    break;
-                }
-                case TextureFormat.R8G8B8A8Srgb:
-                {
-                    format = Format.R8G8B8A8Srgb;
-                    break;
-                }
-                case TextureFormat.R8G8B8Uint:
-                {
-                    format = Format.R8G8B8Uint;
-                    break;
-                }
-                case TextureFormat.R8G8B8A8Uint:
-                {
-                    format = Format.R8G8B8A8Uint;
-                    break;
-                }
-            }
+                TextureFormat.R8G8B8A8Unorm => Format.R8G8B8A8Unorm,
+                TextureFormat.R8G8B8A8Srgb => Format.R8G8B8A8Srgb,
+                TextureFormat.R8G8B8Uint => Format.R8G8B8Uint,
+                TextureFormat.R8G8B8A8Uint => Format.R8G8B8A8Uint,
+                //create some staging buffer
+                //upload to gpu side to store texture memory
+                //copy buffer to image
+                _ => Format.R8G8B8A8Unorm
+            };
 
             // TODO make it possible that there might be multiple usages attached?
             usage = ImageUsageFlags.TransferDstBit | ImageUsageFlags.TransferSrcBit;
@@ -72,23 +55,22 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     break;
                 }
             }
-            
-            MemoryPropertyFlags memUsage = MemoryPropertyFlags.DeviceLocalBit;
-            switch (data.info.memoryUsage)
-            {
-                case TextureMemoryUsage.cpu:
-                {
-                    memUsage = MemoryPropertyFlags.HostVisibleBit;
-                    break;
-                }
-                case TextureMemoryUsage.gpu:
-                {
-                    memUsage = MemoryPropertyFlags.DeviceLocalBit;
-                    break;
-                }
-            }
 
-            Create(data.info.width, data.info.height, format, ImageTiling.Optimal, usage, memUsage);
+            MemoryPropertyFlags memUsage = data.info.memoryUsage switch
+            {
+                TextureMemoryUsage.cpu => MemoryPropertyFlags.HostVisibleBit,
+                TextureMemoryUsage.gpu => MemoryPropertyFlags.DeviceLocalBit,
+                _ => MemoryPropertyFlags.DeviceLocalBit
+            };
+            
+            ImageType imageType = data.info.type switch
+            {
+                TextureType.Type2D => ImageType.Type2D,
+                TextureType.Type3D => ImageType.Type3D,
+                _ => ImageType.Type2D
+            };
+
+            Create(data.info.width, data.info.height, data.info.depth, format, ImageTiling.Optimal, usage, memUsage, imageType);
             
             //create the staging buffer
             Buffer<byte> stagingBuffer = new Buffer<byte>();
@@ -112,50 +94,26 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             CreateImageView(ImageAspectFlags.ColorBit);
 
-            filter = Filter.Linear;
-            switch (data.info.filter)
+            filter = data.info.filter switch
             {
-                case TextureFilter.Linear:
-                {
-                    filter = Filter.Linear;
-                    break;
-                }
-                case TextureFilter.Nearest:
-                {
-                    filter = Filter.Nearest;
-                    break;
-                }
-            }
-            
+                TextureFilter.Linear => Filter.Linear,
+                TextureFilter.Nearest => Filter.Nearest,
+                _ => Filter.Linear
+            };
+
             CreateSampler();
         }
 
         public void CreateImage(in TextureData data)
         {
-            format = Format.R8G8B8A8Unorm;
-            switch (data.info.format)
+            format = data.info.format switch
             {
-                case TextureFormat.R8G8B8A8Unorm:
-                {
-                    format = Format.R8G8B8A8Unorm;
-                    break;
-                }
-                case TextureFormat.R8G8B8A8Srgb:
-                {
-                    format = Format.R8G8B8A8Srgb;
-                    break;
-                }
-                case TextureFormat.R8G8B8Uint:
-                {
-                    format = Format.R8G8B8Uint;
-                    break;
-                }
-                case TextureFormat.R8G8B8A8Uint:
-                {
-                    format = Format.R8G8B8A8Uint;
-                    break;
-                }
-            }
+                TextureFormat.R8G8B8A8Unorm => Format.R8G8B8A8Unorm,
+                TextureFormat.R8G8B8A8Srgb => Format.R8G8B8A8Srgb,
+                TextureFormat.R8G8B8Uint => Format.R8G8B8Uint,
+                TextureFormat.R8G8B8A8Uint => Format.R8G8B8A8Uint,
+                _ => Format.R8G8B8A8Unorm
+            };
 
             // TODO make it possible that there might be multiple usages attached?
             usage = ImageUsageFlags.TransferDstBit | ImageUsageFlags.TransferSrcBit;
@@ -177,23 +135,22 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     break;
                 }
             }
-            
-            MemoryPropertyFlags memUsage = MemoryPropertyFlags.DeviceLocalBit;
-            switch (data.info.memoryUsage)
-            {
-                case TextureMemoryUsage.cpu:
-                {
-                    memUsage = MemoryPropertyFlags.HostVisibleBit;
-                    break;
-                }
-                case TextureMemoryUsage.gpu:
-                {
-                    memUsage = MemoryPropertyFlags.DeviceLocalBit;
-                    break;
-                }
-            }
 
-            Create(data.info.width, data.info.height, format, ImageTiling.Optimal, usage, memUsage);
+            MemoryPropertyFlags memUsage = data.info.memoryUsage switch
+            {
+                TextureMemoryUsage.cpu => MemoryPropertyFlags.HostVisibleBit,
+                TextureMemoryUsage.gpu => MemoryPropertyFlags.DeviceLocalBit,
+                _ => MemoryPropertyFlags.DeviceLocalBit
+            };
+
+            ImageType imageType = data.info.type switch
+            {
+                TextureType.Type2D => ImageType.Type2D,
+                TextureType.Type3D => ImageType.Type3D,
+                _ => ImageType.Type2D
+            };
+
+            Create(data.info.width, data.info.height, data.info.depth, format, ImageTiling.Optimal, usage, memUsage, imageType);
             CreateImageView(ImageAspectFlags.ColorBit);
         }
 
@@ -318,7 +275,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         /// <summary>
         /// Internal vulkan use
         /// </summary>
-        public unsafe void Create(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties)
+        public unsafe void Create(uint width, uint height, uint depth, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageType type)
         {
             this.format = format;
             
@@ -344,12 +301,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             ImageCreateInfo imageInfo = new()
             {
                 SType = StructureType.ImageCreateInfo,
-                ImageType = ImageType.Type2D,
+                ImageType = type,
                 Extent =
                 {
                     Width = width,
                     Height = height,
-                    Depth = 1,
+                    Depth = depth,
                 },
                 MipLevels = 1,
                 ArrayLayers = 1,

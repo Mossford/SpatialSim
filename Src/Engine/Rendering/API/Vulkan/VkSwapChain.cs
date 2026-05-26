@@ -1,4 +1,5 @@
 using System.Numerics;
+using SDL;
 using Silk.NET.Maths;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
@@ -183,10 +184,17 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             while (Window.size.X == 0 || Window.size.Y == 0)
             {
-                Window.size = (Vector2)AppState.window.FramebufferSize;
-                Window.windowScale = Window.size / (Vector2)AppState.window.Size;
-                Window.scaleFromBase = Window.size / AppState.WindowStartSize;
-                AppState.window.DoEvents();
+                unsafe
+                {
+                    int x, y;
+                    SDL3.SDL_GetWindowMaximumSize(AppState.window, &x, &y);
+                    Window.maxSize.X = x;
+                    Window.maxSize.Y = y;
+                    SDL3.SDL_GetWindowSize(AppState.window, &x, &y);
+                    Window.size.X = x;
+                    Window.size.Y = y;
+                    Window.windowScale = new Vector2(SDL3.SDL_GetWindowDisplayScale(AppState.window));
+                }
             }
             
             AppState.appContext.GetContext<VkContext>().vk.DeviceWaitIdle(VkDevices.device);
@@ -289,7 +297,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
             else
             {
-                Vector2D<int> framebufferSize = AppState.window.FramebufferSize;
+                Vector2 framebufferSize = Window.size;
 
                 Extent2D actualExtent = new()
                 {

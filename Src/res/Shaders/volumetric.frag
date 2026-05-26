@@ -17,6 +17,15 @@ layout(set = 2) uniform UniformBufferObject
     vec4 aabb;
 } ubo;
 
+vec4 hash43x(vec3 p)
+{
+    uvec3 x = uvec3(ivec3(p));
+    x = 1103515245U*((x.xyz >> 1U)^(x.yzx));
+    uint h = 1103515245U*((x.x^x.z)^(x.y>>3U));
+    uvec4 rz = uvec4(h, h*16807U, h*48271U, h*69621U); //see: http://random.mat.sbg.ac.at/results/karl/server/node4.html
+    return vec4((rz >> 1) & uvec4(0x7fffffffU))/float(0x7fffffff);
+}
+
 float RaySphereIntersection(vec3 center, float radius, vec3 rayDir)
 {
     vec3 oc = ubo.camPos.xyz - center;
@@ -72,15 +81,6 @@ vec4 RayMarchVolume(vec3 rayStart, vec3 rayEnd, vec3 boxMin, vec3 boxMax)
     }
     
     return vec4(density, density, 0, density);
-}
-
-vec4 hash43x(vec3 p)
-{
-    uvec3 x = uvec3(ivec3(p));
-    x = 1103515245U*((x.xyz >> 1U)^(x.yzx));
-    uint h = 1103515245U*((x.x^x.z)^(x.y>>3U));
-    uvec4 rz = uvec4(h, h*16807U, h*48271U, h*69621U); //see: http://random.mat.sbg.ac.at/results/karl/server/node4.html
-    return vec4((rz >> 1) & uvec4(0x7fffffffU))/float(0x7fffffff);
 }
 
 

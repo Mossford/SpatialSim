@@ -12,10 +12,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             texture.Create(inputTex.data.info.width,
                 inputTex.data.info.height,
+                1,
                 VkSwapChain.swapChainImageFormat,
                 ImageTiling.Optimal,
                 ImageUsageFlags.ColorAttachmentBit | ImageUsageFlags.SampledBit,
-                MemoryPropertyFlags.DeviceLocalBit);
+                MemoryPropertyFlags.DeviceLocalBit,
+                ImageType.Type2D);
             texture.CreateImageView(ImageAspectFlags.ColorBit);
             texture.CreateSampler();
             

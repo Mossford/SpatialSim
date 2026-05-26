@@ -1,3 +1,4 @@
+using SDL;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using SpatialSim.Engine.Core;
@@ -19,7 +20,21 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 throw new NotSupportedException("KHR_surface extension not found");
             }
 
-            surface = AppState.window.VkSurface!.Create<AllocationCallbacks>(AppState.appContext.GetContext<VkContext>().instance.ToHandle(), null).ToSurface();
+            surface = new SurfaceKHR();
+            
+            ulong handleValue;
+            VkSurfaceKHR_T* surfacePtr = (VkSurfaceKHR_T*)&handleValue;
+            if (!SDL3.SDL_Vulkan_CreateSurface(AppState.window,
+                    (VkInstance_T*)AppState.appContext.GetContext<VkContext>().instance.ToHandle().Handle, null,
+                    &surfacePtr))
+            {
+                string error = "" + SDL3.SDL_GetError();
+                Debug.Error($"SDL could not create vulkan surface {error}");
+                throw new Exception($"SDL could not create vulkan surface {error}");
+            }
+            
+            surface.Handle = (ulong)surfacePtr;
+            
             
             Debug.LogInfo("Successful surface creation");
         }

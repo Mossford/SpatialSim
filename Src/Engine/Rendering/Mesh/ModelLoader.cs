@@ -273,7 +273,7 @@ namespace SpatialSim.Engine.Rendering
                 else if (mat->MProperties[i]->MKey == Assimp.MatkeyTextureBase)
                 {
                     AssimpString texFile = new AssimpString();
-                    assimp.GetMaterialString(mat, mat->MProperties[i]->MKey, (uint)TextureType.Diffuse, 0, ref texFile);
+                    assimp.GetMaterialString(mat, mat->MProperties[i]->MKey, (uint)Silk.NET.Assimp.TextureType.Diffuse, 0, ref texFile);
                     material.textureRef = texFile.AsString;
                     //just load from where the model is also located
                     if(!textureQueue.Contains(texFile.AsString))

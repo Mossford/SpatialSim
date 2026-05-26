@@ -10,9 +10,6 @@ namespace SpatialSim.Engine.Core.SDLGpu
     {
         public GraphicsAPI graphicsApi { get; set; }
         public IDeviceFactory DeviceFactory { get; }
-
-        public unsafe SDL_Window* window;
-        
         public unsafe SDL_GPUViewport* gpuViewport;
         public unsafe SDL_GPUDevice* gpuDevice;
         

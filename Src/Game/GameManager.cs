@@ -50,12 +50,12 @@ namespace SpatialSim.Game
                         new Vector3(), 
                         new Vector3(), 
                         1.0f)), 
-                 MathUtil.GetFovFromFocalLength(23.9f,600f)));
+                 MathUtil.GetFovFromFocalLength(23.9f,40f)));
 
             cameraController = new CameraController(cameraRef);
             MainImgui.menus.Add(new CameraMenu());
             
-            /*moon = EcsManager.AddEntity();
+            moon = EcsManager.AddEntity();
             {
                 EcsComponentRef transform = moon.AddComponent(new Transform(
                     new Vector3(0, 0, 1),
@@ -69,7 +69,7 @@ namespace SpatialSim.Game
                     textureRef = "moonColor.png",
                     normalMapRef = "moonNormal.png",
                 }), cameraRef));
-            }*/
+            }
             
             Entity screenQuad = EcsManager.AddEntity();
             {

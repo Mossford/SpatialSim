@@ -6,6 +6,7 @@ using Silk.NET.Core.Native;
 using Silk.NET.Vulkan.Extensions.EXT;
 using SpatialSim.Engine.Core.Vulkan;
 using System.Runtime.CompilerServices;
+using SDL;
 using SpatialSim.Engine.Rendering.ImGui;
 
 namespace SpatialSim.Engine.Rendering.Vulkan
@@ -93,8 +94,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         {
             AppState.appContext.GetContext<VkContext>().imGuiController = new VkImGuiController(
                 AppState.appContext.GetContext<VkContext>().vk,
-                AppState.window,
-                Input.input,
                 VkDevices.physicalDevice,
                 VkDevices.graphicsFamilyIndex,
                 VkSwapChain.swapChainImages.Length,
@@ -107,8 +106,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         
         static unsafe string[] GetRequiredExtensions()
         {
-            byte** glfwExtensions = AppState.window.VkSurface!.GetRequiredExtensions(out uint glfwExtensionCount);
-            string[] extensions = SilkMarshal.PtrToStringArray((nint)glfwExtensions, (int)glfwExtensionCount);
+            uint surfaceExtensionCount;
+            byte** surfaceExtensions = SDL3.SDL_Vulkan_GetInstanceExtensions(&surfaceExtensionCount);
+            string[] extensions = SilkMarshal.PtrToStringArray((nint)surfaceExtensions, (int)surfaceExtensionCount);
 
             if (AppState.EnableValidationLayers)
             {

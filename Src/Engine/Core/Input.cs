@@ -1,101 +1,145 @@
 using System.Numerics;
+using SDL;
 using Silk.NET.Input;
 
 namespace SpatialSim.Engine.Core
 {
     public static class Input
     {
-        public static Dictionary<int, int> keysPressed;
-        public static IInputContext input;
-        public static IKeyboard keyboard;
-        
-        public static IMouse mouse;
-        public static Vector2 position;
-        public static Vector2 localPosition;
-        public static Vector2 lastPosition;
-        public static Vector2 lastLocalPosition;
+        public static Dictionary<int, bool> keysPressed;
+        public static Dictionary<int, bool> mousePressed;
+
+        public static Vector2 mousePosition;
+        public static Vector2 mouseLocalPosition;
+        static Vector2 lastMousePosition;
+        public static Vector2 mouseDelta;
         public static bool uiWantMouse;
-        public static int scroll;
-        static int lastScroll;
+        public static Vector2 mouseWheel;
+        public static bool mouseLocked;
 
         public static void Init()
         {
-            input = AppState.window.CreateInput();
-            keyboard = input.Keyboards.FirstOrDefault();
-            keysPressed = new Dictionary<int, int>();
-            
-            mouse = input.Mice[0];
+            keysPressed = new Dictionary<int, bool>();
+            mousePressed = new Dictionary<int, bool>();
         }
 
-        public static void Update()
+        public static void Update(in SDL_Event sdlEvent)
         {
-            for (int i = 0; i < keyboard.SupportedKeys.Count; i++)
+            if (sdlEvent.type is (uint)SDL_EventType.SDL_EVENT_KEY_DOWN or (uint)SDL_EventType.SDL_EVENT_KEY_UP)
             {
-                if (keyboard.IsKeyPressed(keyboard.SupportedKeys[i]))
+                unsafe
                 {
-                    if(!keysPressed.ContainsKey((int)keyboard.SupportedKeys[i]))
+                    int keyCount;
+                    bool* keyState = (bool*)SDL3.SDL_GetKeyboardState(&keyCount);
+                    for (int i = 0; i < keyCount; i++)
                     {
-                        keysPressed.Add((int)keyboard.SupportedKeys[i], 1);
-                    }
-                    else
-                    {
-                        keysPressed[(int)keyboard.SupportedKeys[i]] = 1;
-                    }
-                }
-                else
-                {
-                    if (!keysPressed.ContainsKey((int)keyboard.SupportedKeys[i]))
-                    {
-                        keysPressed.Add((int)keyboard.SupportedKeys[i], 0);
-                    }
-                    else
-                    {
-                        keysPressed[(int)keyboard.SupportedKeys[i]] = 0;
-                    }
+                        if (keyState[i])
+                        {
+                            if(!keysPressed.TryAdd(i, true))
+                            {
+                                keysPressed[i] = true;
+                            }
+                        }
+                        else
+                        {
+                            keysPressed[i] = false;
+                        }
+                    }    
                 }
             }
             
-            lastPosition = position;
-            lastLocalPosition = ((lastPosition * 2) - Window.size) / 2;
-            position = mouse.Position * Window.windowScale;
-            localPosition = ((position * 2) - Window.size) / 2;
+            if (sdlEvent.type == (uint)SDL_EventType.SDL_EVENT_MOUSE_WHEEL)
+            {
+                mouseWheel = new Vector2(sdlEvent.wheel.x, sdlEvent.wheel.y);
+            }
 
-            scroll = (int)mouse.ScrollWheels.FirstOrDefault().Y;
+            if (sdlEvent.type == (uint)SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN)
+            {
+                if(!mousePressed.TryAdd((int)sdlEvent.button.Button, true))
+                {
+                    mousePressed[(int)sdlEvent.button.Button] = true;
+                }
+            }
+            
+            if (sdlEvent.type == (uint)SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP)
+            {
+                if(!mousePressed.TryAdd((int)sdlEvent.button.Button, false))
+                {
+                    mousePressed[(int)sdlEvent.button.Button] = false;
+                }
+            }
         }
 
-        public static bool IsKeyDown(Key key)
+        public static void UpdateNonEvent()
+        {
+            mouseWheel = new Vector2();
+            
+            lastMousePosition = mousePosition;
+            unsafe
+            {
+                float x, y;
+                SDL3.SDL_GetMouseState(&x, &y);
+                mousePosition = new Vector2(x, y) * Window.windowScale;
+            }
+            mouseDelta = mousePosition - lastMousePosition;
+            mouseLocalPosition = ((mousePosition * 2) - Window.size) / 2;
+        }
+
+        public static bool IsKeyDown(SDL_Scancode key)
         {
             if (keysPressed.ContainsKey((int)key))
             {
-                if (keysPressed[(int)key] == 1)
+                if (keysPressed[(int)key])
                     return true;
             }
             return false;
         }
 
-        public static bool IsKeyUp(Key key)
+        public static bool IsKeyUp(SDL_Scancode key)
         {
             if (keysPressed.ContainsKey((int)key))
             {
-                if (keysPressed[(int)key] == 0)
+                if (!keysPressed[(int)key])
                     return true;
             }
             return false;
         }
 
-        public static bool IsMouseButtonDown(MouseButton button)
+        public static bool IsMouseButtonDown(SDLButton button)
         {
-            return mouse.IsButtonPressed(button);
+            if (mousePressed.ContainsKey((int)button))
+            {
+                if(mousePressed[(int)button])
+                    return true;
+            }
+            return false;
+        }
+        
+        public static bool IsMouseButtonUp(SDLButton button)
+        {
+            if (mousePressed.ContainsKey((int)button))
+            {
+                if(!mousePressed[(int)button])
+                    return true;
+            }
+            return false;
+        }
+
+        public static unsafe void SetMouseLocked(bool state)
+        {
+            SDL3.SDL_SetWindowRelativeMouseMode(AppState.window, state);
+            mouseLocked = state;
         }
 
         public static void Clear()
         {
             keysPressed.Clear();
+            mousePressed.Clear();
         }
 
         public static void Clean()
         {
-            input.Dispose();
+            
         }
     }
 }

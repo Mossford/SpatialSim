@@ -1,4 +1,5 @@
 using System.Numerics;
+using SDL;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Vulkan;
@@ -12,15 +13,15 @@ namespace SpatialSim.Engine.Core
 
         #region Information
 
-        public const string Version = "0.11";
+        public const string Version = "0.13";
         public static string gpuDeviceName;
         public static string Api;
 
         #endregion
         
         #region Windowing
-        
-        public static IWindow window;
+
+        public static unsafe SDL_Window* window;
         public static AppContext appContext;
         public static string WindowTitle = "Spatial Sim - " + Version;
         public static Vector2 WindowStartSize = new Vector2(1920, 1080);

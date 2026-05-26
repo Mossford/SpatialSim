@@ -1,12 +1,9 @@
 using System.Numerics;
-using Silk.NET.GLFW;
-using Silk.NET.Input;
-using Silk.NET.Maths;
+using SDL;
 using Silk.NET.Windowing;
 using SpatialSim.Engine.Core.Vulkan;
 using SpatialSim.Engine.Rendering;
 using SpatialSim.Engine.Rendering.Vulkan;
-using Silk.NET.Windowing.Glfw;
 using SpatialSim.Engine.Core.SDLGpu;
 using SpatialSim.Engine.Rendering.ImGui;
 
@@ -18,7 +15,6 @@ namespace SpatialSim.Engine.Core
         public static Vector2 size;
         public static Vector2 maxSize;
         public static Vector2 windowScale;
-        public static Vector2 scaleFromBase;
 
         static double updateStartTime;
         static double renderStartTime;
@@ -28,6 +24,8 @@ namespace SpatialSim.Engine.Core
         static Action init;
         static Action<float> update;
         static Action<float> fixedUpdate;
+        
+        static bool quit = false;
         
         public static void Init(Action init, Action<float> update, Action<float> fixedUpdate)
         {
@@ -53,6 +51,8 @@ namespace SpatialSim.Engine.Core
                         Version = new APIVersion(1, 4)
                     };
                     AppState.appContext = new VkContext(graphicsApi);
+                    AppState.Api = graphicsApi.API + " " + graphicsApi.Version.MajorVersion + "." +
+                                   graphicsApi.Version.MinorVersion;
                     break;
                 }
                 case RenderingApi.SDLGpu:
@@ -63,34 +63,37 @@ namespace SpatialSim.Engine.Core
             }
             
             size = AppState.WindowStartSize;
-            WindowOptions options = WindowOptions.Default with
+            SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO);
+
+            unsafe
             {
-                Size = new Vector2D<int>((int)size.X, (int)size.Y),
-                Title = AppState.WindowTitle,
-                API = graphicsApi,
-                VSync = true,
-                WindowBorder = WindowBorder.Resizable,
-                TransparentFramebuffer = false,
-            };
-
-            //make sure running on glfw
-            GlfwWindowing.RegisterPlatform();
-            GlfwWindowing.Use();
-
-            AppState.window = Silk.NET.Windowing.Window.Create(options);
-
-            AppState.Api = AppState.window.API.API + " " + AppState.window.API.Version.MajorVersion + "." +
-                           AppState.window.API.Version.MinorVersion;
+                AppState.window = SDL3.SDL_CreateWindow("Spatial Sim", (int)size.X, (int)size.Y, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+                if (AppState.window == null)
+                {
+                    string error = "" + SDL3.SDL_GetError();
+                    Debug.Error($"SDL could not create window {error}");
+                    throw new Exception($"SDL could not create window {error}");
+                }
+            }
             
+            Debug.LogInfo("Running on Windowing Backend: SDL");
+            
+            Load();
+
             Debug.LogInfo("Running on Api: " + AppState.Api);
-            Debug.LogInfo("Running on Windowing Backend: " + AppState.window.GetType().Name);
-            
-            AppState.window.Load += Load;
-            AppState.window.Update += Update;
-            AppState.window.Render += Render;
-            AppState.window.Resize += WindowResize;
 
-            AppState.window.Run();
+            float frameTime = 0;
+            float pastTime = 0;
+            while (!quit)
+            {
+                float time = SDL3.SDL_GetTicksNS() / 1e9f;
+                frameTime = time - pastTime;
+                
+                Update(frameTime);
+                Render(frameTime);
+                
+                pastTime = time;
+            }
             
             Clean();
         }
@@ -112,11 +115,18 @@ namespace SpatialSim.Engine.Core
             MainImgui.Init();
             
             init.Invoke();
-            
-            maxSize = (Vector2)AppState.window.Monitor!.Bounds.Size;
-            size = (Vector2)AppState.window.FramebufferSize;
-            windowScale = size / (Vector2)AppState.window.Size;
-            scaleFromBase = size / AppState.WindowStartSize;
+
+            unsafe
+            {
+                int x, y;
+                SDL3.SDL_GetWindowMaximumSize(AppState.window, &x, &y);
+                maxSize.X = x;
+                maxSize.Y = y;
+                SDL3.SDL_GetWindowSize(AppState.window, &x, &y);
+                size.X = x;
+                size.Y = y;
+                windowScale = new Vector2(SDL3.SDL_GetWindowDisplayScale(AppState.window));
+            }
 
             Ticks.startUpTimer.SignalEnd();
 
@@ -125,31 +135,57 @@ namespace SpatialSim.Engine.Core
 
         static void Update(double delta)
         {
-            updateStartTime = AppState.window.Time * 1000000;
+            updateStartTime = SDL3.SDL_GetTicksNS() / 1000f;
             
             AppState.deltaTime = (float)delta;
-            AppState.totalTime += (ulong)(delta * 1000000);
+            AppState.totalTime = SDL3.SDL_GetTicksNS() / 1000;
             
-            Input.Update();
+            Input.UpdateNonEvent();
+            
+            unsafe
+            {
+                SDL_Event sdlEvent;
+                
+                while (SDL3.SDL_PollEvent(&sdlEvent))
+                {
+                    Input.Update(sdlEvent);
+
+                    if (sdlEvent.type == (uint)SDL_EventType.SDL_EVENT_QUIT)
+                    {
+                        quit = true;
+                    }
+
+                    if (sdlEvent.type == (uint)SDL_EventType.SDL_EVENT_WINDOW_RESIZED)
+                    {
+                        WindowResize();
+                    }
+                }
+            }
+            
             EcsManager.Update();
             
             update.Invoke((float)delta);
             
             AppState.appContext.Update((float)delta);
             
-            if (Input.IsKeyDown(Key.Escape))
+            if (Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_ESCAPE))
             {
-                AppState.window.Close();
+                quit = true;
             }
 
-            updateTime = AppState.window.Time * 1000000 - updateStartTime;
+            updateTime = SDL3.SDL_GetTicksNS() / 1000f - updateStartTime;
         }
 
-        static void WindowResize(Vector2D<int> vector2D)
+        static void WindowResize()
         {
-            size = (Vector2)AppState.window.FramebufferSize;
-            windowScale = size / (Vector2)AppState.window.Size;
-            scaleFromBase = size / AppState.WindowStartSize;
+            unsafe
+            {
+                int x, y;
+                SDL3.SDL_GetWindowSize(AppState.window, &x, &y);
+                size.X = x;
+                size.Y = y;
+                windowScale = new Vector2(SDL3.SDL_GetWindowDisplayScale(AppState.window));
+            }
             
             AppState.appContext.WindowResize();
             PostProcessManager.RecreatePostProcesses();
@@ -157,11 +193,11 @@ namespace SpatialSim.Engine.Core
 
         static void Render(double delta)
         {
-            renderStartTime = AppState.window.Time * 1000000;
+            renderStartTime = SDL3.SDL_GetTicksNS() / 1000f;
             MainImgui.MainMenu();
             AppState.appContext.Render();
             AppState.appContext.FinishRender();
-            renderTime = AppState.window.Time * 1000000 - renderStartTime;
+            renderTime = SDL3.SDL_GetTicksNS() / 1000f - renderStartTime;
         }
 
         static unsafe void Clean()
@@ -174,7 +210,10 @@ namespace SpatialSim.Engine.Core
             PostProcessManager.Clean();
             EcsManager.Clean();
             AppState.appContext.CleanContext();
-            AppState.window.Dispose();
+            
+            SDL3.SDL_DestroyWindow(AppState.window);
+            SDL3.SDL_QuitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO);
+            SDL3.SDL_Quit();
             
             Debug.CompressLog();
         }

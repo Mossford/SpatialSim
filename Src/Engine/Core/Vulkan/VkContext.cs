@@ -358,10 +358,12 @@ namespace SpatialSim.Engine.Core.Vulkan
             ((VkTexture)texture.texture!).Create(
                 VkSwapChain.swapChainExtent.Width,
                 VkSwapChain.swapChainExtent.Height,
+                1,
                 VkSwapChain.swapChainImageFormat,
                 ImageTiling.Optimal,
                 ImageUsageFlags.SampledBit,
-                MemoryPropertyFlags.HostVisibleBit);
+                MemoryPropertyFlags.HostVisibleBit,
+                ImageType.Type2D);
             
             ((VkTexture)texture.texture!).TransitionImageLayout(ImageLayout.Undefined,
                 ImageLayout.ShaderReadOnlyOptimal,
