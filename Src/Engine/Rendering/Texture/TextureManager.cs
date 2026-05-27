@@ -51,12 +51,6 @@ namespace SpatialSim.Engine.Rendering
         
         public static bool LoadTexture(string textureRef, Texture texture)
         {
-            if (!File.Exists(Resources.ImagePath + textureRef) && textureRef.Length != 0)
-            {
-                Debug.Warning($"Could not find file at path {Resources.ImagePath + textureRef}");
-                return false;
-            }
-            
             if (!textureLocToIndex.ContainsKey(textureRef))
             {
                 textures.Add(texture);

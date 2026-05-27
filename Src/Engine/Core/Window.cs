@@ -1,6 +1,7 @@
 using System.Numerics;
 using SDL;
 using Silk.NET.Windowing;
+using SpatialSim.Engine.Audio;
 using SpatialSim.Engine.Core.Vulkan;
 using SpatialSim.Engine.Rendering;
 using SpatialSim.Engine.Rendering.Vulkan;
@@ -24,7 +25,8 @@ namespace SpatialSim.Engine.Core
         static Action init;
         static Action<float> update;
         static Action<float> fixedUpdate;
-        
+
+        static SDL_InitFlags initFlags = SDL_InitFlags.SDL_INIT_VIDEO | SDL_InitFlags.SDL_INIT_AUDIO;
         static bool quit = false;
         
         public static void Init(Action init, Action<float> update, Action<float> fixedUpdate)
@@ -63,7 +65,7 @@ namespace SpatialSim.Engine.Core
             }
             
             size = AppState.WindowStartSize;
-            SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO);
+            SDL3.SDL_Init(initFlags);
 
             unsafe
             {
@@ -111,6 +113,7 @@ namespace SpatialSim.Engine.Core
             PipelineManager.Init();
             TextureManager.Init();
             PostProcessManager.Init();
+            AudioManager.Init();
             
             MainImgui.Init();
             
@@ -168,6 +171,8 @@ namespace SpatialSim.Engine.Core
             
             AppState.appContext.Update((float)delta);
             
+            AudioManager.Update();
+            
             if (Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_ESCAPE))
             {
                 quit = true;
@@ -209,10 +214,11 @@ namespace SpatialSim.Engine.Core
             TextureManager.Clean();
             PostProcessManager.Clean();
             EcsManager.Clean();
+            AudioManager.Clean();
             AppState.appContext.CleanContext();
             
             SDL3.SDL_DestroyWindow(AppState.window);
-            SDL3.SDL_QuitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO);
+            SDL3.SDL_QuitSubSystem(initFlags);
             SDL3.SDL_Quit();
             
             Debug.CompressLog();

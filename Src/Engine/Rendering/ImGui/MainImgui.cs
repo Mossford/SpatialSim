@@ -28,6 +28,7 @@ namespace SpatialSim.Engine.Rendering
             menus.Add(new TicksMenu());
             menus.Add(new MeshMenu());
             menus.Add(new PipelineMenu());
+            menus.Add(new AudioMenu());
         }
         
         public static void MainMenu()
@@ -68,6 +69,16 @@ namespace SpatialSim.Engine.Rendering
                 }
                 ImGuiNET.ImGui.TextWrapped($"Render Tick: {renderAvg:N3} {unit}");
                 ImGuiNET.ImGui.TextWrapped($"{1.0f / fpsMax * 1000.0f:N3} ms/frame Max ({fpsMax:N1} FPS Max)");
+                if (renderAvg > updateAvg)
+                {
+                    ImGuiNET.ImGui.SameLine();
+                    ImGuiNET.ImGui.TextWrapped($"Gpu Limited");
+                }
+                else
+                {
+                    ImGuiNET.ImGui.SameLine();
+                    ImGuiNET.ImGui.TextWrapped($"Cpu Limited");
+                }
                 ImGuiNET.ImGui.TextWrapped($"Time Open {MathF.Floor(curTime / 60.0f):N0}:{curTime:N2}");
                 ImGuiNET.ImGui.TextWrapped("ECS GameObject Count " + EcsManager.entities.ValueCount);
                 ImGuiNET.ImGui.TextWrapped("ECS Component Count " + EcsManager.totalComponents);

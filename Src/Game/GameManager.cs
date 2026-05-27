@@ -1,5 +1,6 @@
 using System.Numerics;
 using Silk.NET.Input;
+using SpatialSim.Engine.Audio;
 using SpatialSim.Engine.Core;
 using SpatialSim.Engine.Network;
 using SpatialSim.Engine.Rendering;
@@ -86,7 +87,10 @@ namespace SpatialSim.Game
                     "Volumetric"));
             }
 
-            /*PostProcessManager.LoadPostProcessEffect(new PostProcessEffect("testeffect"), 
+            AudioManager.LoadAudioStream(new AudioStream($"test"));
+            AudioManager.LoadAudioStream(new AudioStream($"test2"));
+
+            /*PostProcessManager.LoadPostProcessEffect(new PostProcessEffect("testeffect"),
                 ShaderManager.RetrieveShader(
                 new ShaderSettings(ShaderType.Fragment,
                     [
