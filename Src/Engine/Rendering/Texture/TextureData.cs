@@ -34,5 +34,7 @@ namespace SpatialSim.Engine.Rendering
             info = new TextureInfo();
             data = new byte[0];
         }
+        
+        //TODO add overload for string to add debug info when loading images
     }
 }

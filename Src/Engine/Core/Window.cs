@@ -102,6 +102,8 @@ namespace SpatialSim.Engine.Core
 
         static void Load()
         {
+            AppState.random = new Random(10);
+            
             ShaderManager.Init();
             EcsManager.Init();
             Input.Init();
@@ -135,7 +137,7 @@ namespace SpatialSim.Engine.Core
 
             Debug.LogInfo($"Load time took {Ticks.startUpTimer.elapsed}ms");
         }
-
+        
         static void Update(double delta)
         {
             updateStartTime = SDL3.SDL_GetTicksNS() / 1000f;
@@ -171,8 +173,6 @@ namespace SpatialSim.Engine.Core
             
             AppState.appContext.Update((float)delta);
             
-            AudioManager.Update();
-            
             if (Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_ESCAPE))
             {
                 quit = true;
@@ -201,7 +201,6 @@ namespace SpatialSim.Engine.Core
             renderStartTime = SDL3.SDL_GetTicksNS() / 1000f;
             MainImgui.MainMenu();
             AppState.appContext.Render();
-            AppState.appContext.FinishRender();
             renderTime = SDL3.SDL_GetTicksNS() / 1000f - renderStartTime;
         }
 

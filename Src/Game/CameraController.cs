@@ -22,6 +22,7 @@ namespace SpatialSim.Game
         public float sensitivity = 0.003f;
         public float speed = 0.001f;
         private static bool keyUp;
+        private static bool screenshotUp;
 
         public CameraController(EcsComponentRef cameraRef)
         {
@@ -98,6 +99,18 @@ namespace SpatialSim.Game
             {
                 camera.transformRef.position += camera.transformRef.GetUp() * speed;
             }
+
+            if (screenshotUp)
+            {
+                if (Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_B))
+                {
+                    AppState.appContext.renderTexture.SaveToFile(Resources.ImagePath, "image.png");
+                }
+                screenshotUp = false;
+            }
+
+            if (Input.IsKeyUp(SDL_Scancode.SDL_SCANCODE_B))
+                screenshotUp = true;
         }
     }
 }

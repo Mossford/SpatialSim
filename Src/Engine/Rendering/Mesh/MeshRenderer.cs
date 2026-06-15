@@ -60,6 +60,10 @@ namespace SpatialSim.Engine.Rendering
             camera.CheckComponent(EcsComponentType.Camera.GetId());
             this.mesh = mesh;
             this.material = material;
+            if (pipeline.Length == 0)
+            {
+                pipeline = materialRef.normalMapRef.Length == 0 ? DefaultPipelines.BaseColor : DefaultPipelines.BaseNormalMap;
+            }
             this.camera = camera;
             pipelineRef = pipeline;
             
@@ -72,6 +76,10 @@ namespace SpatialSim.Engine.Rendering
             material.CheckComponent(EcsComponentType.Material.GetId());
             this.mesh = mesh;
             this.material = material;
+            if (pipeline.Length == 0)
+            {
+                pipeline = materialRef.normalMapRef.Length == 0 ? DefaultPipelines.BaseColor : DefaultPipelines.BaseNormalMap;
+            }
             camera = new EcsComponentRef();
             pipelineRef = pipeline;
             

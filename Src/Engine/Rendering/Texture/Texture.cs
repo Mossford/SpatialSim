@@ -13,7 +13,7 @@ namespace SpatialSim.Engine.Rendering
 
         public void Create()
         {
-            texture = AppState.appContext.DeviceFactory.CreateTextureDevice(new TextureData());
+            texture = AppState.appContext.DeviceFactory.CreateTextureDevice(data);
         }
         
         public bool LoadTexture(string file, TextureFormat format)
@@ -66,6 +66,17 @@ namespace SpatialSim.Engine.Rendering
             return true;
         }
         
+        public bool LoadTexture(in TextureData data)
+        {
+            texture = AppState.appContext.DeviceFactory.CreateTextureDevice(data);
+            dataSize = (ulong)data.data.Length;
+            Ticks.gpuMemoryAllocation.created += dataSize;
+            
+            Debug.LogDebug($"Loaded texture with custom data");
+
+            return true;
+        }
+        
         public bool LoadMissingTexture()
         {
             data = new TextureData();
@@ -104,6 +115,8 @@ namespace SpatialSim.Engine.Rendering
                         stream
                     );
                 });
+                
+                Debug.LogInfo($"Saved texture to {file}");
             }
             catch (Exception e)
             {

@@ -2,6 +2,7 @@
 
 using System.Numerics;
 using ImGuiNET;
+using SpatialSim.Engine.Audio;
 using SpatialSim.Engine.Core;
 using SpatialSim.Engine.Rendering.ImGui;
 using SpatialSim.Game.ImGui;
@@ -19,6 +20,7 @@ namespace SpatialSim.Engine.Rendering
         static double frameAvg;
         static double updateAvg;
         static double renderAvg;
+        static double audioAvg;
         static float fpsMax;
         static float fpsTime;
 
@@ -68,6 +70,13 @@ namespace SpatialSim.Engine.Rendering
                     unit = "ms";
                 }
                 ImGuiNET.ImGui.TextWrapped($"Render Tick: {renderAvg:N3} {unit}");
+                unit = "us";
+                if (audioAvg >= 1000)
+                {
+                    audioAvg /= 1000;
+                    unit = "ms";
+                }
+                ImGuiNET.ImGui.TextWrapped($"Audio Tick: {audioAvg:N3} {unit}");
                 ImGuiNET.ImGui.TextWrapped($"{1.0f / fpsMax * 1000.0f:N3} ms/frame Max ({fpsMax:N1} FPS Max)");
                 if (renderAvg > updateAvg)
                 {
@@ -91,6 +100,7 @@ namespace SpatialSim.Engine.Rendering
                 frameAvg += (frameRate - frameAvg) / (frameCount + 1);
                 updateAvg += (Window.updateTime - updateAvg) / (frameCount + 1);
                 renderAvg += (Window.renderTime - renderAvg) / (frameCount + 1);
+                audioAvg += (AudioManager.audioDeltaTime * 1e6 - audioAvg) / (frameCount + 1);
                 frameCount++;
                 fpsTime += AppState.GetDelta();
                 if(fpsTime >= 5)

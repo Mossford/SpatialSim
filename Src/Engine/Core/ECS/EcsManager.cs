@@ -263,7 +263,7 @@ namespace SpatialSim.Engine.Core
 
         public static IComponent GetFirstComponentOfType(Entity entity, int type)
         {
-            if (CheckComponentTypeBounds(type))
+            if (!CheckComponentTypeBounds(type))
             {
                 return new EmptyComponent();
             }
@@ -280,7 +280,7 @@ namespace SpatialSim.Engine.Core
         
         public static T GetFirstComponent<T>(Entity entity, int type) where T : IComponent
         {
-            if (CheckComponentTypeBounds(type))
+            if (!CheckComponentTypeBounds(type))
             {
                 throw new InvalidCastException();
             }

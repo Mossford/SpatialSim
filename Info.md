@@ -14,6 +14,10 @@
 ### Make it easier to get rendered images at some point
 ### Normal world render goes to some texture, post process grabs this and runs potentiall multiple times, and on last render it goes to swapchain
 
-## Swap to SDL3 for windowing
+## [DONE] Swap to SDL3 for windowing
 
 ## Make texture loading threaded
+
+## Implement more texture methods
+
+## Add unlit and lit shaders plus more typesSSS

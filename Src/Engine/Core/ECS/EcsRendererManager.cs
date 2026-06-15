@@ -45,10 +45,8 @@ namespace SpatialSim.Engine.Core
 
         /// <summary>
         /// Render to swapchain
-        /// TODO Remove one swapchain gets texture
+        /// TODO Remove once swapchain gets texture
         /// </summary>
-        /// <param name="commandBuffer"></param>
-        /// <param name="frame"></param>
         public static void Render(CommandBuffer commandBuffer, int frame)
         {
             commandBuffer.BeginRendering(frame);

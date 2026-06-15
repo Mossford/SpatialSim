@@ -7,6 +7,7 @@ namespace SpatialSim.Engine.Core
         Material,
         Transform,
         Camera,
+        Light,
         
         //always keep last
         Empty = EcsManager.MaxEngineComponentType

@@ -14,6 +14,7 @@ namespace SpatialSim.Game
     {
         public static CameraController cameraController;
         static Entity moon;
+        static Entity light;
         
         public static void Init()
         {
@@ -51,28 +52,49 @@ namespace SpatialSim.Game
                         new Vector3(), 
                         new Vector3(), 
                         1.0f)), 
-                 MathUtil.GetFovFromFocalLength(23.9f,40f)));
+                 MathUtil.GetFovFromFocalLength(23.9f,600f)));
 
             cameraController = new CameraController(cameraRef);
             MainImgui.menus.Add(new CameraMenu());
+
+            Texture noise = Noise.CreateWorleyNoise(new([256, 256], 8));
+            TextureManager.LoadTexture("noise", noise);
+            
+            Texture noiseNormals = Noise.CreateWorleyNoiseNormals(new([256, 256], 8));
+            TextureManager.LoadTexture("noiseNormals", noiseNormals);
             
             moon = EcsManager.AddEntity();
             {
                 EcsComponentRef transform = moon.AddComponent(new Transform(
                     new Vector3(0, 0, 1),
                     new Vector3(85 * MathF.PI / 180f, 253 * MathF.PI / 180f, 0),
-                    MathUtil.GetScaleFromAngularSize(35 / 60f)));
+                    MathUtil.GetScaleFromAngularSize(25)));
                 EcsComponentRef meshRef = moon.AddComponent(
                     new Mesh(ModelLoader.LoadModelFile("UvSphere.fbx"),
                         transform));
                 moon.AddComponent(new MeshRenderer(meshRef, moon.AddComponent(new Material
                 {
-                    textureRef = "moonColor.png",
-                    normalMapRef = "moonNormal.png",
+                    textureRef = "noise",
+                    normalMapRef = "noiseNormals",
                 }), cameraRef));
             }
             
-            Entity screenQuad = EcsManager.AddEntity();
+            light = EcsManager.AddEntity();
+            {
+                EcsComponentRef transform = light.AddComponent(new Transform(
+                    new Vector3(0, 0, 1),
+                    new Vector3(85 * MathF.PI / 180f, 253 * MathF.PI / 180f, 0),
+                    MathUtil.GetScaleFromAngularSize(35 / 60f)));
+                EcsComponentRef meshRef = light.AddComponent(
+                    new Mesh(ModelLoader.LoadModelFile("UvSphere.fbx"),
+                        transform));
+                light.AddComponent(new MeshRenderer(meshRef, light.AddComponent(new Material
+                {
+                    textureRef = "noise",
+                }), cameraRef));
+            }
+            
+            /*Entity screenQuad = EcsManager.AddEntity();
             {
                 EcsComponentRef transform = screenQuad.AddComponent(new Transform(
                     new Vector3(0, 0, 0),
@@ -85,10 +107,9 @@ namespace SpatialSim.Game
                         new Material()), 
                     cameraRef,
                     "Volumetric"));
-            }
+            }*/
 
-            AudioManager.LoadAudioStream(new AudioStream($"test"));
-            AudioManager.LoadAudioStream(new AudioStream($"test2"));
+            //AudioManager.LoadAudioStream(new AudioStream($"test"));
 
             /*PostProcessManager.LoadPostProcessEffect(new PostProcessEffect("testeffect"),
                 ShaderManager.RetrieveShader(
@@ -98,13 +119,13 @@ namespace SpatialSim.Game
                             ShaderDescriptorUsage.Sampler, ShaderType.Fragment)
                     ],
                     "testeffect.frag")));*/
-
-            //AppState.appContext.GetRenderTexture().SaveToFile(Resources.ImagePath, "savedImage.png");
         }
 
         public static void Update(float dt)
         {
             cameraController.Update();
+            
+            light.GetFirstComponent<Transform>(EcsComponentType.Transform).position = new Vector3(MathF.Cos((float)AppState.GetSeconds()), 0.01f, 1 + MathF.Sin((float)AppState.GetSeconds()));
         }
 
         public static void FixedUpdate(float dt)

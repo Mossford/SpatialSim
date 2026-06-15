@@ -22,6 +22,7 @@ namespace SpatialSim.Engine.Core.Vulkan
         
         public GraphicsAPI graphicsApi { get; set; }
         public IDeviceFactory DeviceFactory { get; set; }
+        public Texture renderTexture { get; set; }
         public RenderPass renderPass { get; set; }
         public VkImGuiController imGuiController;
         
@@ -60,6 +61,8 @@ namespace SpatialSim.Engine.Core.Vulkan
             
             VkCreation.CreateImGui();
             
+            CreateRenderTexture();
+            
             Debug.LogInfo("Successful vulkan context creation");
         }
 
@@ -74,6 +77,9 @@ namespace SpatialSim.Engine.Core.Vulkan
                 if (swapChainRecreationCounter >= ResizeDelay)
                 {
                     VkSwapChain.RecreateSwapChain();
+                    renderTexture.Clean();
+                    CreateRenderTexture();
+                    
                     Ticks.swapchainRecreations.created++;
 
                     currentlyResizing = false;
@@ -184,10 +190,24 @@ namespace SpatialSim.Engine.Core.Vulkan
                 PipelineStageFlags.BottomOfPipeBit,
                 ImageAspectFlags.ColorBit
             );
+            
+            FinishRender();
         }
 
         public void FinishRender()
         {
+            int image = imageIndex - 1;
+            if (image < 0)
+                image = VkSwapChain.swapChainImages.Length - 1;
+            //TODO If we request a rendertexture then do this
+            ((VkTexture)renderTexture.texture!).BlitToImage(
+                drawCmdBuf,
+                VkSwapChain.swapChainImages[image],
+                ImageLayout.TransferSrcOptimal,
+                //The data is the same from the swapchain image to the rendertexture so we can do this
+                renderTexture.data,
+                renderTexture.data);
+            
             drawCmdBuf.End();
             PipelineManager.ResetPipelines(drawCmdBuf);
             
@@ -212,12 +232,12 @@ namespace SpatialSim.Engine.Core.Vulkan
                 default, 
                 ref imageIndex);
 
-            if (result == Result.ErrorOutOfDateKhr)
+             if (result == Result.ErrorOutOfDateKhr || result == Result.SuboptimalKhr)
             {
                 VkSwapChain.RecreateSwapChain();
                 return -1;
             }
-            else if (result != Result.Success && result != Result.SuboptimalKhr)
+            else if (result != Result.Success)
             {
                 Debug.Error($"Failed to acquire swap chain image {result}");
                 throw new Exception($"Failed to acquire swap chain image {result}");
@@ -287,7 +307,7 @@ namespace SpatialSim.Engine.Core.Vulkan
                 PImageIndices = &imageIndexVal
             };
             
-            result = VkSwapChain.khrSwapChain.QueuePresent(VkSurface.presentQueue, in presentInfo);
+            result = VkSwapChain.khrSwapChain!.QueuePresent(VkSurface.presentQueue, in presentInfo);
 
             if (result == Result.ErrorOutOfDateKhr || result == Result.SuboptimalKhr)
             {
@@ -313,6 +333,7 @@ namespace SpatialSim.Engine.Core.Vulkan
             vk.DeviceWaitIdle(VkDevices.device);
          
             imGuiController.Dispose();
+            renderTexture.Clean();
             
             VkSwapChain.CleanSwapChain();
             
@@ -341,31 +362,29 @@ namespace SpatialSim.Engine.Core.Vulkan
             Debug.LogInfo("Cleaned all vulkan instances");
         }
 
-        public Texture GetRenderTexture()
+        void CreateRenderTexture()
         {
-            Texture texture = new Texture()
+            renderTexture = new Texture()
             {
                 data = new TextureData()
                 {
                     info = new TextureInfo()
                     {
                         width = VkSwapChain.swapChainExtent.Width,
-                        height = VkSwapChain.swapChainExtent.Height
+                        height = VkSwapChain.swapChainExtent.Height,
+                        depth = 1,
+                        filter = TextureFilter.Linear,
+                        format = TextureFormat.R8G8B8A8Unorm,
+                        memoryUsage = TextureMemoryUsage.cpu,
+                        type = TextureType.Type2D,
+                        usage = TextureUsage.Sampler
                     }
                 }
             };
-            texture.texture = new VkTexture();
-            ((VkTexture)texture.texture!).Create(
-                VkSwapChain.swapChainExtent.Width,
-                VkSwapChain.swapChainExtent.Height,
-                1,
-                VkSwapChain.swapChainImageFormat,
-                ImageTiling.Optimal,
-                ImageUsageFlags.SampledBit,
-                MemoryPropertyFlags.HostVisibleBit,
-                ImageType.Type2D);
+            renderTexture.texture = new VkTexture();
+            ((VkTexture)renderTexture.texture!).Create(renderTexture.data);
             
-            ((VkTexture)texture.texture!).TransitionImageLayout(ImageLayout.Undefined,
+            ((VkTexture)renderTexture.texture!).TransitionImageLayout(ImageLayout.Undefined,
                 ImageLayout.ShaderReadOnlyOptimal,
                 0,
                 AccessFlags.ShaderReadBit,
@@ -373,14 +392,7 @@ namespace SpatialSim.Engine.Core.Vulkan
                 PipelineStageFlags.FragmentShaderBit,
                 ImageAspectFlags.ColorBit);
             
-            ((VkTexture)texture.texture!).CreateImageView(ImageAspectFlags.ColorBit);
-
-            ((VkTexture)texture.texture!).CopyImageToImage(
-                VkSwapChain.swapChainImages[VkSwapChain.currentFrame],
-                ImageLayout.TransferSrcOptimal,
-                texture.data);
-            
-            return texture;
+            ((VkTexture)renderTexture.texture!).CreateImageView(ImageAspectFlags.ColorBit);
         }
 
         T AppContext.GetContext<T>()

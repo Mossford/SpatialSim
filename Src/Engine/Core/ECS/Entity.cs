@@ -54,14 +54,14 @@ namespace SpatialSim.Engine.Core
             return EcsManager.GetComponent(componentRef);
         }
 
-        public IComponent GetFirstComponentOfType(int type)
+        public IComponent GetFirstComponentOfType(EcsComponentType type)
         {
-            return EcsManager.GetFirstComponentOfType(this, type);
+            return EcsManager.GetFirstComponentOfType(this, type.GetId());
         }
         
-        public T GetFirstComponent<T>() where T : IComponent
+        public T GetFirstComponent<T>(EcsComponentType type) where T : IComponent
         {
-            return EcsManager.GetFirstComponent<T>(this, (typeof(T) as IComponent).type);
+            return EcsManager.GetFirstComponent<T>(this, type.GetId());
         }
     }
 }

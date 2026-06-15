@@ -20,20 +20,40 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public ImageLayout currentLayout = ImageLayout.Undefined;
         public AccessFlags currentAccessFlags = 0;
         public PipelineStageFlags currentPipelineStageFlags = PipelineStageFlags.TopOfPipeBit;
-        
-        public void Create(in TextureData data)
+
+        public static Format ConvertToVkFormat(TextureFormat format)
         {
-            format = data.info.format switch
+            return format switch
             {
                 TextureFormat.R8G8B8A8Unorm => Format.R8G8B8A8Unorm,
                 TextureFormat.R8G8B8A8Srgb => Format.R8G8B8A8Srgb,
-                TextureFormat.R8G8B8Uint => Format.R8G8B8Uint,
-                TextureFormat.R8G8B8A8Uint => Format.R8G8B8A8Uint,
+                TextureFormat.R8G8B8Srgb => Format.R8G8B8Srgb,
+                TextureFormat.R8G8B8Unorm => Format.R8G8B8Unorm,
+                TextureFormat.R8G8Unorm => Format.R8G8Unorm,
+                TextureFormat.R8Unorm => Format.R8Unorm,
                 //create some staging buffer
                 //upload to gpu side to store texture memory
                 //copy buffer to image
                 _ => Format.R8G8B8A8Unorm
             };
+        }
+        
+        public static Filter ConvertToVkFilter(TextureFilter filter)
+        {
+            return filter switch
+            {
+                TextureFilter.Linear => Filter.Linear,
+                TextureFilter.Nearest => Filter.Nearest,
+                //create some staging buffer
+                //upload to gpu side to store texture memory
+                //copy buffer to image
+                _ => Filter.Nearest
+            };
+        }
+        
+        public void Create(in TextureData data)
+        {
+            format = ConvertToVkFormat(data.info.format);
 
             // TODO make it possible that there might be multiple usages attached?
             usage = ImageUsageFlags.TransferDstBit | ImageUsageFlags.TransferSrcBit;
@@ -71,49 +91,42 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             };
 
             Create(data.info.width, data.info.height, data.info.depth, format, ImageTiling.Optimal, usage, memUsage, imageType);
+
+            //copy over data if we have data
+            if (data.data.Length != 0)
+            {
+                //create the staging buffer
+                Buffer<byte> stagingBuffer = new Buffer<byte>();
+                stagingBuffer.Create(new Span<byte>(data.data), BufferUsage.Transfer, BufferMemoryUsage.Cpu);
             
-            //create the staging buffer
-            Buffer<byte> stagingBuffer = new Buffer<byte>();
-            stagingBuffer.Create(new Span<byte>(data.data), BufferUsage.Transfer, BufferMemoryUsage.Cpu);
+                TransitionImageLayout(
+                    ImageLayout.TransferDstOptimal,
+                    AccessFlags.TransferWriteBit,
+                    PipelineStageFlags.TransferBit,
+                    ImageAspectFlags.ColorBit);
             
-            TransitionImageLayout(
-                ImageLayout.TransferDstOptimal,
-                AccessFlags.TransferWriteBit,
-                PipelineStageFlags.TransferBit,
-                ImageAspectFlags.ColorBit);
+                stagingBuffer.CopyToTexture(this, data);
             
-            stagingBuffer.CopyToTexture(this, data);
+                TransitionImageLayout(
+                    ImageLayout.ShaderReadOnlyOptimal,
+                    AccessFlags.ShaderReadBit,
+                    PipelineStageFlags.FragmentShaderBit,
+                    ImageAspectFlags.ColorBit);
             
-            TransitionImageLayout(
-                ImageLayout.ShaderReadOnlyOptimal,
-                AccessFlags.ShaderReadBit,
-                PipelineStageFlags.FragmentShaderBit,
-                ImageAspectFlags.ColorBit);
+                stagingBuffer.Clean();    
+            }
             
-            stagingBuffer.Clean();
             
             CreateImageView(ImageAspectFlags.ColorBit);
 
-            filter = data.info.filter switch
-            {
-                TextureFilter.Linear => Filter.Linear,
-                TextureFilter.Nearest => Filter.Nearest,
-                _ => Filter.Linear
-            };
+            filter = ConvertToVkFilter(data.info.filter);
 
             CreateSampler();
         }
 
         public void CreateImage(in TextureData data)
         {
-            format = data.info.format switch
-            {
-                TextureFormat.R8G8B8A8Unorm => Format.R8G8B8A8Unorm,
-                TextureFormat.R8G8B8A8Srgb => Format.R8G8B8A8Srgb,
-                TextureFormat.R8G8B8Uint => Format.R8G8B8Uint,
-                TextureFormat.R8G8B8A8Uint => Format.R8G8B8A8Uint,
-                _ => Format.R8G8B8A8Unorm
-            };
+            format = ConvertToVkFormat(data.info.format);
 
             // TODO make it possible that there might be multiple usages attached?
             usage = ImageUsageFlags.TransferDstBit | ImageUsageFlags.TransferSrcBit;
@@ -157,14 +170,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public void WriteGpuToCpu(ref TextureData data)
         {
             Buffer<byte> stagingBuffer = new Buffer<byte>();
-            int bpp = data.info.format switch
-            {
-                TextureFormat.R8G8B8A8Uint => 4,
-                TextureFormat.R8G8B8A8Srgb => 4,
-                TextureFormat.R8G8B8A8Unorm => 4,
-                TextureFormat.R8G8B8Uint => 3,
-                _ => 4
-            };
+            int bpp = data.info.format.GetBytePerPixel();
             stagingBuffer.Create((uint)(data.info.width * data.info.height * bpp), BufferUsage.Transfer, BufferMemoryUsage.Cpu);
             AccessFlags oldFlag = currentAccessFlags;
             ImageLayout oldLayout = currentLayout;
@@ -270,6 +276,93 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 in region);
             
             commandBuffer.EndSubmitClean();
+        }
+        
+        public void CopyImageToImage(in CommandBuffer commandBuffer, in Image src, in ImageLayout srcLayout, in TextureData srcData)
+        {
+            ImageCopy region = new()
+            {
+                SrcOffset = new Offset3D(0, 0, 0),
+                DstOffset = new Offset3D(0, 0, 0),
+                SrcSubresource = new ImageSubresourceLayers()
+                {
+                    //TODO This might not be true for all
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                    MipLevel = 0
+                },
+                DstSubresource = new ImageSubresourceLayers()
+                {
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                    MipLevel = 0
+                },
+                Extent = new Extent3D(srcData.info.width, srcData.info.height, 1)
+            };
+            
+            AppState.appContext.GetContext<VkContext>().vk.CmdCopyImage(
+                ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
+                src,
+                srcLayout,
+                image,
+                currentLayout,
+                1,
+                in region);
+        }
+
+        /// <summary>
+        /// Will use the filter stored in dstData
+        /// </summary>
+        public void BlitToImage(in CommandBuffer commandBuffer, in Image src, in ImageLayout srcLayout,
+            in TextureData srcData, in TextureData dstData)
+        {
+            ImageBlit region = new()
+            {
+                SrcOffsets = new ImageBlit.SrcOffsetsBuffer()
+                {
+                    Element0 = new Offset3D(0, 0, 0),
+                    Element1 = new Offset3D(
+                        (int)srcData.info.width,
+                        (int)srcData.info.height,
+                        1)
+                },
+
+                DstOffsets = new ImageBlit.DstOffsetsBuffer()
+                {
+                    Element0 = new Offset3D(0, 0, 0),
+                    Element1 = new Offset3D(
+                        (int)dstData.info.width,
+                        (int)dstData.info.height,
+                        1)
+                },
+                SrcSubresource = new ImageSubresourceLayers()
+                {
+                    //TODO This might not be true for all
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                    MipLevel = 0
+                },
+                DstSubresource = new ImageSubresourceLayers()
+                {
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                    MipLevel = 0
+                }
+            };
+            
+            AppState.appContext.GetContext<VkContext>().vk.CmdBlitImage(
+                ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
+                src,
+                srcLayout,
+                image,
+                currentLayout,
+                1,
+                in region,
+                ConvertToVkFilter(dstData.info.filter));
         }
 
         /// <summary>

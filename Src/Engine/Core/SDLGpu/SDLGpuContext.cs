@@ -10,6 +10,7 @@ namespace SpatialSim.Engine.Core.SDLGpu
     {
         public GraphicsAPI graphicsApi { get; set; }
         public IDeviceFactory DeviceFactory { get; }
+        public Texture renderTexture { get; set; }
         public unsafe SDL_GPUViewport* gpuViewport;
         public unsafe SDL_GPUDevice* gpuDevice;
         
@@ -24,11 +25,6 @@ namespace SpatialSim.Engine.Core.SDLGpu
         }
 
         public void Render()
-        {
-            
-        }
-
-        public void FinishRender()
         {
             
         }

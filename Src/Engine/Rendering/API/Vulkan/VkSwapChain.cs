@@ -180,22 +180,16 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         
         public static unsafe void RecreateSwapChain()
         {
-            Debug.LogInfo("Start Swapchain recreation");
-            
-            while (Window.size.X == 0 || Window.size.Y == 0)
+            //check if window size is less than or 0 and skip recreating as no point to recreate swapchain for a 0 size window
+            SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(VkDevices.physicalDevice);
+
+            if (Window.size.X <= 0 || Window.size.Y <= 0 || swapChainSupport.Capabilities.CurrentExtent.Width == 0 ||
+                swapChainSupport.Capabilities.CurrentExtent.Height == 0)
             {
-                unsafe
-                {
-                    int x, y;
-                    SDL3.SDL_GetWindowMaximumSize(AppState.window, &x, &y);
-                    Window.maxSize.X = x;
-                    Window.maxSize.Y = y;
-                    SDL3.SDL_GetWindowSize(AppState.window, &x, &y);
-                    Window.size.X = x;
-                    Window.size.Y = y;
-                    Window.windowScale = new Vector2(SDL3.SDL_GetWindowDisplayScale(AppState.window));
-                }
+                return;
             }
+            
+            Debug.LogInfo("Start Swapchain recreation");
             
             AppState.appContext.GetContext<VkContext>().vk.DeviceWaitIdle(VkDevices.device);
 
@@ -216,7 +210,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
 
             khrSwapChain!.DestroySwapchain(VkDevices.device, swapChain, null);
-
+            
             CreateSwapChain();
             CreateImageViews();
             
@@ -297,12 +291,10 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
             else
             {
-                Vector2 framebufferSize = Window.size;
-
                 Extent2D actualExtent = new()
                 {
-                    Width = (uint)framebufferSize.X,
-                    Height = (uint)framebufferSize.Y
+                    Width = (uint)Window.size.X,
+                    Height = (uint)Window.size.Y
                 };
 
                 actualExtent.Width = Math.Clamp(actualExtent.Width, capabilities.MinImageExtent.Width, capabilities.MaxImageExtent.Width);

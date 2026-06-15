@@ -11,13 +11,14 @@ namespace SpatialSim.Engine.Rendering
         {
             pipelineToIndex = new Dictionary<string, int>();
             pipelines = new List<Pipeline>();
-            pipelines.Add(new Pipeline("Default") {
+            pipelines.Add(new NormalMapPipeline() {
                 settings = new PipelineSettings()
                 {
                     blendColor = false,
                     depthTest = true
                 }
             });
+            pipelineToIndex.Add(DefaultPipelines.BaseNormalMap, pipelines.Count - 1);
             pipelines[^1].Create(ShaderManager.RetrieveShader(
                     new ShaderSettings(
                         ShaderType.Vertex,
@@ -25,7 +26,7 @@ namespace SpatialSim.Engine.Rendering
                             new ShaderDescriptorDef(RendererSettings.VertexUniformSet, [0],
                                 ShaderDescriptorUsage.Uniform, ShaderType.Vertex)
                         ],
-                        "base.vert")),
+                        "basenormalmap.vert")),
                 ShaderManager.RetrieveShader(
                     new ShaderSettings(ShaderType.Fragment,
                         [
@@ -34,7 +35,33 @@ namespace SpatialSim.Engine.Rendering
                             new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, [0],
                                 ShaderDescriptorUsage.Uniform, ShaderType.Fragment)
                         ],
-                        "base.frag")));
+                        "basenormalmap.frag")));
+            
+            pipelines.Add(new ColorMapPipeline() {
+                settings = new PipelineSettings()
+                {
+                    blendColor = false,
+                    depthTest = true
+                }
+            });
+            pipelineToIndex.Add(DefaultPipelines.BaseColor, pipelines.Count - 1);
+            pipelines[^1].Create(ShaderManager.RetrieveShader(
+                    new ShaderSettings(
+                        ShaderType.Vertex,
+                        [
+                            new ShaderDescriptorDef(RendererSettings.VertexUniformSet, [0],
+                                ShaderDescriptorUsage.Uniform, ShaderType.Vertex)
+                        ],
+                        "basecolormap.vert")),
+                ShaderManager.RetrieveShader(
+                    new ShaderSettings(ShaderType.Fragment,
+                        [
+                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [0],
+                                ShaderDescriptorUsage.Sampler, ShaderType.Fragment),
+                            new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, [0],
+                                ShaderDescriptorUsage.Uniform, ShaderType.Fragment)
+                        ],
+                        "basecolormap.frag")));
             
             Debug.LogInfo("Successful pipeline manager creation");
         }
@@ -72,8 +99,8 @@ namespace SpatialSim.Engine.Rendering
                 return pipelines[index];
             }
             
-            //return default pipeline
-            return pipelines[0];
+            Debug.Warning($"Tried to get a pipeline that does not exist returning default {DefaultPipelines.BaseColor}");
+            return pipelines[pipelineToIndex[DefaultPipelines.BaseColor]];
         }
         
         public static Pipeline RetrievePipeline(int pipeline)
@@ -83,8 +110,8 @@ namespace SpatialSim.Engine.Rendering
                 return pipelines[pipeline];
             }
             
-            //return default pipeline
-            return pipelines[0];
+            Debug.Warning($"Tried to get a pipeline that does not exist returning default {DefaultPipelines.BaseColor}");
+            return pipelines[pipelineToIndex[DefaultPipelines.BaseColor]];
         }
 
         public static void ResetPipelines(CommandBuffer commandBuffer)

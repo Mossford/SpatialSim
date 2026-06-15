@@ -79,7 +79,7 @@ namespace SpatialSim.Engine.Core
             {
                 float x, y;
                 SDL3.SDL_GetMouseState(&x, &y);
-                mousePosition = new Vector2(x, y) * Window.windowScale;
+                mousePosition = new Vector2(x, y) / Window.windowScale;
             }
             mouseDelta = mousePosition - lastMousePosition;
             mouseLocalPosition = ((mousePosition * 2) - Window.size) / 2;
@@ -127,6 +127,7 @@ namespace SpatialSim.Engine.Core
 
         public static unsafe void SetMouseLocked(bool state)
         {
+            //TODO this should be correct as the mouse will go to window edge which stops mouse movement
             SDL3.SDL_SetWindowRelativeMouseMode(AppState.window, state);
             mouseLocked = state;
         }

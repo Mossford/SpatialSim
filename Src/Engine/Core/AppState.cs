@@ -1,10 +1,11 @@
-using System.Numerics;
 using SDL;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Vulkan;
 using Silk.NET.Windowing;
 using SpatialSim.Engine.Rendering.ImGui;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace SpatialSim.Engine.Core
 {
@@ -13,7 +14,7 @@ namespace SpatialSim.Engine.Core
 
         #region Information
 
-        public const string Version = "0.13";
+        public const string Version = "0.14";
         public static string gpuDeviceName;
         public static string Api;
 
@@ -37,12 +38,27 @@ namespace SpatialSim.Engine.Core
 
         #region State
 
+        /// <summary>
+        /// In microseconds
+        /// </summary>
         public static ulong totalTime;
+        /// <summary>
+        /// In seconds
+        /// </summary>
         public static float deltaTime;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double GetSeconds() => totalTime / 1000000.0f;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ulong GetMillis() => totalTime / 1000;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ulong GetMicro() => totalTime;
+        /// <summary>
+        /// In seconds
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float GetDelta() => deltaTime;
+
+        public static Random random;
 
         #endregion
 

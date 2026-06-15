@@ -6,12 +6,29 @@ namespace SpatialSim.Engine.Audio
     public static class AudioManager
     {
         public static Dictionary<string, int> audioToIndex;
-        public static List<AudioStream> audioStreams;
+        public const int MaximumStreams = 32;
+        public static AudioStream[] audioStreams;
+        public static Thread audioThread;
+        public static object audioThreadLock = new();
+        /// <summary>
+        /// Audio thread will only ever be reading this
+        /// </summary>
+        public static volatile bool runningAudioThread;
+
+        /// <summary>
+        /// In seconds
+        /// </summary>
+        public static float audioDeltaTime;
+        public static float globalVolume = 1.0f;
+        
+        static int currentEndStream;
         
         public static void Init()
         {
             audioToIndex = new Dictionary<string, int>();
-            audioStreams = new List<AudioStream>();
+            audioStreams = new AudioStream[MaximumStreams];
+            audioThread = new Thread(Update);
+            runningAudioThread = true;
             
             unsafe
             {
@@ -27,14 +44,31 @@ namespace SpatialSim.Engine.Audio
 
             ResumeAudioDevice(AppState.audioDevice);
             
+            audioThread.Start();
+            
             Debug.LogInfo("Successful audio creation");
         }
 
-        public static void Update()
+        static void Update()
         {
-            for (int i = 0; i < audioStreams.Count; i++)
+            float pastTime = 0;
+
+            while (runningAudioThread)
             {
-                 audioStreams[i].Test();
+                float time = SDL3.SDL_GetTicksNS() / 1e9f;
+                audioDeltaTime = time - pastTime;
+
+                int count = currentEndStream;
+
+                for (int i = 0; i < count; i++)
+                {
+                    if (audioStreams[i] is null) 
+                        continue;
+
+                    audioStreams[i].Test();
+                }
+
+                pastTime = time;
             }
         }
 
@@ -59,16 +93,29 @@ namespace SpatialSim.Engine.Audio
             
             if (!audioToIndex.ContainsKey(audioFile))
             {
-                audioStreams.Add(new AudioStream(audioFile));
-                if (!audioStreams[^1].LoadFromFile(audioFile))
+                lock (audioThreadLock)
                 {
-                    audioStreams.RemoveAt(audioStreams.Count - 1);
-                    return false;
-                }
+                    if (currentEndStream >= MaximumStreams)
+                    {
+                        Debug.Error("Max streams reached");
+                        return false;
+                    }
 
-                audioToIndex.Add(audioFile, audioStreams.Count - 1);
-                audioStreams[^1].CreateAudioStream();
-                audioStreams[^1].BindToAudioDevice(AppState.audioDevice);
+                    audioStreams[currentEndStream] = new AudioStream(audioFile);
+
+                    if (!audioStreams[currentEndStream].LoadFromFile(audioFile))
+                    {
+                        audioStreams[currentEndStream] = null;
+                        return false;
+                    }
+
+                    audioStreams[currentEndStream].CreateAudioStream();
+                    audioStreams[currentEndStream].BindToAudioDevice(AppState.audioDevice);
+                    audioToIndex.Add(audioFile, currentEndStream);
+                    
+                    currentEndStream++;
+                }
+                
                 
                 return true;
             }
@@ -81,10 +128,21 @@ namespace SpatialSim.Engine.Audio
         {
             if (!audioToIndex.ContainsKey(audioStream.name))
             {
-                audioStreams.Add(audioStream);
-                audioStreams[^1].CreateAudioStream();
-                audioStreams[^1].BindToAudioDevice(AppState.audioDevice);
-                audioToIndex.Add(audioStream.name, audioStreams.Count - 1);
+                lock (audioThreadLock)
+                {
+                    if (currentEndStream >= MaximumStreams)
+                    {
+                        Debug.Error("Max streams reached");
+                        return false;
+                    }
+
+                    audioStreams[currentEndStream] = audioStream;
+                    audioStreams[currentEndStream].CreateAudioStream();
+                    audioStreams[currentEndStream].BindToAudioDevice(AppState.audioDevice);
+                    audioToIndex.Add(audioStream.name, currentEndStream);
+                    
+                    currentEndStream++;
+                }
                 return true;
             }
 
@@ -92,29 +150,35 @@ namespace SpatialSim.Engine.Audio
             return false;
         }
 
-        public static AudioStream RetrieveAudioStream(string audioFile)
+        public static AudioStream? RetrieveAudioStream(string audioFile)
         {
-            if (audioToIndex.TryGetValue(audioFile, out int index))
+            lock (audioStreams)
             {
-                return audioStreams[index];
-            }
-            else
-            {
-                if (LoadAudioStream(audioFile))
+                if (audioToIndex.TryGetValue(audioFile, out int index))
                 {
-                    return audioStreams[audioToIndex[audioFile]];
+                    return audioStreams[index];
                 }
+                else
+                {
+                    if (LoadAudioStream(audioFile))
+                    {
+                        return audioStreams[audioToIndex[audioFile]];
+                    }
+                }   
             }
             
             Debug.Error("Tried to retrieve a audio file that does not exist");
             return null;
         }
         
-        public static AudioStream RetrieveAudioStream(int audioStream)
+        public static AudioStream? RetrieveAudioStream(int audioStream)
         {
-            if (audioStream >= 0 && audioStream < audioStreams.Count)
+            lock (audioStreams)
             {
-                return audioStreams[audioStream];
+                if (audioStream >= 0 && audioStream < audioStreams.Length)
+                {
+                    return audioStreams[audioStream];
+                }   
             }
             
             Debug.Error("Tried to retrieve a audio stream that does not exist");
@@ -133,9 +197,18 @@ namespace SpatialSim.Engine.Audio
 
         public static void Clean()
         {
-            for (int i = 0; i < audioStreams.Count; i++)
+            runningAudioThread = false;
+
+            audioThread.Join();
+            
+            //dont think this lock is needed but rider really wants it so
+            lock (audioStreams)
             {
-                audioStreams[i].Clean();
+                for (int i = 0; i < audioStreams.Length; i++)
+                {
+                    if(audioStreams[i] is not null)
+                        audioStreams[i].Clean();
+                }
             }
             
             SDL3.SDL_CloseAudioDevice(AppState.audioDevice);
