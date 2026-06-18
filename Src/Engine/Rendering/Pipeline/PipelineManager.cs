@@ -15,7 +15,8 @@ namespace SpatialSim.Engine.Rendering
                 settings = new PipelineSettings()
                 {
                     blendColor = false,
-                    depthTest = true
+                    depthTest = true,
+                    format = TextureFormat.R8G8B8A8Unorm
                 }
             });
             pipelineToIndex.Add(DefaultPipelines.BaseNormalMap, pipelines.Count - 1);
@@ -41,7 +42,8 @@ namespace SpatialSim.Engine.Rendering
                 settings = new PipelineSettings()
                 {
                     blendColor = false,
-                    depthTest = true
+                    depthTest = true,
+                    format = TextureFormat.R8G8B8A8Unorm
                 }
             });
             pipelineToIndex.Add(DefaultPipelines.BaseColor, pipelines.Count - 1);

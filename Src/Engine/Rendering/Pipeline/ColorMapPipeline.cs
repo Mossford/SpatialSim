@@ -35,7 +35,7 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer.BindFragmentUniforms(this, uniformBinding);
             commandBuffer.BindSamplers(
                 this,
-                [TextureManager.RetrieveTexture(meshRenderer.materialRef.textureRef)],
+                [TextureManager.RetrieveTexture(colorTextureIndex)],
                 [colorTextureIndex],
                 ShaderType.Fragment);
         }

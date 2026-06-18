@@ -20,4 +20,11 @@
 
 ## Implement more texture methods
 
-## Add unlit and lit shaders plus more typesSSS
+## Add unlit and lit shaders plus more types
+
+## Texture usage can be or together
+
+## Mouse stops camera movement when cursor reaches edge of screen
+### Allow mouse delta to still be calculated even if mouse is stopped by edge of screen
+
+## Look into if uniform data would be possible on post processes or at least push constants

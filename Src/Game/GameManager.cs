@@ -14,7 +14,6 @@ namespace SpatialSim.Game
     {
         public static CameraController cameraController;
         static Entity moon;
-        static Entity light;
         
         public static void Init()
         {
@@ -52,12 +51,12 @@ namespace SpatialSim.Game
                         new Vector3(), 
                         new Vector3(), 
                         1.0f)), 
-                 MathUtil.GetFovFromFocalLength(23.9f,600f)));
+                 10f));
 
             cameraController = new CameraController(cameraRef);
             MainImgui.menus.Add(new CameraMenu());
 
-            Texture noise = Noise.CreateWorleyNoise(new([256, 256], 8));
+            Texture noise = Noise.CreateWorleyNoise(new([128, 128, 128], 8));
             TextureManager.LoadTexture("noise", noise);
             
             Texture noiseNormals = Noise.CreateWorleyNoiseNormals(new([256, 256], 8));
@@ -68,7 +67,7 @@ namespace SpatialSim.Game
                 EcsComponentRef transform = moon.AddComponent(new Transform(
                     new Vector3(0, 0, 1),
                     new Vector3(85 * MathF.PI / 180f, 253 * MathF.PI / 180f, 0),
-                    MathUtil.GetScaleFromAngularSize(25)));
+                    MathUtil.GetScaleFromAngularSize(35 / 60f)));
                 EcsComponentRef meshRef = moon.AddComponent(
                     new Mesh(ModelLoader.LoadModelFile("UvSphere.fbx"),
                         transform));
@@ -79,22 +78,7 @@ namespace SpatialSim.Game
                 }), cameraRef));
             }
             
-            light = EcsManager.AddEntity();
-            {
-                EcsComponentRef transform = light.AddComponent(new Transform(
-                    new Vector3(0, 0, 1),
-                    new Vector3(85 * MathF.PI / 180f, 253 * MathF.PI / 180f, 0),
-                    MathUtil.GetScaleFromAngularSize(35 / 60f)));
-                EcsComponentRef meshRef = light.AddComponent(
-                    new Mesh(ModelLoader.LoadModelFile("UvSphere.fbx"),
-                        transform));
-                light.AddComponent(new MeshRenderer(meshRef, light.AddComponent(new Material
-                {
-                    textureRef = "noise",
-                }), cameraRef));
-            }
-            
-            /*Entity screenQuad = EcsManager.AddEntity();
+            Entity screenQuad = EcsManager.AddEntity();
             {
                 EcsComponentRef transform = screenQuad.AddComponent(new Transform(
                     new Vector3(0, 0, 0),
@@ -104,10 +88,13 @@ namespace SpatialSim.Game
                 screenQuad.AddComponent(new MeshRenderer(
                     meshRef, 
                     screenQuad.AddComponent(
-                        new Material()), 
+                        new Material()
+                        {
+                            textureRef = "noise"
+                        }),
                     cameraRef,
                     "Volumetric"));
-            }*/
+            }
 
             //AudioManager.LoadAudioStream(new AudioStream($"test"));
 
@@ -124,8 +111,6 @@ namespace SpatialSim.Game
         public static void Update(float dt)
         {
             cameraController.Update();
-            
-            light.GetFirstComponent<Transform>(EcsComponentType.Transform).position = new Vector3(MathF.Cos((float)AppState.GetSeconds()), 0.01f, 1 + MathF.Sin((float)AppState.GetSeconds()));
         }
 
         public static void FixedUpdate(float dt)

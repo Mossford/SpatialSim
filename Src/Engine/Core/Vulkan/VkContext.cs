@@ -23,7 +23,6 @@ namespace SpatialSim.Engine.Core.Vulkan
         public GraphicsAPI graphicsApi { get; set; }
         public IDeviceFactory DeviceFactory { get; set; }
         public Texture renderTexture { get; set; }
-        public RenderPass renderPass { get; set; }
         public VkImGuiController imGuiController;
         
         public static int imageIndex;
@@ -101,41 +100,23 @@ namespace SpatialSim.Engine.Core.Vulkan
             drawCmdBuf = VkSwapChain.commandBuffers[imageIndex];
             VkSwapChain.commandBuffers[imageIndex].Begin();
             
-            VkTexture.TransitionImageLayout(
+            VkDepthBuffer.texture.TransitionImageLayout(
                 drawCmdBuf,
-                VkDepthBuffer.texture.image,
-                ImageLayout.Undefined,
                 ImageLayout.DepthStencilAttachmentOptimal,
                 AccessFlags.DepthStencilAttachmentWriteBit,
-                AccessFlags.DepthStencilAttachmentWriteBit,
                 PipelineStageFlags.EarlyFragmentTestsBit | PipelineStageFlags.LateFragmentTestsBit,
-                PipelineStageFlags.EarlyFragmentTestsBit | PipelineStageFlags.LateFragmentTestsBit,
-                ImageAspectFlags.DepthBit
-            );
+                ImageAspectFlags.DepthBit);
 
             // If we have no post processes to run then just write to swapchain
             if (PostProcessManager.postProcesses.Count == 0)
             {
-                VkTexture.TransitionImageLayout(
-                    drawCmdBuf,
-                    VkSwapChain.swapChainImages[imageIndex],
-                    ImageLayout.Undefined,
+                ((VkTexture)renderTexture.texture!).TransitionImageLayout(drawCmdBuf,
                     ImageLayout.ColorAttachmentOptimal,
-                    AccessFlags.None,
                     AccessFlags.ColorAttachmentWriteBit,
                     PipelineStageFlags.ColorAttachmentOutputBit,
-                    PipelineStageFlags.ColorAttachmentOutputBit,
-                    ImageAspectFlags.ColorBit
-                );
+                    ImageAspectFlags.ColorBit);
             
-                EcsManager.Render(drawCmdBuf, imageIndex);
-            
-                imGuiController.Render(
-                    ((VkCommandBuffer)drawCmdBuf.commandBuffer!).commandBuffer,
-                    VkSwapChain.swapChainImageViews[imageIndex],
-                    VkDepthBuffer.texture.imageView,
-                    VkSwapChain.swapChainExtent,
-                    Window.windowScale);
+                EcsManager.Render(drawCmdBuf, renderTexture);
             }
             else
             {
@@ -155,58 +136,68 @@ namespace SpatialSim.Engine.Core.Vulkan
                     PostProcessManager.postProcesses.GetValueAtIndex(i).EnableRead(drawCmdBuf);
                 }
                 
-                VkTexture.TransitionImageLayout(
-                    drawCmdBuf,
-                    VkSwapChain.swapChainImages[imageIndex],
-                    ImageLayout.Undefined,
+                ((VkTexture)renderTexture.texture!).TransitionImageLayout(drawCmdBuf,
                     ImageLayout.ColorAttachmentOptimal,
                     AccessFlags.ColorAttachmentWriteBit,
-                    AccessFlags.ColorAttachmentWriteBit,
                     PipelineStageFlags.ColorAttachmentOutputBit,
-                    PipelineStageFlags.ColorAttachmentOutputBit,
-                    ImageAspectFlags.ColorBit
-                );
+                    ImageAspectFlags.ColorBit);
                 
-                PostProcessManager.postProcesses.GetValueAtIndex(PostProcessManager.postProcesses.Count - 1).Render(drawCmdBuf, imageIndex);
-                
-                imGuiController.Render(
-                    ((VkCommandBuffer)drawCmdBuf.commandBuffer!).commandBuffer,
-                    VkSwapChain.swapChainImageViews[imageIndex],
-                    VkDepthBuffer.texture.imageView,
-                    VkSwapChain.swapChainExtent,
-                    Window.windowScale);
+                PostProcessManager.postProcesses.GetValueAtIndex(PostProcessManager.postProcesses.Count - 1).Render(drawCmdBuf, renderTexture);
                 
             }
             
-            
-            VkTexture.TransitionImageLayout(
-                drawCmdBuf, 
-                VkSwapChain.swapChainImages[imageIndex],
-                ImageLayout.ColorAttachmentOptimal,
-                ImageLayout.PresentSrcKhr,
-                AccessFlags.ColorAttachmentWriteBit,
-                AccessFlags.None,
-                PipelineStageFlags.ColorAttachmentOutputBit,
-                PipelineStageFlags.BottomOfPipeBit,
-                ImageAspectFlags.ColorBit
-            );
+            imGuiController.Render(
+                ((VkCommandBuffer)drawCmdBuf.commandBuffer!).commandBuffer,
+                ((VkTexture)renderTexture.texture!).imageView,
+                VkDepthBuffer.texture.imageView,
+                VkSwapChain.swapChainExtent,
+                Window.windowScale);
             
             FinishRender();
         }
 
         public void FinishRender()
         {
-            int image = imageIndex - 1;
-            if (image < 0)
-                image = VkSwapChain.swapChainImages.Length - 1;
-            //TODO If we request a rendertexture then do this
-            ((VkTexture)renderTexture.texture!).BlitToImage(
-                drawCmdBuf,
-                VkSwapChain.swapChainImages[image],
+            ((VkTexture)renderTexture.texture!).TransitionImageLayout(drawCmdBuf,
                 ImageLayout.TransferSrcOptimal,
+                AccessFlags.TransferReadBit,
+                PipelineStageFlags.TransferBit,
+                ImageAspectFlags.ColorBit);
+            
+            VkTexture.TransitionImageLayout(
+                drawCmdBuf,
+                VkSwapChain.swapChainImages[imageIndex],
+                ImageLayout.Undefined,
+                ImageLayout.TransferDstOptimal,
+                AccessFlags.ColorAttachmentWriteBit,
+                AccessFlags.TransferWriteBit,
+                PipelineStageFlags.ColorAttachmentOutputBit,
+                PipelineStageFlags.TransferBit,
+                ImageAspectFlags.ColorBit
+            );
+            
+            VkTexture.BlitToImage(
+                drawCmdBuf,
+                ((VkTexture)renderTexture.texture!).image,
+                ((VkTexture)renderTexture.texture!).currentLayout,
                 //The data is the same from the swapchain image to the rendertexture so we can do this
                 renderTexture.data,
-                renderTexture.data);
+                VkSwapChain.swapChainImages[imageIndex],
+                ImageLayout.TransferDstOptimal,
+                renderTexture.data
+            );
+            
+            VkTexture.TransitionImageLayout(
+                drawCmdBuf, 
+                VkSwapChain.swapChainImages[imageIndex],
+                ImageLayout.TransferDstOptimal,
+                ImageLayout.PresentSrcKhr,
+                AccessFlags.TransferWriteBit,
+                AccessFlags.None,
+                PipelineStageFlags.TransferBit,
+                PipelineStageFlags.BottomOfPipeBit,
+                ImageAspectFlags.ColorBit
+            );
             
             drawCmdBuf.End();
             PipelineManager.ResetPipelines(drawCmdBuf);
@@ -333,7 +324,7 @@ namespace SpatialSim.Engine.Core.Vulkan
             vk.DeviceWaitIdle(VkDevices.device);
          
             imGuiController.Dispose();
-            renderTexture.Clean();
+            renderTexture.Dispose();
             
             VkSwapChain.CleanSwapChain();
             
@@ -371,28 +362,23 @@ namespace SpatialSim.Engine.Core.Vulkan
                     info = new TextureInfo()
                     {
                         width = VkSwapChain.swapChainExtent.Width,
-                        height = VkSwapChain.swapChainExtent.Height,
-                        depth = 1,
-                        filter = TextureFilter.Linear,
-                        format = TextureFormat.R8G8B8A8Unorm,
-                        memoryUsage = TextureMemoryUsage.cpu,
-                        type = TextureType.Type2D,
-                        usage = TextureUsage.Sampler
+                        height = VkSwapChain.swapChainExtent.Height, 
                     }
                 }
             };
             renderTexture.texture = new VkTexture();
-            ((VkTexture)renderTexture.texture!).Create(renderTexture.data);
+            ((VkTexture)renderTexture.texture!).Create(
+                VkSwapChain.swapChainExtent.Width,
+                VkSwapChain.swapChainExtent.Width,
+                1,
+                VkTexture.ConvertToVkFormat(TextureFormat.R8G8B8A8Unorm),
+                ImageTiling.Optimal,
+                ImageUsageFlags.ColorAttachmentBit | ImageUsageFlags.SampledBit | ImageUsageFlags.TransferSrcBit | ImageUsageFlags.TransferDstBit,
+                MemoryPropertyFlags.DeviceLocalBit,
+                ImageType.Type2D);
             
-            ((VkTexture)renderTexture.texture!).TransitionImageLayout(ImageLayout.Undefined,
-                ImageLayout.ShaderReadOnlyOptimal,
-                0,
-                AccessFlags.ShaderReadBit,
-                PipelineStageFlags.TopOfPipeBit,
-                PipelineStageFlags.FragmentShaderBit,
-                ImageAspectFlags.ColorBit);
-            
-            ((VkTexture)renderTexture.texture!).CreateImageView(ImageAspectFlags.ColorBit);
+            ((VkTexture)renderTexture.texture!).CreateImageView(ImageAspectFlags.ColorBit, ImageViewType.Type2D);
+            ((VkTexture)renderTexture.texture!).CreateSampler();
         }
 
         T AppContext.GetContext<T>()

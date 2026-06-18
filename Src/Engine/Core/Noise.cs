@@ -22,16 +22,17 @@ namespace SpatialSim.Engine.Core
         {
             Texture texture = new Texture();
 
-            if (settings.dimensions.Length == 0 || settings.dimensions.Length > 3)
+            if (settings.dimensions.Length <= 1 || settings.dimensions.Length > 3)
             {
                 Debug.Warning($"Tried to create worley noise texture with wrong dimension size {settings.dimensions.Length} returning empty texture");
                 return texture;
             }
 
             int width = settings.dimensions[0];
-            int height = settings.dimensions.Length == 2 ? settings.dimensions[1] : 0;
+            int height = settings.dimensions[1];
             int depth = settings.dimensions.Length == 3 ? settings.dimensions[2] : 1;
                 
+            
             TextureData textureData = new TextureData()
             {
                 info = new TextureInfo()
@@ -60,14 +61,14 @@ namespace SpatialSim.Engine.Core
         {
             Texture texture = new Texture();
 
-            if (settings.dimensions.Length == 0 || settings.dimensions.Length > 3)
+            if (settings.dimensions.Length <= 1 || settings.dimensions.Length > 3)
             {
                 Debug.Warning($"Tried to create worley noise texture with wrong dimension size {settings.dimensions.Length} returning empty texture");
                 return texture;
             }
 
             int width = settings.dimensions[0];
-            int height = settings.dimensions.Length == 2 ? settings.dimensions[1] : 0;
+            int height = settings.dimensions[1];
             int depth = settings.dimensions.Length == 3 ? settings.dimensions[2] : 1;
                 
             TextureData textureData = new TextureData()
@@ -102,9 +103,9 @@ namespace SpatialSim.Engine.Core
             byte[] data = new byte[width * height * depth];
 
             int cellSize = settings.cellSize;
-            int cellsWidth = width / cellSize;
-            int cellsHeight = height / cellSize;
-            int cellsDepth = depth / cellSize;
+            int cellsWidth = (width + cellSize - 1) / cellSize;
+            int cellsHeight = (height + cellSize - 1) / cellSize;
+            int cellsDepth = (depth + cellSize - 1) / cellSize;
             
             Vector3[] points = new Vector3[cellsWidth * cellsHeight * cellsDepth];
 
@@ -118,11 +119,11 @@ namespace SpatialSim.Engine.Core
 
             float maxDistance = cellSize * MathF.Sqrt(3f);
 
-            for (int x = 0; x < width; x++)
+            for (int z = 0; z < depth; z++)
             {
                 for (int y = 0; y < height; y++)
                 {
-                    for (int z = 0; z < depth; z++)
+                    for (int x = 0; x < width; x++)
                     {
                         int cellX = x / cellSize;
                         int cellY = y / cellSize;
@@ -130,11 +131,11 @@ namespace SpatialSim.Engine.Core
 
                         float closestDistance = float.MaxValue;
 
-                        for (int cx = -1; cx <= 1; cx++)
+                        for (int cz = -1; cz <= 1; cz++)
                         {
                             for (int cy = -1; cy <= 1; cy++)
                             {
-                                for (int cz = -1; cz <= 1; cz++)
+                                for (int cx = -1; cx <= 1; cx++)
                                 {
                                     int surCellX = cellX + cx;
                                     int surCellY = cellY + cy;
@@ -147,7 +148,7 @@ namespace SpatialSim.Engine.Core
                                         continue;
                                     }
 
-                                    int pointIndex = surCellX * cellsHeight + surCellY;
+                                    int pointIndex = surCellZ * cellsWidth * cellsHeight + surCellY * cellsWidth + surCellX;
                                     Vector3 pointOffset = points[pointIndex] + new Vector3(surCellX * cellSize, surCellY * cellSize, surCellZ * cellSize);
 
                                     float distance = Vector3.Distance(new Vector3(x, y, z), pointOffset);
@@ -176,8 +177,8 @@ namespace SpatialSim.Engine.Core
             byte[] data = new byte[width * height];
 
             int cellSize = settings.cellSize;
-            int cellsWidth = width / cellSize;
-            int cellsHeight = height / cellSize;
+            int cellsWidth = (width + cellSize - 1) / cellSize;
+            int cellsHeight = (height + cellSize - 1) / cellSize;
             
             Vector2[] points = new Vector2[cellsWidth * cellsHeight];
 
@@ -191,21 +192,21 @@ namespace SpatialSim.Engine.Core
 
             float maxDistance = cellSize * MathF.Sqrt(2f);
 
-            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
             {
-                for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
                 {
                     int cellX = x / cellSize;
                     int cellY = y / cellSize;
 
                     float closestDistance = float.MaxValue;
 
-                    for (int cx = -1; cx <= 1; cx++)
+                    for (int cy = -1; cy <= 1; cy++)
                     {
-                        for (int cy = -1; cy <= 1; cy++)
+                        for (int cx = -1; cx <= 1; cx++)
                         {
                             int surCellX = cellX + cx;
-                            int surCellY = cellY + cy;
+                            int surCellY = cellY + cx;
 
                             if (surCellX < 0 || surCellX >= cellsWidth ||
                                 surCellY < 0 || surCellY >= cellsHeight)
@@ -240,8 +241,8 @@ namespace SpatialSim.Engine.Core
             byte[] data = new byte[width * height * TextureFormat.R8G8B8A8Unorm.GetBytePerPixel()];
 
             int cellSize = settings.cellSize;
-            int cellsWidth = width / cellSize;
-            int cellsHeight = height / cellSize;
+            int cellsWidth = (width + cellSize - 1) / cellSize;
+            int cellsHeight = (height + cellSize - 1) / cellSize;
             
             Vector2[] points = new Vector2[cellsWidth * cellsHeight];
 
@@ -253,9 +254,9 @@ namespace SpatialSim.Engine.Core
                 points[i] = new Vector2(random.NextSingle() * cellSize, random.NextSingle() * cellSize);
             }
 
-            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
             {
-                for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
                 {
                     int cellX = x / cellSize;
                     int cellY = y / cellSize;
@@ -263,9 +264,9 @@ namespace SpatialSim.Engine.Core
                     float closestDistance = float.MaxValue;
                     Vector3 dir = Vector3.Zero;
 
-                    for (int cx = -1; cx <= 1; cx++)
+                    for (int cy = -1; cy <= 1; cy++)
                     {
-                        for (int cy = -1; cy <= 1; cy++)
+                        for (int cx = -1; cx <= 1; cx++)
                         {
                             int surCellX = cellX + cx;
                             int surCellY = cellY + cy;

@@ -18,7 +18,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 ImageUsageFlags.ColorAttachmentBit | ImageUsageFlags.SampledBit,
                 MemoryPropertyFlags.DeviceLocalBit,
                 ImageType.Type2D);
-            texture.CreateImageView(ImageAspectFlags.ColorBit);
+            texture.CreateImageView(ImageAspectFlags.ColorBit, ImageViewType.Type2D);
             texture.CreateSampler();
             
             inputTex.texture = texture;

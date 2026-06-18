@@ -97,7 +97,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 VkDevices.physicalDevice,
                 VkDevices.graphicsFamilyIndex,
                 VkSwapChain.swapChainImages.Length,
-                VkSwapChain.swapChainImageFormat,
+                VkTexture.ConvertToVkFormat(TextureFormat.R8G8B8A8Unorm),
                 VkDepthBuffer.FindDepthFormat()
             );
             

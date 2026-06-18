@@ -60,7 +60,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 ImageColorSpace = surfaceFormat.ColorSpace,
                 ImageExtent = extent,
                 ImageArrayLayers = 1,
-                ImageUsage = ImageUsageFlags.ColorAttachmentBit,
+                ImageUsage = ImageUsageFlags.ColorAttachmentBit | ImageUsageFlags.TransferDstBit,
             };
 
             VkDevices.QueueFamilyIndices indices = VkDevices.FindQueueFamilies(VkDevices.physicalDevice);

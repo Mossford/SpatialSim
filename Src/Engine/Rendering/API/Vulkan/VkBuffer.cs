@@ -296,7 +296,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     LayerCount = 1,
                 },
                 ImageOffset = new Offset3D(0, 0, 0),
-                ImageExtent = new Extent3D(srcData.info.width, srcData.info.height, 1),
+                ImageExtent = new Extent3D(srcData.info.width, srcData.info.height, srcData.info.depth),
             };
 
             AppState.appContext.GetContext<VkContext>().vk.CmdCopyBufferToImage(
@@ -332,7 +332,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     LayerCount = 1,
                 },
                 ImageOffset = new Offset3D(0, 0, 0),
-                ImageExtent = new Extent3D(destData.info.width, destData.info.height, 1),
+                ImageExtent = new Extent3D(destData.info.width, destData.info.height, destData.info.depth),
             };
             
             AppState.appContext.GetContext<VkContext>().vk.CmdCopyImageToBuffer(

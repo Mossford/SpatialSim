@@ -89,7 +89,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 TextureType.Type3D => ImageType.Type3D,
                 _ => ImageType.Type2D
             };
-
+            
             Create(data.info.width, data.info.height, data.info.depth, format, ImageTiling.Optimal, usage, memUsage, imageType);
 
             //copy over data if we have data
@@ -116,12 +116,21 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 stagingBuffer.Clean();    
             }
             
+            ImageViewType imageViewType = data.info.type switch
+            {
+                TextureType.Type2D => ImageViewType.Type2D,
+                TextureType.Type3D => ImageViewType.Type3D,
+                _ => ImageViewType.Type2D
+            };
             
-            CreateImageView(ImageAspectFlags.ColorBit);
+            CreateImageView(ImageAspectFlags.ColorBit, imageViewType);
 
             filter = ConvertToVkFilter(data.info.filter);
 
-            CreateSampler();
+            if (data.info.usage == TextureUsage.Sampler)
+            {
+                CreateSampler();
+            }
         }
 
         public void CreateImage(in TextureData data)
@@ -164,7 +173,15 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             };
 
             Create(data.info.width, data.info.height, data.info.depth, format, ImageTiling.Optimal, usage, memUsage, imageType);
-            CreateImageView(ImageAspectFlags.ColorBit);
+            
+            ImageViewType imageViewType = data.info.type switch
+            {
+                TextureType.Type2D => ImageViewType.Type2D,
+                TextureType.Type3D => ImageViewType.Type3D,
+                _ => ImageViewType.Type2D
+            };
+            
+            CreateImageView(ImageAspectFlags.ColorBit, imageViewType);
         }
 
         public void WriteGpuToCpu(ref TextureData data)
@@ -376,19 +393,36 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.GetContext<VkContext>().vk.GetPhysicalDeviceImageFormatProperties(
                     VkDevices.physicalDevice,
                     format,
-                    ImageType.Type2D,
+                    type,
                     tiling,
                     usage,
                     ImageCreateFlags.Create2DArrayCompatibleBit,
                     out ImageFormatProperties formatProperties);
 
-            if (formatProperties.MaxExtent.Width <= width)
+            if (width > formatProperties.MaxExtent.Width)
             {
                 Debug.Error($"Image width {width} is greater than max extent width {formatProperties.MaxExtent.Width} for format {format}");
             }
-            if (formatProperties.MaxExtent.Height <= height)
+            if (height > formatProperties.MaxExtent.Height)
             {
                 Debug.Error($"Image height {height} is greater than max extent height {formatProperties.MaxExtent.Height} for format {format}");
+            }
+            if (depth > formatProperties.MaxExtent.Depth)
+            {
+                Debug.Error($"Image depth {depth} is greater than max extent depth {formatProperties.MaxExtent.Depth} for format {format}");
+            }
+            
+            if (width <= 0)
+            {
+                Debug.Error($"Image width {width} is less or equal to 0");
+            }
+            if (height <= 0)
+            {
+                Debug.Error($"Image height {height} is less or equal to 0");
+            }
+            if (depth <= 0)
+            {
+                Debug.Error($"Image depth {depth} is less or equal to 0");
             }
             
             ImageCreateInfo imageInfo = new()
@@ -648,17 +682,73 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 in barrier
             );
         }
+        
+        public static void BlitToImage(
+            in CommandBuffer commandBuffer,
+            in Image src,
+            in ImageLayout srcLayout,
+            in TextureData srcData,
+            in Image dst,
+            in ImageLayout dstLayout,
+            in TextureData dstData)
+        {
+            ImageBlit region = new()
+            {
+                SrcOffsets = new ImageBlit.SrcOffsetsBuffer()
+                {
+                    Element0 = new Offset3D(0, 0, 0),
+                    Element1 = new Offset3D(
+                        (int)srcData.info.width,
+                        (int)srcData.info.height,
+                        1)
+                },
+
+                DstOffsets = new ImageBlit.DstOffsetsBuffer()
+                {
+                    Element0 = new Offset3D(0, 0, 0),
+                    Element1 = new Offset3D(
+                        (int)dstData.info.width,
+                        (int)dstData.info.height,
+                        1)
+                },
+                SrcSubresource = new ImageSubresourceLayers()
+                {
+                    //TODO This might not be true for all
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                    MipLevel = 0
+                },
+                DstSubresource = new ImageSubresourceLayers()
+                {
+                    AspectMask = ImageAspectFlags.ColorBit,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                    MipLevel = 0
+                }
+            };
+            
+            AppState.appContext.GetContext<VkContext>().vk.CmdBlitImage(
+                ((VkCommandBuffer)commandBuffer.commandBuffer!).commandBuffer,
+                src,
+                srcLayout,
+                dst,
+                dstLayout,
+                1,
+                in region,
+                ConvertToVkFilter(dstData.info.filter));
+        }
 
         /// <summary>
         /// Internal vulkaneedDescriptorUpdaten use
         /// </summary>
-        public unsafe void CreateImageView(ImageAspectFlags imageAspectFlags)
+        public unsafe void CreateImageView(ImageAspectFlags imageAspectFlags, ImageViewType viewType)
         {
             ImageViewCreateInfo createInfo = new()
             {
                 SType = StructureType.ImageViewCreateInfo,
                 Image = image,
-                ViewType = ImageViewType.Type2D,
+                ViewType = viewType,
                 Format = format,
                 Components =
                 {

@@ -167,7 +167,7 @@ namespace SpatialSim.Engine.Audio
                 }   
             }
             
-            Debug.Error("Tried to retrieve a audio file that does not exist");
+            Debug.Error("Tried to retrieve an audio file that does not exist");
             return null;
         }
         
@@ -181,7 +181,7 @@ namespace SpatialSim.Engine.Audio
                 }   
             }
             
-            Debug.Error("Tried to retrieve a audio stream that does not exist");
+            Debug.Error("Tried to retrieve an audio stream that does not exist");
             return null;
         }
 

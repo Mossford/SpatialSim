@@ -717,7 +717,7 @@ namespace SpatialSim.Engine.Rendering.ImGui
                 SType = StructureType.RenderingAttachmentInfo,
                 ImageView = depth,
                 ImageLayout = ImageLayout.DepthStencilAttachmentOptimal,
-                LoadOp = AttachmentLoadOp.Load,
+                LoadOp = AttachmentLoadOp.DontCare,
                 StoreOp = AttachmentStoreOp.DontCare,
                 ClearValue = default,
                 ResolveMode = ResolveModeFlags.None

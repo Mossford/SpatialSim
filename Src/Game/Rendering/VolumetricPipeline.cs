@@ -23,8 +23,15 @@ namespace SpatialSim.Game.Rendering
             fragmentShader.AddData(uniformBinding, meshRenderer.cameraRef.fov);
             fragmentShader.AddData(uniformBinding, (uint)100);
             fragmentShader.AddData(uniformBinding, new Vector4(0, 0, 0.3f, MathUtil.GetScaleFromAngularSize(80 / 60f)));
+            int textureIndex = TextureManager.RetrieveTextureIndex(meshRenderer.materialRef.textureRef);
+            fragmentShader.AddData(uniformBinding, textureIndex, true);
             UpdateUniforms(fragmentShader, uniformBinding);
             commandBuffer.BindFragmentUniforms(this, uniformBinding);
+            commandBuffer.BindSamplers(
+                this,
+                [TextureManager.RetrieveTexture(textureIndex)],
+                [textureIndex],
+                ShaderType.Fragment);
         }
     }
 }

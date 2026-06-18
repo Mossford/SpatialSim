@@ -17,5 +17,9 @@ namespace SpatialSim.Engine.Rendering
         /// Enables depth writing and shit
         /// </summary>
         public bool depthTest;
+        /// <summary>
+        /// Format that will be rendered too, Pipelines that render to the render texture must follow the format of the render texture
+        /// </summary>
+        public TextureFormat format;
     }
 }

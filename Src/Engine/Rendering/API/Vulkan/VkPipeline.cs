@@ -198,12 +198,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             colorBlending.BlendConstants[2] = 0;
             colorBlending.BlendConstants[3] = 0;
 
-            Format swapChainFormat = VkSwapChain.swapChainImageFormat;
+            Format renderFormat = VkTexture.ConvertToVkFormat(settings.format);
             PipelineRenderingCreateInfo pipelineRenderingCreateInfo = new()
             {
                 SType = StructureType.PipelineRenderingCreateInfo,
                 ColorAttachmentCount = 1,
-                PColorAttachmentFormats = &swapChainFormat,
+                PColorAttachmentFormats = &renderFormat,
                 DepthAttachmentFormat = VkDepthBuffer.FindDepthFormat()
             };
 

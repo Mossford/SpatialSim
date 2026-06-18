@@ -23,7 +23,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 MemoryPropertyFlags.DeviceLocalBit,
                 ImageType.Type2D);
             TransitionDepthLayout();
-            texture.CreateImageView(ImageAspectFlags.DepthBit);
+            texture.CreateImageView(ImageAspectFlags.DepthBit, ImageViewType.Type2D);
             
             Debug.LogInfo($"Successful vulkan depth buffer creation on format {depthFormat}");
         }

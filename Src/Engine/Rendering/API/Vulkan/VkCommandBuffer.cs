@@ -290,10 +290,22 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             {
                 SType = StructureType.RenderingAttachmentInfo,
                 ImageView = ((VkTexture)colorWrite.texture!).imageView,
-                ImageLayout = ImageLayout.ColorAttachmentOptimal,
+                ImageLayout = ((VkTexture)colorWrite.texture!).currentLayout,
                 LoadOp = AttachmentLoadOp.Clear,
                 StoreOp = AttachmentStoreOp.Store,
                 ClearValue = clearValues[0],
+                ResolveMode = ResolveModeFlags.None
+            };
+            
+            //TODO Should this be an extra texture passed in?
+            RenderingAttachmentInfo depthAttachmentInfo = new()
+            {
+                SType = StructureType.RenderingAttachmentInfo,
+                ImageView = VkDepthBuffer.texture.imageView,
+                ImageLayout = ImageLayout.DepthStencilAttachmentOptimal,
+                LoadOp = AttachmentLoadOp.Clear,
+                StoreOp = AttachmentStoreOp.DontCare,
+                ClearValue = clearValues[1],
                 ResolveMode = ResolveModeFlags.None
             };
             
@@ -304,6 +316,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 LayerCount = 1,
                 ColorAttachmentCount = 1,
                 PColorAttachments = &colorAttachmentInfo,
+                PDepthAttachment = &depthAttachmentInfo
             };
             
             VkDevices.dynamicRendering.CmdBeginRendering(commandBuffer, &renderingInfo);

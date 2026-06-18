@@ -19,11 +19,11 @@ namespace SpatialSim.Engine.Rendering
             }
         }
 
+        public Transform transformRef { get; private set; }
+        
         public Matrix4x4 view;
         public Matrix4x4 proj;
         public float fov;
-
-        public Transform transformRef { get; private set; }
         
 
         public Camera(EcsComponentRef transform, float fov)
