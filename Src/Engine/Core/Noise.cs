@@ -57,6 +57,9 @@ namespace SpatialSim.Engine.Core
             return texture;
         }
         
+        /// <summary>
+        /// In 3d this gives the gradient as normals are not really possible
+        /// </summary>
         public static Texture CreateWorleyNoiseNormals(in NoiseSettings settings)
         {
             Texture texture = new Texture();
@@ -86,7 +89,7 @@ namespace SpatialSim.Engine.Core
             };
 
             textureData.data = settings.dimensions.Length == 3
-                ? Create3DWorleyNoise(settings)
+                ? Create3DWorleyNoiseGradient(settings)
                 : Create2DWorleyNoiseNormals(settings);
 
             texture.data = textureData;
@@ -163,6 +166,85 @@ namespace SpatialSim.Engine.Core
 
                         int index = z * height * width + y * width + x;
                         data[index] = (byte)(Math.Clamp(closestDistance / maxDistance, 0f, 1f) * 255f);
+                    }
+                }
+            }
+            
+            return data;
+        }
+        
+        static byte[] Create3DWorleyNoiseGradient(in NoiseSettings settings)
+        {
+            int width = settings.dimensions[0];
+            int height = settings.dimensions[1];
+            int depth = settings.dimensions[2];
+            byte[] data = new byte[width * height * depth * TextureFormat.R8G8B8A8Unorm.GetBytePerPixel()];
+
+            int cellSize = settings.cellSize;
+            int cellsWidth = (width + cellSize - 1) / cellSize;
+            int cellsHeight = (height + cellSize - 1) / cellSize;
+            int cellsDepth = (depth + cellSize - 1) / cellSize;
+            
+            Vector3[] points = new Vector3[cellsWidth * cellsHeight * cellsDepth];
+
+            //TODO use some static seeded random
+            Random random = new Random();
+            
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i] = new Vector3(random.NextSingle() * cellSize, random.NextSingle() * cellSize, random.NextSingle() * cellSize);
+            }
+
+            for (int z = 0; z < depth; z++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        int cellX = x / cellSize;
+                        int cellY = y / cellSize;
+                        int cellZ = z / cellSize;
+
+                        float closestDistance = float.MaxValue;
+                        Vector3 dir = Vector3.Zero;
+
+                        for (int cz = -1; cz <= 1; cz++)
+                        {
+                            for (int cy = -1; cy <= 1; cy++)
+                            {
+                                for (int cx = -1; cx <= 1; cx++)
+                                {
+                                    int surCellX = cellX + cx;
+                                    int surCellY = cellY + cy;
+                                    int surCellZ = cellZ + cz;
+
+                                    if (surCellX < 0 || surCellX >= cellsWidth ||
+                                        surCellY < 0 || surCellY >= cellsHeight ||
+                                        surCellZ < 0 || surCellZ >= cellsDepth)
+                                    {
+                                        continue;
+                                    }
+
+                                    int pointIndex = surCellZ * cellsWidth * cellsHeight + surCellY * cellsWidth + surCellX;
+                                    Vector3 pointOffset = points[pointIndex] + new Vector3(surCellX * cellSize, surCellY * cellSize, surCellZ * cellSize);
+
+                                    Vector3 pixel = new Vector3(x, y, z);
+                                    float distance = Vector3.Distance(pixel, pointOffset);
+
+                                    if (distance < closestDistance)
+                                    {
+                                        closestDistance = distance;
+                                        dir = Vector3.Normalize(pointOffset - pixel);
+                                    }
+                                }
+                            }
+                        }
+
+                        int index = (z * height * width + y * width + x) * TextureFormat.R8G8B8A8Unorm.GetBytePerPixel();
+                        data[index] = (byte)((dir.X + 1f) * 255f / 2f);
+                        data[index + 1] = (byte)((dir.Y + 1f) * 255f / 2f);
+                        data[index + 2] = (byte)((dir.Z + 1f) * 255f / 2f);
+                        data[index + 3] = 255;
                     }
                 }
             }

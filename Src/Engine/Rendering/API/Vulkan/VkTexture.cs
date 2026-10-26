@@ -21,6 +21,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public AccessFlags currentAccessFlags = 0;
         public PipelineStageFlags currentPipelineStageFlags = PipelineStageFlags.TopOfPipeBit;
 
+        /// <summary>
+        /// Checks if the texture has been assigned to a descriptor set
+        /// </summary>
+        public Dictionary<ShaderDescriptorDef, bool> descriptorLookUp;
+
         public static Format ConvertToVkFormat(TextureFormat format)
         {
             return format switch
@@ -90,7 +95,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 _ => ImageType.Type2D
             };
             
-            Create(data.info.width, data.info.height, data.info.depth, format, ImageTiling.Optimal, usage, memUsage, imageType);
+            VulkanCreate(data.info.width, data.info.height, data.info.depth, format, ImageTiling.Optimal, usage, memUsage, imageType);
 
             //copy over data if we have data
             if (data.data.Length != 0)
@@ -172,7 +177,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 _ => ImageType.Type2D
             };
 
-            Create(data.info.width, data.info.height, data.info.depth, format, ImageTiling.Optimal, usage, memUsage, imageType);
+            VulkanCreate(data.info.width, data.info.height, data.info.depth, format, ImageTiling.Optimal, usage, memUsage, imageType);
             
             ImageViewType imageViewType = data.info.type switch
             {
@@ -385,8 +390,10 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         /// <summary>
         /// Internal vulkan use
         /// </summary>
-        public unsafe void Create(uint width, uint height, uint depth, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageType type)
+        public unsafe void VulkanCreate(uint width, uint height, uint depth, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ImageType type)
         {
+            descriptorLookUp = new Dictionary<ShaderDescriptorDef, bool>();
+            
             this.format = format;
             
             //TODO If extent is bigger than maximum split up image into multiple parts
@@ -810,6 +817,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         
         public unsafe void SetTextureToDescriptorSet(VkDescriptor descriptor, int binding)
         {
+            if(!descriptorLookUp.TryAdd(descriptor.descriptorDef, true))
+                return;
+
             DescriptorImageInfo imageInfo = new()
             {
                 ImageLayout = ImageLayout.ShaderReadOnlyOptimal,

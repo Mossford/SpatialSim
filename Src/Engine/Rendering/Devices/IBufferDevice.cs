@@ -11,6 +11,7 @@ namespace SpatialSim.Engine.Rendering
         public void TextureToCopy(ITextureDevice src, in TextureData destData);
         public T[] CopyToArray();
         public void UpdateData(in Span<T> data);
+        public unsafe void* GetMapPointer();
         public void UpdateUniformData(in Span<T> data);
         public void Clean();
     }

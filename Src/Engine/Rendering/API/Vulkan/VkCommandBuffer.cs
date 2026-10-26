@@ -211,9 +211,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 {
                     Color = new ()
                     {
-                        Float32_0 = 0, 
-                        Float32_1 = 0, 
-                        Float32_2 = 0, 
+                        Float32_0 = (float)RendererSettings.clearColor.R / 255, 
+                        Float32_1 = (float)RendererSettings.clearColor.G / 255, 
+                        Float32_2 = (float)RendererSettings.clearColor.B / 255, 
                         Float32_3 = 1
                     },
                 },
@@ -270,9 +270,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 {
                     Color = new ()
                     {
-                        Float32_0 = 0, 
-                        Float32_1 = 0, 
-                        Float32_2 = 0, 
+                        Float32_0 = (float)RendererSettings.clearColor.R / 255, 
+                        Float32_1 = (float)RendererSettings.clearColor.G / 255, 
+                        Float32_2 = (float)RendererSettings.clearColor.B / 255, 
                         Float32_3 = 1
                     },
                 },
@@ -426,7 +426,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
                 ShaderDescriptorDef def = new (RendererSettings.FragmentSamplerSet, bindings, ShaderDescriptorUsage.Sampler, shaderType);
                 
-                VkTexture texture = ((VkTexture)textures[i].texture);
+                VkTexture texture = ((VkTexture)textures[i].texture!);
                 VkDescriptor set = vkPipeLine.GetDescriptor(def);
                 texture.SetTextureToDescriptorSet(set, bindings[i]);
                 
@@ -435,6 +435,33 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     PipelineBindPoint.Graphics,
                     vkPipeLine.pipelineLayout,
                     RendererSettings.FragmentSamplerSet,
+                    1,
+                    ref set.descriptorSet,
+                    0,
+                    null);
+            }
+        }
+        
+        public unsafe void BindBufferStorage<T>(Pipeline pipeline, Buffer<T>[] buffers, int[] bindings, ShaderType shaderType) where T : unmanaged
+        {
+            VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
+            
+            for (int i = 0; i < buffers.Length; i++)
+            {
+                // TODO this binds to the fragment sampler set which should change based on the shader type
+
+                ShaderDescriptorDef def = new (RendererSettings.FragmentStorageSet, bindings, ShaderDescriptorUsage.Storage, shaderType);
+                
+                VkBuffer<T> buffer = ((VkBuffer<T>)buffers[i].buffer!);
+                VkDescriptor set = vkPipeLine.GetDescriptor(def);
+                buffer.SetBufferToDescriptorSet(set, bindings[i]);
+                
+                AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
+                    commandBuffer,
+                    PipelineBindPoint.Graphics,
+                    vkPipeLine.pipelineLayout,
+                    //TODO check on shader type for this
+                    RendererSettings.FragmentStorageSet,
                     1,
                     ref set.descriptorSet,
                     0,

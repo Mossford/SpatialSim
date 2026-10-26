@@ -6,12 +6,13 @@ namespace SpatialSim.Engine.Core
     {
         /// <summary>
         /// Probably a better way to do this
+        /// sorts by layer of pipeline, and then index for the pipeline so groups of renderers of the same pipeline can just get one api call for the pipeline bind
         /// </summary>
-        public static SortedList<int, List<int>> renderOrder;
+        public static SortedList<int, SortedList<int, List<int>>> renderOrder;
 
         public static void Init()
         {
-            renderOrder = new SortedList<int, List<int>>();
+            renderOrder = new SortedList<int, SortedList<int, List<int>>>();
         }
         
         public static void UpdateOrder()
@@ -31,14 +32,29 @@ namespace SpatialSim.Engine.Core
             for (int i = 0; i < meshRendererCount; i++)
             {
                 MeshRenderer renderer = (MeshRenderer)EcsManager.componentPools[EcsComponentType.MeshRenderer.GetId()].components.Get(i);
-                int pipelineLayer = PipelineManager.RetrievePipeline(renderer.pipelineRef).layer;
-                if (renderOrder.TryAdd(pipelineLayer, new List<int>()))
+                Pipeline pipeline = PipelineManager.RetrievePipeline(renderer.pipelineRef);
+                int pipelineLayer = pipeline.layer;
+                if (renderOrder.TryAdd(pipelineLayer, new SortedList<int, List<int>>()))
                 {
-                    renderOrder[pipelineLayer].Add(i);
+                    if (renderOrder[pipelineLayer].TryAdd(pipeline.id, new List<int>()))
+                    {
+                        renderOrder[pipelineLayer][pipeline.id].Add(i);
+                    }
+                    else
+                    {
+                        renderOrder[pipelineLayer][pipeline.id].Add(i);
+                    }
                 }
                 else
                 {
-                    renderOrder[pipelineLayer].Add(i);
+                    if (renderOrder[pipelineLayer].TryAdd(pipeline.id, new List<int>()))
+                    {
+                        renderOrder[pipelineLayer][pipeline.id].Add(i);
+                    }
+                    else
+                    {
+                        renderOrder[pipelineLayer][pipeline.id].Add(i);
+                    }
                 }
             }
         }
@@ -50,14 +66,23 @@ namespace SpatialSim.Engine.Core
         public static void Render(CommandBuffer commandBuffer, int frame)
         {
             commandBuffer.BeginRendering(frame);
+            commandBuffer.SetViewport(Window.size);
+            commandBuffer.SetScissor(Window.size);
             for (int i = 0; i < renderOrder.Count; i++)
             {
-                List<int> indexes = renderOrder.GetValueAtIndex(i);
-                for (int j = 0; j < indexes.Count; j++)
+                SortedList<int, List<int>> layers = renderOrder.GetValueAtIndex(i);
+                for (int j = 0; j < layers.Count; j++)
                 {
-                    int index = indexes[j];
-                    MeshRenderer renderer = (MeshRenderer)EcsManager.componentPools[EcsComponentType.MeshRenderer.GetId()].components.Get(index);
-                    renderer.Draw(commandBuffer);
+                    int pipelineId = layers.GetKeyAtIndex(j);
+                    commandBuffer.BindPipeLine(PipelineManager.RetrievePipeline(pipelineId));
+
+                    List<int> pipelines = layers.GetValueAtIndex(j);
+                    for (int k = 0; k < pipelines.Count; k++)
+                    {
+                        int index = pipelines[k];
+                        MeshRenderer renderer = (MeshRenderer)EcsManager.componentPools[EcsComponentType.MeshRenderer.GetId()].components.Get(index);
+                        renderer.Draw(commandBuffer);
+                    }
                 }
             }
             commandBuffer.EndRendering();
@@ -69,14 +94,23 @@ namespace SpatialSim.Engine.Core
         public static void Render(CommandBuffer commandBuffer, Texture texture)
         {
             commandBuffer.BeginRendering(texture);
+            commandBuffer.SetViewport(Window.size);
+            commandBuffer.SetScissor(Window.size);
             for (int i = 0; i < renderOrder.Count; i++)
             {
-                List<int> indexes = renderOrder.GetValueAtIndex(i);
-                for (int j = 0; j < indexes.Count; j++)
+                SortedList<int, List<int>> layers = renderOrder.GetValueAtIndex(i);
+                for (int j = 0; j < layers.Count; j++)
                 {
-                    int index = indexes[j];
-                    MeshRenderer renderer = (MeshRenderer)EcsManager.componentPools[EcsComponentType.MeshRenderer.GetId()].components.Get(index);
-                    renderer.Draw(commandBuffer);
+                    int pipelineId = layers.GetKeyAtIndex(j);
+                    commandBuffer.BindPipeLine(PipelineManager.RetrievePipeline(pipelineId));
+
+                    List<int> pipelines = layers.GetValueAtIndex(j);
+                    for (int k = 0; k < pipelines.Count; k++)
+                    {
+                        int index = pipelines[k];
+                        MeshRenderer renderer = (MeshRenderer)EcsManager.componentPools[EcsComponentType.MeshRenderer.GetId()].components.Get(index);
+                        renderer.Draw(commandBuffer);
+                    }
                 }
             }
             commandBuffer.EndRendering();

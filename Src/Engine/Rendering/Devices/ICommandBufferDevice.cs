@@ -22,6 +22,7 @@ namespace SpatialSim.Engine.Rendering
         public void BindVertexUniforms(Pipeline pipeline, int binding);
         public void BindFragmentUniforms(Pipeline pipeline, int binding);
         public void BindSamplers(Pipeline pipeline, Texture[] textures, int[] bindings, ShaderType shaderType);
+        public void BindBufferStorage<T>(Pipeline pipeline, Buffer<T>[] buffers, int[] bindings, ShaderType shaderType) where T : unmanaged;
         public void Draw(int indexCount);
         public void ResetPipeLine(Pipeline pipeline);
     }

@@ -3,7 +3,8 @@ namespace SpatialSim.Engine.Rendering
     public enum ShaderDescriptorUsage
     {
         Uniform,
-        Sampler
+        Sampler,
+        Storage
     }
     
     public struct ShaderDescriptorDef : IEquatable<ShaderDescriptorDef>

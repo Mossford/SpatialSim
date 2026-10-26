@@ -1,3 +1,4 @@
+
 namespace SpatialSim.Engine.Rendering
 {
     public enum RasterizationMode

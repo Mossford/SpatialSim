@@ -32,6 +32,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     {
                         Type = DescriptorType.CombinedImageSampler,
                         DescriptorCount = VkSettings.MaxDescriptorsInPool
+                    },
+                    new DescriptorPoolSize
+                    {
+                        Type = DescriptorType.StorageBuffer,
+                        DescriptorCount = VkSettings.MaxDescriptorsInPool
                     }
                 };
 

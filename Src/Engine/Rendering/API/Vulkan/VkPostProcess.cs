@@ -10,10 +10,10 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         {
             texture = new VkTexture();
             
-            texture.Create(inputTex.data.info.width,
+            texture.VulkanCreate(inputTex.data.info.width,
                 inputTex.data.info.height,
                 1,
-                VkSwapChain.swapChainImageFormat,
+                VkTexture.ConvertToVkFormat(inputTex.data.info.format),
                 ImageTiling.Optimal,
                 ImageUsageFlags.ColorAttachmentBit | ImageUsageFlags.SampledBit,
                 MemoryPropertyFlags.DeviceLocalBit,

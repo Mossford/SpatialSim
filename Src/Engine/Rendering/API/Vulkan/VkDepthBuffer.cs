@@ -13,7 +13,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             Format depthFormat = FindDepthFormat();
 
             texture = new VkTexture();
-            texture.Create(
+            texture.VulkanCreate(
                 VkSwapChain.swapChainExtent.Width, 
                 VkSwapChain.swapChainExtent.Height,
                 1,

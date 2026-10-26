@@ -16,6 +16,7 @@ layout(set = 2) uniform UniformBufferObject
     uint rayMarchCount;
     vec4 aabb;
     uint sampleTex;
+    uint sampleGradientTex;
 } ubo;
 
 vec2 RayAabbIntersect(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax)
@@ -29,26 +30,31 @@ vec2 RayAabbIntersect(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax)
     return vec2(tNear, tFar);
 }
 
-float DensityAtPoint(vec3 point, vec3 boxMin, vec3 boxMax)
-{
-    vec3 pointRel = (point - boxMin) / (boxMax - boxMin);
-    float density = texture(nonuniformEXT(textures[ubo.sampleTex]), pointRel).r;
-    return density;
-}
-
 vec4 RayMarchVolume(vec3 rayStart, vec3 rayEnd, vec3 boxMin, vec3 boxMax)
 {
+    vec3 color = vec3(0.0f);
     float density = 0.0f;
     vec3 step = (rayEnd - rayStart) / ubo.rayMarchCount;
     vec3 pos = rayStart;
+    const float cutoff = 0.4f;
 
     for (uint i = 0; i < ubo.rayMarchCount; i++)
     {
-        density += DensityAtPoint(pos, boxMin, boxMax) / float(ubo.rayMarchCount);
+        vec3 pointRel = (pos - boxMin) / (boxMax - boxMin);
+        float texDensity = texture(nonuniformEXT(textures[ubo.sampleTex]), pointRel).r;
+        if(texDensity >= cutoff)
+        {
+            vec3 gradient = texture(nonuniformEXT(textures[ubo.sampleGradientTex]), pointRel).rgb;
+            vec3 normal = normalize(gradient * 2.0f - 1.0f);
+            float dens = texDensity / float(ubo.rayMarchCount);
+            color += dens * normal;
+            density += dens;
+        }
+
         pos += step;
     }
 
-    return vec4(density, density, density, 1.0f);
+    return vec4(color, density);
 }
 
 void main()

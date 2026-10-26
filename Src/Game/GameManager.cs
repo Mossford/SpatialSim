@@ -51,34 +51,36 @@ namespace SpatialSim.Game
                         new Vector3(), 
                         new Vector3(), 
                         1.0f)), 
-                 10f));
+                 MathUtil.GetFovFromFocalLength(3.13f, 480)));
 
             cameraController = new CameraController(cameraRef);
             MainImgui.menus.Add(new CameraMenu());
 
-            Texture noise = Noise.CreateWorleyNoise(new([128, 128, 128], 8));
+            Texture noise = Noise.CreateWorleyNoise(new([128, 128, 128], 12));
             TextureManager.LoadTexture("noise", noise);
             
-            Texture noiseNormals = Noise.CreateWorleyNoiseNormals(new([256, 256], 8));
+            Texture noiseNormals = Noise.CreateWorleyNoiseNormals(new([128, 128, 128], 12));
             TextureManager.LoadTexture("noiseNormals", noiseNormals);
+            
+            TextureManager.LoadTexture("moonColor.png", TextureFormat.R8G8B8A8Unorm);
+            TextureManager.LoadTexture("moonNormal.png", TextureFormat.R8G8B8A8Unorm);
             
             moon = EcsManager.AddEntity();
             {
                 EcsComponentRef transform = moon.AddComponent(new Transform(
                     new Vector3(0, 0, 1),
                     new Vector3(85 * MathF.PI / 180f, 253 * MathF.PI / 180f, 0),
-                    MathUtil.GetScaleFromAngularSize(35 / 60f)));
+                    MathUtil.GetScaleFromAngularSize(30f / 60f)));
                 EcsComponentRef meshRef = moon.AddComponent(
-                    new Mesh(ModelLoader.LoadModelFile("UvSphere.fbx"),
-                        transform));
+                    new Mesh(ModelLoader.LoadModelFile("UvSphere.fbx")));
                 moon.AddComponent(new MeshRenderer(meshRef, moon.AddComponent(new Material
                 {
-                    textureRef = "noise",
-                    normalMapRef = "noiseNormals",
-                }), cameraRef));
+                    textureRef = "moonColor.png",
+                    normalMapRef = "moonNormal.png",
+                }), cameraRef, transform));
             }
             
-            Entity screenQuad = EcsManager.AddEntity();
+            /*Entity screenQuad = EcsManager.AddEntity();
             {
                 EcsComponentRef transform = screenQuad.AddComponent(new Transform(
                     new Vector3(0, 0, 0),
@@ -90,22 +92,23 @@ namespace SpatialSim.Game
                     screenQuad.AddComponent(
                         new Material()
                         {
-                            textureRef = "noise"
+                            textureRef = "noise",
+                            normalMapRef = "noiseNormals"
                         }),
                     cameraRef,
                     "Volumetric"));
-            }
+            }*/
 
             //AudioManager.LoadAudioStream(new AudioStream($"test"));
 
-            /*PostProcessManager.LoadPostProcessEffect(new PostProcessEffect("testeffect"),
+            PostProcessManager.LoadPostProcessEffect(new PostProcessEffect("testeffect"),
                 ShaderManager.RetrieveShader(
-                new ShaderSettings(ShaderType.Fragment,
-                    [
-                        new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [0],
-                            ShaderDescriptorUsage.Sampler, ShaderType.Fragment)
-                    ],
-                    "testeffect.frag")));*/
+                    new ShaderSettings(ShaderType.Fragment,
+                        [
+                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [0],
+                                ShaderDescriptorUsage.Sampler, ShaderType.Fragment)
+                        ],
+                        "testeffect.frag")));
         }
 
         public static void Update(float dt)
@@ -114,6 +117,11 @@ namespace SpatialSim.Game
         }
 
         public static void FixedUpdate(float dt)
+        {
+            
+        }
+
+        public static void Clean()
         {
             
         }

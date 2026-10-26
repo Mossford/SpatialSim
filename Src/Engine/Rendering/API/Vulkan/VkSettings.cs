@@ -10,7 +10,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static Format SwapchainColorFormat = Format.B8G8R8A8Unorm;
         public static ColorSpaceKHR SwapchainColorSpaceFormat = ColorSpaceKHR.SpaceSrgbNonlinearKhr;
         //immediate but no tearing for mailbox
-        public static PresentModeKHR SwapchainPresentMode = PresentModeKHR.FifoKhr;
+        public static PresentModeKHR SwapchainPresentMode = PresentModeKHR.ImmediateKhr;
         public static int MAX_FRAMES_IN_FLIGHT = 3;
 
         #endregion
@@ -40,7 +40,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static readonly string[] deviceExtensions = new[]
         {
             KhrSwapchain.ExtensionName,
-            KhrDeferredHostOperations.ExtensionName,
             KhrDynamicRendering.ExtensionName,
         };
         

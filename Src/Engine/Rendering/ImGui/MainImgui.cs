@@ -1,11 +1,8 @@
-
-
 using System.Numerics;
 using ImGuiNET;
 using SpatialSim.Engine.Audio;
 using SpatialSim.Engine.Core;
 using SpatialSim.Engine.Rendering.ImGui;
-using SpatialSim.Game.ImGui;
 
 namespace SpatialSim.Engine.Rendering
 {
@@ -88,7 +85,7 @@ namespace SpatialSim.Engine.Rendering
                     ImGuiNET.ImGui.SameLine();
                     ImGuiNET.ImGui.TextWrapped($"Cpu Limited");
                 }
-                ImGuiNET.ImGui.TextWrapped($"Time Open {MathF.Floor(curTime / 60.0f):N0}:{curTime:N2}");
+                ImGuiNET.ImGui.TextWrapped($"Time Open {MathF.Floor(curTime / 60.0f):N0}:{(curTime % 60):N2}");
                 ImGuiNET.ImGui.TextWrapped("ECS GameObject Count " + EcsManager.entities.ValueCount);
                 ImGuiNET.ImGui.TextWrapped("ECS Component Count " + EcsManager.totalComponents);
             

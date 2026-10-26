@@ -39,10 +39,19 @@ namespace SpatialSim.Engine.Rendering
                 cameraRef = EcsManager.GetComponent<Camera>(camera);
             }
         }
-
-        public Buffer<Vertex> vertexBuffer;
-        public Buffer<int> indexBuffer;
-
+        
+        public EcsComponentRef transform
+        {
+            get;
+            set
+            {
+                //make sure we update the transform reference if we update it
+                field = value;
+                transformRef = EcsManager.GetComponent<Transform>(transform);
+            }
+        }
+        
+        public Transform transformRef { get; private set; }
         public Mesh meshRef { get; private set; }
         public Material materialRef { get; private set; }
         public Camera cameraRef { get; private set; }
@@ -53,11 +62,12 @@ namespace SpatialSim.Engine.Rendering
             
         }
 
-        public MeshRenderer(EcsComponentRef mesh, EcsComponentRef material, EcsComponentRef camera, string pipeline = "")
+        public MeshRenderer(EcsComponentRef mesh, EcsComponentRef material, EcsComponentRef camera, EcsComponentRef transform, string pipeline = "")
         {
             mesh.CheckComponent(EcsComponentType.Mesh.GetId());
             material.CheckComponent(EcsComponentType.Material.GetId());
             camera.CheckComponent(EcsComponentType.Camera.GetId());
+            transform.CheckComponent(EcsComponentType.Transform.GetId());
             this.mesh = mesh;
             this.material = material;
             if (pipeline.Length == 0)
@@ -65,63 +75,37 @@ namespace SpatialSim.Engine.Rendering
                 pipeline = materialRef.normalMapRef.Length == 0 ? DefaultPipelines.BaseColor : DefaultPipelines.BaseNormalMap;
             }
             this.camera = camera;
+            this.transform = transform;
             pipelineRef = pipeline;
-            
-            Create();
         }
         
-        public MeshRenderer(EcsComponentRef mesh, EcsComponentRef material, string pipeline = "")
+        public MeshRenderer(EcsComponentRef mesh, EcsComponentRef material, EcsComponentRef transform, string pipeline = "")
         {
             mesh.CheckComponent(EcsComponentType.Mesh.GetId());
             material.CheckComponent(EcsComponentType.Material.GetId());
+            transform.CheckComponent(EcsComponentType.Transform.GetId());
             this.mesh = mesh;
             this.material = material;
+            this.transform = transform;
             if (pipeline.Length == 0)
             {
                 pipeline = materialRef.normalMapRef.Length == 0 ? DefaultPipelines.BaseColor : DefaultPipelines.BaseNormalMap;
             }
-            camera = new EcsComponentRef();
             pipelineRef = pipeline;
-            
-            Create();
-        }
-
-        public void Create()
-        {
-            vertexBuffer = new Buffer<Vertex>();
-            vertexBuffer.Create(new Span<Vertex>(meshRef.GetVertexes()), BufferUsage.Vertex, BufferMemoryUsage.Cpu);
-            indexBuffer = new Buffer<int>();
-            indexBuffer.Create(new Span<int>(meshRef.meshData.indices), BufferUsage.Index, BufferMemoryUsage.Cpu);
-        }
-
-        public void UpdateMesh()
-        {
-            vertexBuffer.UpdateData(meshRef.GetVertexes());
-            indexBuffer.UpdateData(meshRef.meshData.indices);
         }
 
         public void Draw(CommandBuffer commandBuffer)
         {
             Pipeline pipeline = PipelineManager.RetrievePipeline(pipelineRef);
-            commandBuffer.BindPipeLine(pipeline);
-            commandBuffer.SetViewport(Window.size);
-            commandBuffer.SetScissor(Window.size);
-            
-            commandBuffer.BindVertexBuffers(vertexBuffer.buffer!);
-            commandBuffer.BindIndexBuffers(indexBuffer.buffer!);
+            commandBuffer.BindVertexBuffers(meshRef.vertexBuffer.buffer!);
+            commandBuffer.BindIndexBuffers(meshRef.indexBuffer.buffer!);
             pipeline.SetDrawData(commandBuffer, this, 0);
             commandBuffer.Draw(meshRef.meshData.indices.Length);
         }
 
-        public void Clean()
-        {
-            vertexBuffer.Clean();
-            indexBuffer.Clean();
-        }
-
         public void Dispose()
         {
-            Clean();
+            
         }
     }
 }

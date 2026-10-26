@@ -1,6 +1,6 @@
 namespace SpatialSim.Engine.Core
 {
-    public class Entity
+    public class Entity : IDisposable
     {
         public int id;
         public StableList<EcsComponentRef> componentRefs;
@@ -62,6 +62,14 @@ namespace SpatialSim.Engine.Core
         public T GetFirstComponent<T>(EcsComponentType type) where T : IComponent
         {
             return EcsManager.GetFirstComponent<T>(this, type.GetId());
+        }
+
+        public void Dispose()
+        {
+            for (int i = 0; i < componentRefs.ValueCount; i++)
+            {
+                EcsManager.RemoveComponent(componentRefs.Get(i));
+            }
         }
     }
 }

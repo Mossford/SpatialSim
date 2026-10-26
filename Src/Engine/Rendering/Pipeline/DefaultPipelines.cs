@@ -4,5 +4,6 @@ namespace SpatialSim.Engine.Rendering
     {
         public static string BaseColor = "BaseColorMap";
         public static string BaseNormalMap = "BaseNormalMap";
+        public static string BaseColor2D = "BaseColorMap2D";
     }   
 }

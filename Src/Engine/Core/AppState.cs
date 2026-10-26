@@ -14,7 +14,7 @@ namespace SpatialSim.Engine.Core
 
         #region Information
 
-        public const string Version = "0.14";
+        public const string Version = "0.15";
         public static string gpuDeviceName;
         public static string Api;
 
@@ -27,6 +27,7 @@ namespace SpatialSim.Engine.Core
         public static string WindowTitle = "Spatial Sim - " + Version;
         public static Vector2 WindowStartSize = new Vector2(1920, 1080);
         public static RenderingApi renderingApi = RenderingApi.Vulkan;
+        public const float fixedDeltaTime = 16.667f / 1000f;
 
         #endregion
 

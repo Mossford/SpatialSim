@@ -8,7 +8,7 @@ namespace SpatialSim
     {
         static void Main(string[] args)
         {
-            Window.Init(GameManager.Init, GameManager.Update, GameManager.FixedUpdate);
+            Window.Init(GameManager.Init, GameManager.Update, GameManager.FixedUpdate, GameManager.Clean);
         }
     }
 }

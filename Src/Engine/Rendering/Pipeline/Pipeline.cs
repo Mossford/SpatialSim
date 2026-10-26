@@ -13,6 +13,7 @@ namespace SpatialSim.Engine.Rendering
         public string name;
         public PipelineSettings settings;
         public int layer;
+        public int id;
 
         public Pipeline(string name)
         {

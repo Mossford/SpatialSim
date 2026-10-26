@@ -20,7 +20,7 @@ namespace SpatialSim.Engine.Rendering
             buffer = AppState.appContext.DeviceFactory.CreateBufferDevice(data, usage, memoryUsage);
             size = (ulong)(data.Length * sizeof(T));
             
-            Debug.LogDebug($"Created buffer of type {typeof(T).Name} of size {sizeof(T) * data.Length}");
+            Debug.LogDebug($"Created buffer of type {typeof(T).Name} of size {sizeof(T) * data.Length} on {memoryUsage} for {usage}");
             Ticks.bufferCount.created++;
             Ticks.gpuMemoryAllocation.created += size;
         }
@@ -35,7 +35,7 @@ namespace SpatialSim.Engine.Rendering
             buffer = AppState.appContext.DeviceFactory.CreateBufferDevice<T>(dataLength, usage, memoryUsage);
             size = (ulong)(dataLength * sizeof(T));
             
-            Debug.LogDebug($"Created buffer of type {typeof(T).Name} of size {sizeof(T) * dataLength}");
+            Debug.LogDebug($"Created buffer of type {typeof(T).Name} of size {sizeof(T) * dataLength} on {memoryUsage} for {usage}");
             Ticks.bufferCount.created++;
             Ticks.gpuMemoryAllocation.created += size;
         }
@@ -68,11 +68,23 @@ namespace SpatialSim.Engine.Rendering
             return buffer?.CopyToArray() ?? Array.Empty<T>();
         }
 
+        /// <summary>
+        /// Copies the data passed in to the buffer
+        /// </summary>
         public void UpdateData(in Span<T> data)
         {
             buffer?.UpdateData(data);
         }
 
+        /// <summary>
+        /// Gets the pointer that gets mapped to the buffer memory
+        /// TODO Make this vulkan only or return null ptr on things that dont support this
+        /// </summary>
+        public unsafe void* GetMapPointer()
+        {
+            return buffer!.GetMapPointer();
+        }
+        
         public void UpdateUniformData(in Span<T> data)
         {
             buffer?.UpdateUniformData(data);

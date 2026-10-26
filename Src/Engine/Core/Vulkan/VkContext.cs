@@ -367,7 +367,7 @@ namespace SpatialSim.Engine.Core.Vulkan
                 }
             };
             renderTexture.texture = new VkTexture();
-            ((VkTexture)renderTexture.texture!).Create(
+            ((VkTexture)renderTexture.texture!).VulkanCreate(
                 VkSwapChain.swapChainExtent.Width,
                 VkSwapChain.swapChainExtent.Width,
                 1,

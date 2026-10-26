@@ -28,3 +28,8 @@
 ### Allow mouse delta to still be calculated even if mouse is stopped by edge of screen
 
 ## Look into if uniform data would be possible on post processes or at least push constants
+
+## Fix descriptors where the set order can caue issues, if uniform comes before sampler vulkan will complain. Will also complain if shader defintition is missing a set
+### Make it index by the number it was added in?
+
+## Maybe move uniform descriptor sets off the uniform manager into pipeline?

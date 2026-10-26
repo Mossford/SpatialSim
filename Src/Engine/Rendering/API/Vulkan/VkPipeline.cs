@@ -344,7 +344,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         {
             descriptorSetLayouts = new Dictionary<ShaderDescriptorDef, DescriptorSetLayout>();
             descriptorSets = new Dictionary<ShaderDescriptorDef, VkDescriptor>();
-
             List<ShaderDescriptorDef> uniformDefs = new();
             CreateShaderDescriptors(vertex, uniformDefs);
             CreateShaderDescriptors(fragment, uniformDefs);
@@ -361,11 +360,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             for (int i = 0; i < shader.settings.descriptorDef.Length; i++)
             {
                 ShaderDescriptorDef def = shader.settings.descriptorDef[i];
-
+                
                 DescriptorType type = def.usage switch
                 {
                     ShaderDescriptorUsage.Uniform => DescriptorType.UniformBufferDynamic,
                     ShaderDescriptorUsage.Sampler => DescriptorType.CombinedImageSampler,
+                    ShaderDescriptorUsage.Storage => DescriptorType.StorageBuffer,
                     _ => DescriptorType.UniformBufferDynamic
                 };
 

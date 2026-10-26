@@ -43,7 +43,7 @@ namespace SpatialSim.Engine.Rendering
                 fov * MathF.PI / 180.0f,
                 Window.size.X / Window.size.Y,
                 0.1f,
-                10f);
+                100f);
             
             //apply reverse depth buffer
             Matrix4x4 transform = new Matrix4x4(

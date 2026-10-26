@@ -1,6 +1,5 @@
 using System.Numerics;
 using SpatialSim.Engine.Core;
-using SpatialSim.Game.Math;
 
 namespace SpatialSim.Engine.Rendering
 {

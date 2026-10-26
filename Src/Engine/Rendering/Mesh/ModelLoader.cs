@@ -173,12 +173,12 @@ namespace SpatialSim.Engine.Rendering
             meshData.vertexData.uvs = uvs.ToArray();
             meshData.indices = indices.ToArray();
             
-            Mesh meshComp = new Mesh(meshData, entity.AddComponentThr(transform));
+            Mesh meshComp = new Mesh(meshData);
             int materialIndex = (int)mesh->MMaterialIndex;
             //grab the material associated with this mesh
             Material mat = LoadSubMaterial(assimp, scene, materialIndex);
             
-            entity.AddComponentThr(new MeshRenderer(entity.AddComponentThr(meshComp), entity.AddComponentThr(mat), camera));
+            entity.AddComponentThr(new MeshRenderer(entity.AddComponentThr(meshComp), entity.AddComponentThr(mat), camera, entity.AddComponentThr(transform)));
             
             Debug.LogDebug($"Loaded sub mesh {mesh->MName.AsString}");
         }

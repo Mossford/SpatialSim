@@ -17,8 +17,15 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public BufferMemoryUsage memoryUsage;
         public BufferUsage usage;
         
+        /// <summary>
+        /// Checks if the buffer has been assigned to a descriptor set
+        /// </summary>
+        public Dictionary<ShaderDescriptorDef, bool> descriptorLookUp;
+        
         public void Create(in Span<T> data, BufferUsage usage, BufferMemoryUsage memoryUsage)
         {
+            descriptorLookUp = new Dictionary<ShaderDescriptorDef, bool>();
+            
             this.memoryUsage = memoryUsage;
             this.usage = usage;
             if (data.Length == 0)
@@ -136,6 +143,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         
         public void Create(uint dataLength, BufferUsage usage, BufferMemoryUsage memoryUsage)
         {
+            descriptorLookUp = new Dictionary<ShaderDescriptorDef, bool>();
+            
             this.memoryUsage = memoryUsage;
             this.usage = usage;
             BufferUsageFlags bufferUsage = BufferUsageFlags.StorageBufferBit;
@@ -222,13 +231,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             AppState.appContext.GetContext<VkContext>().vk.BindBufferMemory(VkDevices.device, buffer, bufferMemory, 0);
             
-            //only copy if on cpu
             if (memoryUsage == BufferMemoryUsage.Cpu)
             {
                 void* ptr = memoryMap;
                 AppState.appContext.GetContext<VkContext>().vk.MapMemory(VkDevices.device, bufferMemory, 0,  (ulong)(sizeof(T) * dataLength), 0, ref ptr);
                 memoryMap = (byte*)ptr;
-                //AppState.appContext.GetContext<VkContext>().vk.UnmapMemory(VkDevices.device, bufferMemory);
             }
         }
 
@@ -400,8 +407,38 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             {
                 data.CopyTo(new Span<T>(memoryMap, data.Length));
             }
+            else if (memoryUsage == BufferMemoryUsage.Gpu)
+            {
+                //create a staging buffer
+                VkBuffer<T> stagingBuffer = new VkBuffer<T>();
+                stagingBuffer.Create(data, usage, BufferMemoryUsage.Cpu);
+                stagingBuffer.CopyTo(this);
+                stagingBuffer.Clean();
+            }
         }
-        
+
+        public void* GetMapPointer()
+        {
+            if (memoryUsage == BufferMemoryUsage.Cpu)
+            {
+                //clear past memory in the memory map
+                AppState.appContext.GetContext<VkContext>().vk.UnmapMemory(VkDevices.device, bufferMemory);
+                void* ptrRef = memoryMap;
+                //TODO Maybe add a sync check here?
+                //this could be data.length but that might make it shrink and go against the buffer memory object so we just stay as the size and recreate when we need size changes
+                AppState.appContext.GetContext<VkContext>().vk.MapMemory(VkDevices.device, bufferMemory, 0,  size, 0, ref ptrRef);
+                memoryMap = (byte*)ptrRef;
+
+                return memoryMap;
+            }
+            else
+            {
+                Debug.Warning($"Could not map to buffer, buffer was not set to be on host memory");
+            }
+            
+            return null;
+        }
+
         public void UpdateUniformData(in Span<T> data)
         {
             uint blockSize = VkUniformManager.PadUniformSize((uint)(data.Length * sizeof(T)));
@@ -416,6 +453,45 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             byte* dst = memoryMap + memoryOffset;
             data.CopyTo(new Span<T>(dst, data.Length));
             memoryOffset += blockSize;
+        }
+
+        public void SetBufferToDescriptorSet(VkDescriptor descriptor, int binding)
+        {
+            if(!descriptorLookUp.TryAdd(descriptor.descriptorDef, true))
+                return;
+            
+            DescriptorType type = descriptor.descriptorDef.usage switch
+            {
+                ShaderDescriptorUsage.Uniform => DescriptorType.UniformBufferDynamic,
+                ShaderDescriptorUsage.Sampler => DescriptorType.CombinedImageSampler,
+                ShaderDescriptorUsage.Storage => DescriptorType.StorageBuffer,
+                _ => DescriptorType.UniformBufferDynamic
+            };
+            
+            DescriptorBufferInfo bufferInfo = new()
+            {
+                Buffer = buffer,
+                Offset = 0,
+                Range = size,
+            };
+            
+            WriteDescriptorSet descriptorWrite = new()
+            {
+                SType = StructureType.WriteDescriptorSet,
+                DstSet = descriptor.descriptorSet,
+                DstBinding = (uint)binding,
+                DstArrayElement = 0,
+                DescriptorType = type,
+                DescriptorCount = 1,
+                PBufferInfo = &bufferInfo,
+            };
+            
+            AppState.appContext.GetContext<VkContext>().vk.UpdateDescriptorSets(
+                VkDevices.device,
+                1,
+                in descriptorWrite,
+                0,
+                null);
         }
 
         public ulong GetBufferDeviceAddress()

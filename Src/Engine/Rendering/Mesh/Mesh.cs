@@ -6,31 +6,36 @@ namespace SpatialSim.Engine.Rendering
     {
         public int type => EcsComponentType.Mesh.GetId();
         public int id { get; set; } = -1;
-
-        public EcsComponentRef transform
-        {
-            get;
-            set
-            {
-                //make sure we update the transform reference if we update it
-                field = value;
-                transformRef = EcsManager.GetComponent<Transform>(transform);
-            }
-        }
+        
         public MeshData meshData;
         
-        public Transform transformRef { get; private set; }
+        public Buffer<Vertex> vertexBuffer;
+        public Buffer<int> indexBuffer;
         
         public Mesh()
         {
             
         }
 
-        public Mesh(MeshData meshData, EcsComponentRef transform)
+        public Mesh(MeshData meshData)
         {
-            transform.CheckComponent(EcsComponentType.Transform.GetId());
             this.meshData = meshData;
-            this.transform = transform;
+            
+            Create();
+        }
+        
+        public void Create()
+        {
+            vertexBuffer = new Buffer<Vertex>();
+            vertexBuffer.Create(new Span<Vertex>(GetVertexes()), BufferUsage.Vertex, BufferMemoryUsage.Cpu);
+            indexBuffer = new Buffer<int>();
+            indexBuffer.Create(new Span<int>(meshData.indices), BufferUsage.Index, BufferMemoryUsage.Cpu);
+        }
+
+        public void UpdateMesh()
+        {
+            vertexBuffer.UpdateData(GetVertexes());
+            indexBuffer.UpdateData(meshData.indices);
         }
 
         public Vertex[] GetVertexes()
@@ -38,9 +43,15 @@ namespace SpatialSim.Engine.Rendering
             return meshData.GetVertexes();
         }
 
+        public void Clean()
+        {
+            vertexBuffer.Clean();
+            indexBuffer.Clean();
+        }
+        
         public void Dispose()
         {
-            
+            Clean();
         }
     }
 }

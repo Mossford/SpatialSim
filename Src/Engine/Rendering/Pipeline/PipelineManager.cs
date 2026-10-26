@@ -20,6 +20,7 @@ namespace SpatialSim.Engine.Rendering
                 }
             });
             pipelineToIndex.Add(DefaultPipelines.BaseNormalMap, pipelines.Count - 1);
+            pipelines[^1].id = pipelines.Count - 1;
             pipelines[^1].Create(ShaderManager.RetrieveShader(
                     new ShaderSettings(
                         ShaderType.Vertex,
@@ -47,6 +48,7 @@ namespace SpatialSim.Engine.Rendering
                 }
             });
             pipelineToIndex.Add(DefaultPipelines.BaseColor, pipelines.Count - 1);
+            pipelines[^1].id = pipelines.Count - 1;
             pipelines[^1].Create(ShaderManager.RetrieveShader(
                     new ShaderSettings(
                         ShaderType.Vertex,
@@ -64,6 +66,34 @@ namespace SpatialSim.Engine.Rendering
                                 ShaderDescriptorUsage.Uniform, ShaderType.Fragment)
                         ],
                         "basecolormap.frag")));
+            
+            pipelines.Add(new ColorMapPipeline2D() {
+                settings = new PipelineSettings()
+                {
+                    blendColor = false,
+                    depthTest = true,
+                    format = TextureFormat.R8G8B8A8Unorm
+                }
+            });
+            pipelineToIndex.Add(DefaultPipelines.BaseColor2D, pipelines.Count - 1);
+            pipelines[^1].id = pipelines.Count - 1;
+            pipelines[^1].Create(ShaderManager.RetrieveShader(
+                    new ShaderSettings(
+                        ShaderType.Vertex,
+                        [
+                            new ShaderDescriptorDef(RendererSettings.VertexUniformSet, [0],
+                                ShaderDescriptorUsage.Uniform, ShaderType.Vertex)
+                        ],
+                        "basecolormap2D.vert")),
+                ShaderManager.RetrieveShader(
+                    new ShaderSettings(ShaderType.Fragment,
+                        [
+                            new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [0],
+                                ShaderDescriptorUsage.Sampler, ShaderType.Fragment),
+                            new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, [0],
+                                ShaderDescriptorUsage.Uniform, ShaderType.Fragment)
+                        ],
+                        "basecolormap2D.frag")));
             
             Debug.LogInfo("Successful pipeline manager creation");
         }
@@ -85,6 +115,7 @@ namespace SpatialSim.Engine.Rendering
             if (pipelineToIndex.TryAdd(pipeline.name, pipelines.Count))
             {
                 pipelines.Add(pipeline);
+                pipelines[^1].id = pipelines.Count - 1;
                 //TODO make the pipeline accept an array of shaders and a usage and infer what to then do
                 pipelines[^1].Create(shaders[0], shaders[1]);
                 return true;

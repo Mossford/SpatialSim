@@ -25,11 +25,14 @@ namespace SpatialSim.Engine.Core
         static Action init;
         static Action<float> update;
         static Action<float> fixedUpdate;
+        static Action cleanUp;
+
+        public static Matrix4x4 orthoProjection;
 
         static SDL_InitFlags initFlags = SDL_InitFlags.SDL_INIT_VIDEO | SDL_InitFlags.SDL_INIT_AUDIO;
         static bool quit = false;
         
-        public static void Init(Action init, Action<float> update, Action<float> fixedUpdate)
+        public static void Init(Action init, Action<float> update, Action<float> fixedUpdate, Action cleanUp)
         {
             Resources.Init();
             //load logging before anything
@@ -40,6 +43,7 @@ namespace SpatialSim.Engine.Core
             Window.init = init;
             Window.update = update;
             Window.fixedUpdate = fixedUpdate;
+            Window.cleanUp = cleanUp;
 
             GraphicsAPI graphicsApi = default;
 
@@ -69,7 +73,7 @@ namespace SpatialSim.Engine.Core
 
             unsafe
             {
-                AppState.window = SDL3.SDL_CreateWindow("Spatial Sim", (int)size.X, (int)size.Y, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+                AppState.window = SDL3.SDL_CreateWindow(AppState.WindowTitle, (int)size.X, (int)size.Y, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
                 if (AppState.window == null)
                 {
                     string error = "" + SDL3.SDL_GetError();
@@ -103,6 +107,8 @@ namespace SpatialSim.Engine.Core
         static void Load()
         {
             AppState.random = new Random(10);
+
+            orthoProjection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, 0, size.Y, -1, 1);
             
             ShaderManager.Init();
             EcsManager.Init();
@@ -138,6 +144,7 @@ namespace SpatialSim.Engine.Core
             Debug.LogInfo($"Load time took {Ticks.startUpTimer.elapsed}ms");
         }
         
+        static double totalTimeUpdate = 0.0f;
         static void Update(double delta)
         {
             updateStartTime = SDL3.SDL_GetTicksNS() / 1000f;
@@ -173,12 +180,24 @@ namespace SpatialSim.Engine.Core
             
             AppState.appContext.Update((float)delta);
             
+            totalTimeUpdate += delta;
+            while (totalTimeUpdate >= AppState.fixedDeltaTime)
+            {
+                totalTimeUpdate -= AppState.fixedDeltaTime;
+                FixedUpdate(AppState.fixedDeltaTime);
+            }
+            
             if (Input.IsKeyDown(SDL_Scancode.SDL_SCANCODE_ESCAPE))
             {
                 quit = true;
             }
 
             updateTime = SDL3.SDL_GetTicksNS() / 1000f - updateStartTime;
+        }
+
+        static void FixedUpdate(float delta)
+        {
+            fixedUpdate.Invoke(delta);
         }
 
         static void WindowResize()
@@ -206,6 +225,8 @@ namespace SpatialSim.Engine.Core
 
         static unsafe void Clean()
         {
+            cleanUp.Invoke();
+            
             ShaderManager.Clean();
             Input.Clean();
             AppState.appContext.CleanObjects();

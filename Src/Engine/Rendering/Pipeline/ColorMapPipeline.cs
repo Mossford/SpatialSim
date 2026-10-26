@@ -20,7 +20,7 @@ namespace SpatialSim.Engine.Rendering
             Shader vertexShader = ShaderManager.RetrieveShader(shaders[0]);
             vertexShader.AddData(uniformBinding, meshRenderer.cameraRef.view);
             vertexShader.AddData(uniformBinding, meshRenderer.cameraRef.proj);
-            vertexShader.AddData(uniformBinding, meshRenderer.meshRef.transformRef.GetModelMat());
+            vertexShader.AddData(uniformBinding, meshRenderer.transformRef.GetModelMat());
             UpdateUniforms(vertexShader, uniformBinding);
             commandBuffer.BindVertexUniforms(this, uniformBinding);
             Shader fragmentShader = ShaderManager.RetrieveShader(shaders[1]);

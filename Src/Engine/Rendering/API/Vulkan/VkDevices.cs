@@ -22,7 +22,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
         //this needs to exist because the vk class will segfault on commands for dynamic rendering as they dont have the methods loaded
         public static KhrDynamicRendering dynamicRendering;
-        public static KhrAccelerationStructure accelerationStructure;
         
         public struct QueueFamilyIndices
         {
@@ -105,12 +104,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
 
             DeviceCreateInfo createInfo;
-
-            PhysicalDeviceRayQueryFeaturesKHR rayQueryFeaturesKhr = new()
-            {
-                SType = StructureType.PhysicalDeviceRayQueryFeaturesKhr,
-                RayQuery = true
-            };
             
             PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures = new ()
             {
@@ -125,7 +118,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 DescriptorBindingUniformBufferUpdateAfterBind = true,
                 DescriptorBindingUniformTexelBufferUpdateAfterBind = true,
                 DescriptorBindingUpdateUnusedWhilePending = true,
-                PNext = &rayQueryFeaturesKhr
             };
             
             PhysicalDeviceVulkan13Features features = new PhysicalDeviceVulkan13Features()
@@ -166,9 +158,6 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.GetContext<VkContext>().vk
                 .TryGetDeviceExtension(AppState.appContext.GetContext<VkContext>().instance, device,
                     out dynamicRendering);
-            AppState.appContext.GetContext<VkContext>().vk
-                .TryGetDeviceExtension(AppState.appContext.GetContext<VkContext>().instance, device,
-                    out accelerationStructure);
             
             Debug.LogInfo("Successful logical device creation");
         }

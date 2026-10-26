@@ -95,6 +95,11 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer?.BindSamplers(pipeline, textures, bindings, shaderType);
         }
 
+        public void BindBufferStorage<T>(Pipeline pipeline, Buffer<T>[] buffers, int[] bindings, ShaderType shaderType) where T : unmanaged
+        {
+            commandBuffer?.BindBufferStorage(pipeline, buffers, bindings, shaderType);
+        }
+
         /// <summary>
         /// Should only be used with type Vertex
         /// </summary>
