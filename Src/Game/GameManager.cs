@@ -51,16 +51,10 @@ namespace SpatialSim.Game
                         new Vector3(), 
                         new Vector3(), 
                         1.0f)), 
-                 MathUtil.GetFovFromFocalLength(3.13f, 480)));
+                 MathUtil.GetFovFromFocalLength(24f, 200)));
 
             cameraController = new CameraController(cameraRef);
             MainImgui.menus.Add(new CameraMenu());
-
-            Texture noise = Noise.CreateWorleyNoise(new([128, 128, 128], 12));
-            TextureManager.LoadTexture("noise", noise);
-            
-            Texture noiseNormals = Noise.CreateWorleyNoiseNormals(new([128, 128, 128], 12));
-            TextureManager.LoadTexture("noiseNormals", noiseNormals);
             
             TextureManager.LoadTexture("moonColor.png", TextureFormat.R8G8B8A8Unorm);
             TextureManager.LoadTexture("moonNormal.png", TextureFormat.R8G8B8A8Unorm);
@@ -79,6 +73,12 @@ namespace SpatialSim.Game
                     normalMapRef = "moonNormal.png",
                 }), cameraRef, transform));
             }
+            
+            //Texture noise = Noise.CreateWorleyNoise(new([128, 128, 128], 12));
+            //TextureManager.LoadTexture("noise", noise);
+            
+            //Texture noiseNormals = Noise.CreateWorleyNoiseNormals(new([128, 128, 128], 12));
+            //TextureManager.LoadTexture("noiseNormals", noiseNormals);
             
             /*Entity screenQuad = EcsManager.AddEntity();
             {
@@ -101,14 +101,34 @@ namespace SpatialSim.Game
 
             //AudioManager.LoadAudioStream(new AudioStream($"test"));
 
-            PostProcessManager.LoadPostProcessEffect(new PostProcessEffect("testeffect"),
+            /*PostProcessManager.LoadPostProcessEffect(new PostProcessEffect("testeffect"),
                 ShaderManager.RetrieveShader(
                     new ShaderSettings(ShaderType.Fragment,
                         [
                             new ShaderDescriptorDef(RendererSettings.FragmentSamplerSet, [0],
                                 ShaderDescriptorUsage.Sampler, ShaderType.Fragment)
                         ],
-                        "testeffect.frag")));
+                        "testeffect.frag")));*/
+            
+            /*PipelineManager.LoadPipeline(new TestComputePipeline("ComputeTest")
+            {
+                settings = new PipelineSettings()
+                {
+                    type = PipelineType.Compute,
+                },
+                layer = -1
+            }, [
+                ShaderManager.RetrieveShader(
+                    new ShaderSettings(
+                        ShaderType.Compute,
+                        [
+                            new ShaderDescriptorDef(RendererSettings.ComputeImageStorageSet, [0],
+                                ShaderDescriptorUsage.ImageStorage, ShaderType.Compute),
+                            new ShaderDescriptorDef(RendererSettings.ComputeUniformSet, [0],
+                                ShaderDescriptorUsage.Uniform, ShaderType.Compute)
+                        ],
+                        "testCompute.comp")),
+            ]);*/
         }
 
         public static void Update(float dt)

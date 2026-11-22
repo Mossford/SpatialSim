@@ -78,8 +78,8 @@ namespace SpatialSim.Engine.Audio
             {
                 for (int g = 0; g < samples.Length; g++)
                 {
-                    float runTime = 0.3f;
-                    float hangTime = 0.1f;
+                    float runTime = 1f;
+                    float hangTime = 0.0001f;
                     if(accumulator > 0 && accumulator < runTime)
                         samples[g] = AudioFunctions.TriangleWave(phase);
                     else if (accumulator > runTime && accumulator < runTime + hangTime)
@@ -87,7 +87,7 @@ namespace SpatialSim.Engine.Audio
                     else if (accumulator > hangTime)
                         accumulator = 0;
 
-                    samples[g] *= MathF.Exp(-accumulator * 10);
+                    samples[g] *= MathF.Exp(-accumulator);
                     
                     //clamp between 1 and -1 to stop clipping and to represent the actual audio wave
                     samples[g] = Math.Clamp(samples[g], -1f, 1f);

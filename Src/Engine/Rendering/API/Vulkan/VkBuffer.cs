@@ -278,8 +278,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
 
             // TODO Check if this should be in the graphics queue
-            AppState.appContext.GetContext<VkContext>().vk.QueueSubmit(VkDevices.graphicsQueue, 1, in submitInfo, default);
-            AppState.appContext.GetContext<VkContext>().vk.QueueWaitIdle(VkDevices.graphicsQueue);
+            AppState.appContext.GetContext<VkContext>().vk.QueueSubmit(VkDevices.graphicsComputeQueue, 1, in submitInfo, default);
+            AppState.appContext.GetContext<VkContext>().vk.QueueWaitIdle(VkDevices.graphicsComputeQueue);
 
             commandBuffer.Clean();
         }

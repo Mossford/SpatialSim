@@ -68,7 +68,14 @@ namespace SpatialSim.Engine.Rendering
             Debug.LogDebug($"Loading model {modelFile}");
             if (scene->MNumMeshes > 1)
             {
-                Debug.Warning("Loaded model with more than one mesh, loading first, skipping rest");
+                Debug.Warning($"Loaded model {modelFile} with more than one mesh, loading first, skipping rest");
+            }
+
+            if (scene->MNumMeshes <= 0)
+            {
+                Debug.Warning($"Loaded model {modelFile} has no mesh, skipping loading of mesh");
+                assimp.ReleaseImport(scene);
+                return meshData;
             }
 
             LoadSubMesh(scene->MMeshes[0], ref meshData);

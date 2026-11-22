@@ -8,7 +8,7 @@ namespace SpatialSim.Engine.Rendering
     public class Pipeline : IDisposable
     {
         public IPipelineDevice? pipeline;
-        public List<string> shaders;
+        public List<string> shaderNames;
         
         public string name;
         public PipelineSettings settings;
@@ -22,14 +22,18 @@ namespace SpatialSim.Engine.Rendering
             layer = 0;
         }
         
-        public void Create(in Shader vertex, in Shader fragment)
+        public void Create(in Shader[] shaders)
         {
-            shaders = new List<string>();
-            pipeline = AppState.appContext.DeviceFactory.CreatePipelineDevice(vertex, fragment, settings);
-            shaders.Add(vertex.settings.file);
-            shaders.Add(fragment.settings.file);
+            shaderNames = new List<string>();
+            pipeline = AppState.appContext.DeviceFactory.CreatePipelineDevice(shaders, settings);
+            string names = "";
+            for (int i = 0; i < shaders.Length; i++)
+            {
+                shaderNames.Add(shaders[i].settings.file);
+                names += shaders[i].settings.file + ", ";
+            }
             Ticks.pipelineCount.created++;
-            Debug.LogDebug($"Created pipeline with {vertex.settings.file} and {fragment.settings.file}");
+            Debug.LogDebug($"Created pipeline with {names}");
         }
 
         public void Recreate()
@@ -41,12 +45,17 @@ namespace SpatialSim.Engine.Rendering
             }
             
             Clean();
-            
-            Create(ShaderManager.RetrieveShader(shaders[0]), ShaderManager.RetrieveShader(shaders[1]));
+
+            Shader[] shaders = new Shader[shaderNames.Count];
+            for (int i = 0; i < shaders.Length; i++)
+            {
+                shaders[i] = ShaderManager.RetrieveShader(shaderNames[i]);
+            }
+            Create(shaders);
         }
 
         // TODO maybe move this into separate functions for vertex and fragment
-        public virtual void SetDrawData(in CommandBuffer commandBuffer, in MeshRenderer meshRenderer, int uniformBinding)
+        public virtual void SetData(in CommandBuffer commandBuffer, in MeshRenderer meshRenderer, int uniformBinding)
         {
             
         }
@@ -54,20 +63,21 @@ namespace SpatialSim.Engine.Rendering
         /// <summary>
         /// Function that does not provide any mesh renderer but allows for custom overrides for stuff outside the ecs
         /// </summary>
-        public virtual void SetDrawData(in CommandBuffer commandBuffer, int uniformBinding)
+        public virtual void SetData(in CommandBuffer commandBuffer, int uniformBinding)
         {
             
         }
 
         public void UpdateUniforms(in Shader shader, int binding)
         {
-            // TODO this is running two times maybe change?
-            int set = RendererSettings.VertexUniformSet;
-            if (shader.settings.type == ShaderType.Fragment)
+            int set = shader.settings.type switch
             {
-                set = RendererSettings.FragmentUniformSet;
-            }
-            
+                ShaderType.Fragment => RendererSettings.FragmentUniformSet,
+                ShaderType.Vertex => RendererSettings.VertexUniformSet,
+                ShaderType.Compute => RendererSettings.ComputeUniformSet,
+                _ => RendererSettings.VertexUniformSet
+            };
+
             ShaderDescriptorDef def = new ShaderDescriptorDef(set, [binding], ShaderDescriptorUsage.Uniform, shader.settings.type);
             pipeline?.UpdateUniforms(shader, binding);
             shader.uniformData[def].Clear();

@@ -19,11 +19,12 @@ namespace SpatialSim.Engine.Rendering
         public void BindPipeLine(Pipeline pipeline);
         public void SetViewport(Vector2 size);
         public void SetScissor(Vector2 size);
-        public void BindVertexUniforms(Pipeline pipeline, int binding);
-        public void BindFragmentUniforms(Pipeline pipeline, int binding);
+        public void BindUniforms(Pipeline pipeline, int binding, ShaderType shaderType);
         public void BindSamplers(Pipeline pipeline, Texture[] textures, int[] bindings, ShaderType shaderType);
+        public void BindImageStorage(Pipeline pipeline, Texture texture, int binding, ShaderType shaderType);
         public void BindBufferStorage<T>(Pipeline pipeline, Buffer<T>[] buffers, int[] bindings, ShaderType shaderType) where T : unmanaged;
         public void Draw(int indexCount);
+        public void DispatchCompute(int sizeX, int sizeY, int sizeZ);
         public void ResetPipeLine(Pipeline pipeline);
     }
 }

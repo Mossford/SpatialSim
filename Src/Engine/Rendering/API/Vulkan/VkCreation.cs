@@ -95,7 +95,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.GetContext<VkContext>().imGuiController = new VkImGuiController(
                 AppState.appContext.GetContext<VkContext>().vk,
                 VkDevices.physicalDevice,
-                VkDevices.graphicsFamilyIndex,
+                VkDevices.graphicsComputeFamilyIndex,
                 VkSwapChain.swapChainImages.Length,
                 VkTexture.ConvertToVkFormat(TextureFormat.R8G8B8A8Unorm),
                 VkDepthBuffer.FindDepthFormat()

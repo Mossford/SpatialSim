@@ -99,7 +99,7 @@ namespace SpatialSim.Engine.Rendering
             Pipeline pipeline = PipelineManager.RetrievePipeline(pipelineRef);
             commandBuffer.BindVertexBuffers(meshRef.vertexBuffer.buffer!);
             commandBuffer.BindIndexBuffers(meshRef.indexBuffer.buffer!);
-            pipeline.SetDrawData(commandBuffer, this, 0);
+            pipeline.SetData(commandBuffer, this, 0);
             commandBuffer.Draw(meshRef.meshData.indices.Length);
         }
 

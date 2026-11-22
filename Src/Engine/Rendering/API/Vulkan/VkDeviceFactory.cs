@@ -1,5 +1,7 @@
 
 
+using SpatialSim.Engine.Core;
+
 namespace SpatialSim.Engine.Rendering.Vulkan
 {
     public class VkDeviceFactory : IDeviceFactory
@@ -11,10 +13,32 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             return shader;
         }
 
-        public IPipelineDevice CreatePipelineDevice(in Shader vertex, in Shader fragment, in PipelineSettings settings)
+        public IPipelineDevice CreatePipelineDevice(in Shader[] shaders, in PipelineSettings settings)
         {
             VkPipeline pipeline = new VkPipeline();
-            pipeline.Create(vertex, fragment, settings);
+            switch (settings.type)
+            {
+                case PipelineType.Raster:
+                {
+                    if (shaders.Length != 2)
+                    {
+                        Debug.Error($"Tried to create {settings.type} pipeline with insufficient amount of shaders {shaders.Length}, returning empty pipeline");
+                        return pipeline;
+                    }
+                    pipeline.CreateRaster(shaders[0], shaders[1], settings);
+                    break;
+                }
+                case PipelineType.Compute:
+                {
+                    if (shaders.Length != 1)
+                    {
+                        Debug.Error($"Tried to create {settings.type} pipeline with insufficient amount of shaders {shaders.Length}, returning empty pipeline");
+                        return pipeline;
+                    }
+                    pipeline.CreateCompute(shaders[0], settings);
+                    break;
+                }
+            }
             return pipeline;
         }
 

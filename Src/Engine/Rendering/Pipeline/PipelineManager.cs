@@ -21,7 +21,7 @@ namespace SpatialSim.Engine.Rendering
             });
             pipelineToIndex.Add(DefaultPipelines.BaseNormalMap, pipelines.Count - 1);
             pipelines[^1].id = pipelines.Count - 1;
-            pipelines[^1].Create(ShaderManager.RetrieveShader(
+            pipelines[^1].Create([ShaderManager.RetrieveShader(
                     new ShaderSettings(
                         ShaderType.Vertex,
                         [
@@ -37,7 +37,7 @@ namespace SpatialSim.Engine.Rendering
                             new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, [0],
                                 ShaderDescriptorUsage.Uniform, ShaderType.Fragment)
                         ],
-                        "basenormalmap.frag")));
+                        "basenormalmap.frag"))]);
             
             pipelines.Add(new ColorMapPipeline() {
                 settings = new PipelineSettings()
@@ -49,7 +49,7 @@ namespace SpatialSim.Engine.Rendering
             });
             pipelineToIndex.Add(DefaultPipelines.BaseColor, pipelines.Count - 1);
             pipelines[^1].id = pipelines.Count - 1;
-            pipelines[^1].Create(ShaderManager.RetrieveShader(
+            pipelines[^1].Create([ShaderManager.RetrieveShader(
                     new ShaderSettings(
                         ShaderType.Vertex,
                         [
@@ -65,7 +65,7 @@ namespace SpatialSim.Engine.Rendering
                             new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, [0],
                                 ShaderDescriptorUsage.Uniform, ShaderType.Fragment)
                         ],
-                        "basecolormap.frag")));
+                        "basecolormap.frag"))]);
             
             pipelines.Add(new ColorMapPipeline2D() {
                 settings = new PipelineSettings()
@@ -77,7 +77,7 @@ namespace SpatialSim.Engine.Rendering
             });
             pipelineToIndex.Add(DefaultPipelines.BaseColor2D, pipelines.Count - 1);
             pipelines[^1].id = pipelines.Count - 1;
-            pipelines[^1].Create(ShaderManager.RetrieveShader(
+            pipelines[^1].Create([ShaderManager.RetrieveShader(
                     new ShaderSettings(
                         ShaderType.Vertex,
                         [
@@ -93,7 +93,7 @@ namespace SpatialSim.Engine.Rendering
                             new ShaderDescriptorDef(RendererSettings.FragmentUniformSet, [0],
                                 ShaderDescriptorUsage.Uniform, ShaderType.Fragment)
                         ],
-                        "basecolormap2D.frag")));
+                        "basecolormap2D.frag"))]);
             
             Debug.LogInfo("Successful pipeline manager creation");
         }
@@ -105,19 +105,12 @@ namespace SpatialSim.Engine.Rendering
 
         public static bool LoadPipeline(Pipeline pipeline, Shader[] shaders)
         {
-            //TODO remove this check
-            if (shaders.Length != 2)
-            {
-                Debug.Error("Tried to load pipeline at an incorrect amount of shaders");
-                return false;
-            }
-            
             if (pipelineToIndex.TryAdd(pipeline.name, pipelines.Count))
             {
                 pipelines.Add(pipeline);
                 pipelines[^1].id = pipelines.Count - 1;
                 //TODO make the pipeline accept an array of shaders and a usage and infer what to then do
-                pipelines[^1].Create(shaders[0], shaders[1]);
+                pipelines[^1].Create(shaders);
                 return true;
             }
 

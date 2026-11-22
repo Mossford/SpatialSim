@@ -9,7 +9,7 @@ namespace SpatialSim.Engine.Rendering
             
         }
         
-        public override void SetDrawData(in CommandBuffer commandBuffer, in MeshRenderer meshRenderer, int uniformBinding)
+        public override void SetData(in CommandBuffer commandBuffer, in MeshRenderer meshRenderer, int uniformBinding)
         {
             //we can have a empty camera ref so check for it
             if(meshRenderer.camera.id == -1)
@@ -17,13 +17,13 @@ namespace SpatialSim.Engine.Rendering
             
             //default pipeline has default behavior
             
-            Shader vertexShader = ShaderManager.RetrieveShader(shaders[0]);
+            Shader vertexShader = ShaderManager.RetrieveShader(shaderNames[0]);
             vertexShader.AddData(uniformBinding, meshRenderer.cameraRef.view);
             vertexShader.AddData(uniformBinding, meshRenderer.cameraRef.proj);
             vertexShader.AddData(uniformBinding, meshRenderer.transformRef.GetModelMat());
             UpdateUniforms(vertexShader, uniformBinding);
-            commandBuffer.BindVertexUniforms(this, uniformBinding);
-            Shader fragmentShader = ShaderManager.RetrieveShader(shaders[1]);
+            commandBuffer.BindUniforms(this, uniformBinding, ShaderType.Vertex);
+            Shader fragmentShader = ShaderManager.RetrieveShader(shaderNames[1]);
             fragmentShader.AddData(uniformBinding, meshRenderer.materialRef.diffuse, true);
             fragmentShader.AddData(uniformBinding, meshRenderer.materialRef.ambient, true);
             fragmentShader.AddData(uniformBinding, new Vector4(meshRenderer.materialRef.specular, meshRenderer.materialRef.specularExp));
@@ -32,7 +32,7 @@ namespace SpatialSim.Engine.Rendering
             fragmentShader.AddData(uniformBinding, (uint)colorTextureIndex);
             fragmentShader.AddData(uniformBinding, new Vector3(2, 0.5f, -1), true);
             UpdateUniforms(fragmentShader, uniformBinding);
-            commandBuffer.BindFragmentUniforms(this, uniformBinding);
+            commandBuffer.BindUniforms(this, uniformBinding, ShaderType.Fragment);
             commandBuffer.BindSamplers(
                 this,
                 [TextureManager.RetrieveTexture(colorTextureIndex)],

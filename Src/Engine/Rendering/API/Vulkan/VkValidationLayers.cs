@@ -32,7 +32,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             createInfo.SType = StructureType.DebugUtilsMessengerCreateInfoExt;
             createInfo.MessageSeverity = DebugUtilsMessageSeverityFlagsEXT.VerboseBitExt |
                                          DebugUtilsMessageSeverityFlagsEXT.WarningBitExt |
-                                         DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt;
+                                         DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt | 
+                                         DebugUtilsMessageSeverityFlagsEXT.InfoBitExt;
             createInfo.MessageType = DebugUtilsMessageTypeFlagsEXT.GeneralBitExt |
                                      DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt |
                                      DebugUtilsMessageTypeFlagsEXT.ValidationBitExt;

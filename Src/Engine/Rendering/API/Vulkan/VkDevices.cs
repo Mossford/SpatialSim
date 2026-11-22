@@ -15,8 +15,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static PhysicalDevice physicalDevice;
         public static Device device;
         //meant for graphics commands
-        public static Queue graphicsQueue;
-        public static uint graphicsFamilyIndex;
+        public static Queue graphicsComputeQueue;
+        public static uint graphicsComputeFamilyIndex;
         public static PhysicalDeviceProperties properties;
         public static PhysicalDeviceProperties2 properties2;
 
@@ -25,12 +25,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         
         public struct QueueFamilyIndices
         {
-            public uint? GraphicsFamily { get; set; }
+            public uint? GraphicsComputeFamily { get; set; }
             public uint? PresentFamily { get; set; }
 
             public bool IsComplete()
             {
-                return GraphicsFamily.HasValue && PresentFamily.HasValue;
+                return GraphicsComputeFamily.HasValue && PresentFamily.HasValue;
             }
         }
         
@@ -81,12 +81,12 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             uint[] uniqueQueueFamilies = new[]
             {
-                indices.GraphicsFamily!.Value, 
+                indices.GraphicsComputeFamily!.Value, 
                 indices.PresentFamily!.Value
             };
             
             uniqueQueueFamilies = uniqueQueueFamilies.Distinct().ToArray();
-            graphicsFamilyIndex = indices.GraphicsFamily.Value;
+            graphicsComputeFamilyIndex = indices.GraphicsComputeFamily.Value;
 
             using GlobalMemory? mem = GlobalMemory.Allocate(uniqueQueueFamilies.Length * sizeof(DeviceQueueCreateInfo));
             DeviceQueueCreateInfo* queueCreateInfos = (DeviceQueueCreateInfo*)Unsafe.AsPointer(ref mem.GetPinnableReference());
@@ -105,9 +105,17 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             DeviceCreateInfo createInfo;
             
-            PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures = new ()
+            
+            PhysicalDeviceVulkan13Features features13 = new ()
             {
-                SType = StructureType.PhysicalDeviceDescriptorIndexingFeatures,
+                SType = StructureType.PhysicalDeviceVulkan13Features,
+                DynamicRendering = true,
+            };
+
+            PhysicalDeviceVulkan12Features features12 = new()
+            {
+                SType = StructureType.PhysicalDeviceVulkan12Features,
+                ShaderSampledImageArrayNonUniformIndexing = true,
                 RuntimeDescriptorArray = true,
                 DescriptorBindingPartiallyBound = true,
                 DescriptorBindingVariableDescriptorCount = true,
@@ -118,13 +126,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 DescriptorBindingUniformBufferUpdateAfterBind = true,
                 DescriptorBindingUniformTexelBufferUpdateAfterBind = true,
                 DescriptorBindingUpdateUnusedWhilePending = true,
-            };
-            
-            PhysicalDeviceVulkan13Features features = new PhysicalDeviceVulkan13Features()
-            {
-                SType = StructureType.PhysicalDeviceVulkan13Features,
-                DynamicRendering = true,
-                PNext = &descriptorIndexingFeatures
+                PNext = &features13
             };
 
             fixed (PhysicalDeviceFeatures* deviceFeatures = &VkSettings.physicalDeviceFeatures)
@@ -136,7 +138,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     PQueueCreateInfos = queueCreateInfos,
 
                     PEnabledFeatures = deviceFeatures,
-                    PNext = &features,
+                    PNext = &features12,
 
                     EnabledExtensionCount = (uint)VkSettings.deviceExtensions.Length,
                     PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(VkSettings.deviceExtensions),
@@ -151,7 +153,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 throw new Exception($"Failed to create logical device {result}");
             }
 
-            AppState.appContext.GetContext<VkContext>().vk.GetDeviceQueue(device, indices.GraphicsFamily!.Value, 0, out graphicsQueue);
+            AppState.appContext.GetContext<VkContext>().vk.GetDeviceQueue(device, indices.GraphicsComputeFamily!.Value, 0, out graphicsComputeQueue);
             AppState.appContext.GetContext<VkContext>().vk.GetDeviceQueue(device, indices.PresentFamily!.Value, 0, out VkSurface.presentQueue);
             
 
@@ -302,9 +304,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             
             for (uint i = 0; i < queueFamilies.Length; i++)
             {
-                if (queueFamilies[i].QueueFlags.HasFlag(QueueFlags.GraphicsBit))
+                if (queueFamilies[i].QueueFlags.HasFlag(QueueFlags.GraphicsBit) && queueFamilies[i].QueueFlags.HasFlag(QueueFlags.ComputeBit))
                 {
-                    indices.GraphicsFamily = i;
+                    indices.GraphicsComputeFamily = i;
                 }
 
                 VkSurface.khrSurface.GetPhysicalDeviceSurfaceSupport(device, i, VkSurface.surface, out Bool32 presentSupport);

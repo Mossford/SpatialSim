@@ -9,9 +9,9 @@ namespace SpatialSim.Game.Rendering.StarRendering
             this.name = name;
         }
 
-        public override void SetDrawData(in CommandBuffer commandBuffer, int uniformBinding)
+        public override void SetData(in CommandBuffer commandBuffer, int uniformBinding)
         {
-            base.SetDrawData(in commandBuffer, uniformBinding);
+            base.SetData(in commandBuffer, uniformBinding);
         }
     }
 }

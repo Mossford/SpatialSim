@@ -49,6 +49,11 @@ namespace SpatialSim.Engine.Rendering
                     uniformDef.set = RendererSettings.FragmentUniformSet;
                     break;
                 }
+                case ShaderType.Compute:
+                {
+                    uniformDef.set = RendererSettings.ComputeUniformSet;
+                    break;
+                }
             }
             
             if (!File.Exists(Resources.ShaderPath + settings.file))
@@ -56,10 +61,17 @@ namespace SpatialSim.Engine.Rendering
                 Debug.Error("Could not find shader " + settings.file);
                 return;
             }
-            
-            shader = AppState.appContext.DeviceFactory.CreateShaderDevice(settings, GLSLToSpirv(settings.type));
+
+            PreprocessShader();
+            byte[] code = GLSLToSpirv(settings.type);
+            shader = AppState.appContext.DeviceFactory.CreateShaderDevice(settings, code);
             
             Debug.LogDebug($"Created shader from {settings.file}");
+        }
+
+        void PreprocessShader()
+        {
+            
         }
 
         public void Clean()

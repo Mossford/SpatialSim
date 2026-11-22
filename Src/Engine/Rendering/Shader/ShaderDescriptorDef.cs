@@ -4,7 +4,8 @@ namespace SpatialSim.Engine.Rendering
     {
         Uniform,
         Sampler,
-        Storage
+        Storage,
+        ImageStorage
     }
     
     public struct ShaderDescriptorDef : IEquatable<ShaderDescriptorDef>

@@ -100,6 +100,16 @@ namespace SpatialSim.Engine.Core.Vulkan
             drawCmdBuf = VkSwapChain.commandBuffers[imageIndex];
             VkSwapChain.commandBuffers[imageIndex].Begin();
             
+            for (int i = 0; i < PipelineManager.pipelines.Count; i++)
+            {
+                if (PipelineManager.pipelines[i].settings.type == PipelineType.Compute)
+                {
+                    drawCmdBuf.BindPipeLine(PipelineManager.pipelines[i]);
+                    PipelineManager.pipelines[i].SetData(drawCmdBuf, 0);
+                    drawCmdBuf.DispatchCompute(8, 8, 1);
+                }
+            }
+            
             VkDepthBuffer.texture.TransitionImageLayout(
                 drawCmdBuf,
                 ImageLayout.DepthStencilAttachmentOptimal,
@@ -275,7 +285,7 @@ namespace SpatialSim.Engine.Core.Vulkan
             }
 
             vk.ResetFences(VkDevices.device, 1, in VkSwapChain.inFlightFences[VkSwapChain.currentFrame]);
-            Result result = vk.QueueSubmit(VkDevices.graphicsQueue, 1, in submitInfo,
+            Result result = vk.QueueSubmit(VkDevices.graphicsComputeQueue, 1, in submitInfo,
                 VkSwapChain.inFlightFences[VkSwapChain.currentFrame]);
             if (result != Result.Success)
             {

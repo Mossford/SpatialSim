@@ -33,6 +33,12 @@ namespace SpatialSim.Engine.Core
             {
                 MeshRenderer renderer = (MeshRenderer)EcsManager.componentPools[EcsComponentType.MeshRenderer.GetId()].components.Get(i);
                 Pipeline pipeline = PipelineManager.RetrievePipeline(renderer.pipelineRef);
+                //This should not happen but it could, if a mesh renderer is assigned a pipeline that is not a raster
+                if (pipeline.settings.type != PipelineType.Raster)
+                {
+                    Debug.Error($"A meshRenderer was assigned a {pipeline.settings.type} pipeline, should be a raster pipeline to work");
+                    continue;
+                }
                 int pipelineLayer = pipeline.layer;
                 if (renderOrder.TryAdd(pipelineLayer, new SortedList<int, List<int>>()))
                 {

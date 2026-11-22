@@ -126,7 +126,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             CommandPoolCreateInfo poolInfo = new()
             {
                 SType = StructureType.CommandPoolCreateInfo,
-                QueueFamilyIndex = queueFamiliyIndicies.GraphicsFamily!.Value,
+                QueueFamilyIndex = queueFamiliyIndicies.GraphicsComputeFamily!.Value,
                 Flags = CommandPoolCreateFlags.ResetCommandBufferBit
             };
 
@@ -196,8 +196,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     PCommandBuffers = cmdPtr,
                 };
                 
-                AppState.appContext.GetContext<VkContext>().vk.QueueSubmit(VkDevices.graphicsQueue, 1, in submitInfo, default);
-                AppState.appContext.GetContext<VkContext>().vk.QueueWaitIdle(VkDevices.graphicsQueue);
+                AppState.appContext.GetContext<VkContext>().vk.QueueSubmit(VkDevices.graphicsComputeQueue, 1, in submitInfo, default);
+                AppState.appContext.GetContext<VkContext>().vk.QueueWaitIdle(VkDevices.graphicsComputeQueue);
 
                 AppState.appContext.GetContext<VkContext>().vk.FreeCommandBuffers(VkDevices.device, commandPool, 1, in commandBuffer);
             }
@@ -331,7 +331,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         {
             AppState.appContext.GetContext<VkContext>().vk.CmdBindPipeline(
                 commandBuffer, 
-                PipelineBindPoint.Graphics, 
+                pipeline.settings.type switch
+                {
+                    PipelineType.Compute => PipelineBindPoint.Compute,
+                    _ => PipelineBindPoint.Graphics
+                }, 
                 ((VkPipeline)pipeline.pipeline!).pipeline);
         }
 
@@ -367,15 +371,28 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             AppState.appContext.GetContext<VkContext>().vk.CmdSetScissor(commandBuffer, 0, [scissor]);
         }
 
-        public unsafe void BindVertexUniforms(Pipeline pipeline, int binding)
+        public unsafe void BindUniforms(Pipeline pipeline, int binding, ShaderType shaderType)
         {
             VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
 
+            PipelineBindPoint point = shaderType switch
+            {
+                ShaderType.Compute => PipelineBindPoint.Compute,
+                _ => PipelineBindPoint.Graphics
+            };
+
+            int setPoint = shaderType switch
+            {
+                ShaderType.Vertex => RendererSettings.VertexUniformSet,
+                ShaderType.Compute => RendererSettings.ComputeUniformSet,
+                _ => RendererSettings.FragmentUniformSet
+            };
+            
             ShaderDescriptorDef def = new ShaderDescriptorDef(
-                RendererSettings.VertexUniformSet, 
+                setPoint, 
                 [binding], 
                 ShaderDescriptorUsage.Uniform, 
-                ShaderType.Vertex);
+                shaderType);
             DescriptorSet set = vkPipeLine.uniformManager.GetDescriptorSet(def);
             //data will be 0 so we just grab the current buffer
             uint dynamicOffset = ((VkBuffer<byte>)vkPipeLine.uniformManager.GetBuffer(def).buffer!).drawOffset;
@@ -383,33 +400,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             //bind only the descriptor set with the one buffer attached vulkan will auto increment
             AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
                 commandBuffer,
-                PipelineBindPoint.Graphics,
+                point,
                 vkPipeLine.pipelineLayout,
-                RendererSettings.VertexUniformSet,
-                1,
-                &set,
-                1,
-                in dynamicOffset);
-        }
-        
-        public unsafe void BindFragmentUniforms(Pipeline pipeline, int binding)
-        {
-            VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
-            
-            ShaderDescriptorDef def = new ShaderDescriptorDef(
-                RendererSettings.FragmentUniformSet, 
-                [binding], 
-                ShaderDescriptorUsage.Uniform, 
-                ShaderType.Fragment);
-            DescriptorSet set = vkPipeLine.uniformManager.GetDescriptorSet(def);
-            uint dynamicOffset = ((VkBuffer<byte>)vkPipeLine.uniformManager.GetBuffer(def).buffer!).drawOffset;
-
-            //bind only the descriptor set with the one buffer attached vulkan will auto increment
-            AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
-                commandBuffer,
-                PipelineBindPoint.Graphics,
-                vkPipeLine.pipelineLayout,
-                RendererSettings.FragmentUniformSet,
+                (uint)setPoint,
                 1,
                 &set,
                 1,
@@ -420,37 +413,93 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         {
             VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
             
+            PipelineBindPoint point = shaderType switch
+            {
+                ShaderType.Compute => PipelineBindPoint.Compute,
+                _ => PipelineBindPoint.Graphics
+            };
+
+            int setPoint = shaderType switch
+            {
+                ShaderType.Vertex => throw new NotImplementedException("Vertex does not have buffer sampler number yet"),
+                ShaderType.Compute => RendererSettings.ComputeSamplerSet,
+                _ => RendererSettings.FragmentSamplerSet
+            };
+            
             for (int i = 0; i < textures.Length; i++)
             {
-                // TODO this binds to the fragment sampler set which should change based on the shader type
-
-                ShaderDescriptorDef def = new (RendererSettings.FragmentSamplerSet, bindings, ShaderDescriptorUsage.Sampler, shaderType);
+                ShaderDescriptorDef def = new (setPoint, bindings, ShaderDescriptorUsage.Sampler, shaderType);
                 
                 VkTexture texture = ((VkTexture)textures[i].texture!);
                 VkDescriptor set = vkPipeLine.GetDescriptor(def);
-                texture.SetTextureToDescriptorSet(set, bindings[i]);
+                texture.SetTextureToDescriptorSet(set, bindings[i], DescriptorType.CombinedImageSampler, ImageLayout.ShaderReadOnlyOptimal);
                 
                 AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
                     commandBuffer,
-                    PipelineBindPoint.Graphics,
+                    point,
                     vkPipeLine.pipelineLayout,
-                    RendererSettings.FragmentSamplerSet,
+                    (uint)setPoint,
                     1,
                     ref set.descriptorSet,
                     0,
                     null);
             }
         }
+
+        public unsafe void BindImageStorage(Pipeline pipeline, Texture texture, int binding, ShaderType shaderType)
+        {
+            VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
+            
+            PipelineBindPoint point = shaderType switch
+            {
+                ShaderType.Compute => PipelineBindPoint.Compute,
+                _ => PipelineBindPoint.Graphics
+            };
+
+            int setPoint = shaderType switch
+            {
+                ShaderType.Vertex => throw new NotImplementedException("Vertex does not have image storage number yet"),
+                ShaderType.Fragment => throw new NotImplementedException("Fragment does not have image storage number yet"),
+                _ => RendererSettings.ComputeImageStorageSet
+            };
+            
+            ShaderDescriptorDef def = new (setPoint, [binding], ShaderDescriptorUsage.ImageStorage, shaderType);
+                
+            VkTexture VKtexture = ((VkTexture)texture.texture!);
+            VkDescriptor set = vkPipeLine.GetDescriptor(def);
+            VKtexture.SetTextureToDescriptorSet(set, binding, DescriptorType.StorageImage, ImageLayout.General);
+                
+            AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
+                commandBuffer,
+                point,
+                vkPipeLine.pipelineLayout,
+                (uint)setPoint,
+                1,
+                ref set.descriptorSet,
+                0,
+                null);
+        }
         
         public unsafe void BindBufferStorage<T>(Pipeline pipeline, Buffer<T>[] buffers, int[] bindings, ShaderType shaderType) where T : unmanaged
         {
             VkPipeline vkPipeLine = ((VkPipeline)pipeline.pipeline!);
+
+            PipelineBindPoint point = shaderType switch
+            {
+                ShaderType.Compute => PipelineBindPoint.Compute,
+                _ => PipelineBindPoint.Graphics
+            };
+
+            int setPoint = shaderType switch
+            {
+                ShaderType.Vertex => throw new NotImplementedException("Vertex does not have buffer storage number yet"),
+                ShaderType.Compute => RendererSettings.ComputeStorageSet,
+                _ => RendererSettings.FragmentStorageSet
+            };
             
             for (int i = 0; i < buffers.Length; i++)
             {
-                // TODO this binds to the fragment sampler set which should change based on the shader type
-
-                ShaderDescriptorDef def = new (RendererSettings.FragmentStorageSet, bindings, ShaderDescriptorUsage.Storage, shaderType);
+                ShaderDescriptorDef def = new (setPoint, bindings, ShaderDescriptorUsage.Storage, shaderType);
                 
                 VkBuffer<T> buffer = ((VkBuffer<T>)buffers[i].buffer!);
                 VkDescriptor set = vkPipeLine.GetDescriptor(def);
@@ -458,10 +507,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 
                 AppState.appContext.GetContext<VkContext>().vk.CmdBindDescriptorSets(
                     commandBuffer,
-                    PipelineBindPoint.Graphics,
+                    point,
                     vkPipeLine.pipelineLayout,
-                    //TODO check on shader type for this
-                    RendererSettings.FragmentStorageSet,
+                    (uint)setPoint,
                     1,
                     ref set.descriptorSet,
                     0,
@@ -481,6 +529,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public void Draw(int indexCount)
         {
             AppState.appContext.GetContext<VkContext>().vk.CmdDrawIndexed(commandBuffer, (uint)indexCount, 1, 0, 0, 0);
+        }
+
+        public void DispatchCompute(int sizeX, int sizeY, int sizeZ)
+        {
+            AppState.appContext.GetContext<VkContext>().vk.CmdDispatch(commandBuffer, (uint)sizeX, (uint)sizeY, (uint)sizeZ);
         }
 
         public void EndRenderPass()

@@ -65,6 +65,56 @@ namespace SpatialSim.Engine.Rendering
 
             return true;
         }
+
+        public bool LoadTextureThr(string file, TextureFormat format)
+        {
+            //check if we can load the image
+            try
+            {
+                FileStream stream = File.Open(Resources.ImagePath + file, FileMode.Open);
+                stream.Close();
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+            
+            data = new TextureData();
+            if (!File.Exists(Resources.ImagePath + file))
+            {
+                if(file != "")
+                    Debug.Warning($"Loaded image with no found path at {file}, loading missing texture");
+                return false;
+            }
+            else
+            {
+                StbImage.stbi_set_flip_vertically_on_load(1);
+                try
+                {
+                    ImageResult result = ImageResult.FromMemory(File.ReadAllBytes(Resources.ImagePath + file), ColorComponents.RedGreenBlueAlpha);
+                    data.data = result.Data;
+                    data.info.width = (uint)result.Width;
+                    data.info.height = (uint)result.Height;
+                    data.info.depth = 1;
+                    data.info.format = format;
+                    data.info.usage = TextureUsage.Sampler;
+                    data.info.memoryUsage = TextureMemoryUsage.gpu;
+                }
+                catch (Exception e)
+                {
+                    Debug.Error($"Tried to load image with error, {e}");
+                    return false;
+                }
+            }
+
+            texture = AppState.appContext.DeviceFactory.CreateTextureDevice(data);
+            dataSize = (ulong)data.data.Length;
+            Interlocked.Add(ref Ticks.gpuMemoryAllocation.created, dataSize);
+            
+            Debug.LogDebug($"Loaded texture at {file}");
+
+            return true;
+        }
         
         public bool LoadTexture(in TextureData data)
         {

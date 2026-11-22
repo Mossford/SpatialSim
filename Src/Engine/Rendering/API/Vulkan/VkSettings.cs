@@ -57,7 +57,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public static readonly ValidationFeatureEnableEXT[] validationFeatures =
         {
             ValidationFeatureEnableEXT.BestPracticesExt,
-            ValidationFeatureEnableEXT.SynchronizationValidationExt
+            ValidationFeatureEnableEXT.SynchronizationValidationExt,
+            ValidationFeatureEnableEXT.DebugPrintfExt
         };
 
         #endregion

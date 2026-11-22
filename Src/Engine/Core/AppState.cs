@@ -14,7 +14,7 @@ namespace SpatialSim.Engine.Core
 
         #region Information
 
-        public const string Version = "0.15";
+        public const string Version = "0.16";
         public static string gpuDeviceName;
         public static string Api;
 

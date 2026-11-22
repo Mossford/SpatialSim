@@ -66,11 +66,11 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             VkDevices.QueueFamilyIndices indices = VkDevices.FindQueueFamilies(VkDevices.physicalDevice);
             uint* queueFamilyIndices = stackalloc[]
             {
-                indices.GraphicsFamily!.Value, 
+                indices.GraphicsComputeFamily!.Value, 
                 indices.PresentFamily!.Value
             };
 
-            if (indices.GraphicsFamily != indices.PresentFamily)
+            if (indices.GraphicsComputeFamily != indices.PresentFamily)
             {
                 createInfo = createInfo with
                 {

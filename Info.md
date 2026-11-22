@@ -16,13 +16,13 @@
 
 ## [DONE] Swap to SDL3 for windowing
 
-## Make texture loading threaded
+## [DONE] Make texture loading threaded
 
 ## Implement more texture methods
 
 ## Add unlit and lit shaders plus more types
 
-## Texture usage can be or together
+## [DONE] Texture usage can be or together
 
 ## Mouse stops camera movement when cursor reaches edge of screen
 ### Allow mouse delta to still be calculated even if mouse is stopped by edge of screen
@@ -33,3 +33,7 @@
 ### Make it index by the number it was added in?
 
 ## Maybe move uniform descriptor sets off the uniform manager into pipeline?
+
+## Run a preprocess on shaders to replace the set numbers so they are not hardcoded
+
+## Menu in imgui that displays all textures in the texture manager

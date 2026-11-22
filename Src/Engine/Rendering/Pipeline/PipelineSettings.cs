@@ -7,8 +7,15 @@ namespace SpatialSim.Engine.Rendering
         Line
     }
 
+    public enum PipelineType
+    {
+        Raster,
+        Compute
+    }
+
     public struct PipelineSettings
     {
+        public PipelineType type;
         public RasterizationMode rasterizationMode;
         /// <summary>
         /// Blends color with past pipeline drawn

@@ -59,26 +59,19 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public void Create(in TextureData data)
         {
             format = ConvertToVkFormat(data.info.format);
-
-            // TODO make it possible that there might be multiple usages attached?
+            
             usage = ImageUsageFlags.TransferDstBit | ImageUsageFlags.TransferSrcBit;
-            switch (data.info.usage)
+            if (data.info.usage.HasFlag(TextureUsage.Sampler))
             {
-                case TextureUsage.Sampler:
-                {
-                    usage |= ImageUsageFlags.SampledBit;
-                    break;
-                }
-                case TextureUsage.Storage:
-                {
-                    usage |= ImageUsageFlags.StorageBit;
-                    break;
-                }
-                case TextureUsage.ColorFramebuffer:
-                {
-                    usage |= ImageUsageFlags.ColorAttachmentBit;
-                    break;
-                }
+                usage |= ImageUsageFlags.SampledBit;
+            }
+            if (data.info.usage.HasFlag(TextureUsage.Storage))
+            {
+                usage |= ImageUsageFlags.StorageBit;
+            }
+            if (data.info.usage.HasFlag(TextureUsage.ColorFramebuffer))
+            {
+                usage |= ImageUsageFlags.ColorAttachmentBit;
             }
 
             MemoryPropertyFlags memUsage = data.info.memoryUsage switch
@@ -132,7 +125,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
 
             filter = ConvertToVkFilter(data.info.filter);
 
-            if (data.info.usage == TextureUsage.Sampler)
+            if (data.info.usage.HasFlag(TextureUsage.Sampler))
             {
                 CreateSampler();
             }
@@ -141,26 +134,19 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public void CreateImage(in TextureData data)
         {
             format = ConvertToVkFormat(data.info.format);
-
-            // TODO make it possible that there might be multiple usages attached?
+            
             usage = ImageUsageFlags.TransferDstBit | ImageUsageFlags.TransferSrcBit;
-            switch (data.info.usage)
+            if (data.info.usage.HasFlag(TextureUsage.Sampler))
             {
-                case TextureUsage.Sampler:
-                {
-                    usage |= ImageUsageFlags.SampledBit;
-                    break;
-                }
-                case TextureUsage.Storage:
-                {
-                    usage |= ImageUsageFlags.StorageBit;
-                    break;
-                }
-                case TextureUsage.ColorFramebuffer:
-                {
-                    usage |= ImageUsageFlags.ColorAttachmentBit;
-                    break;
-                }
+                usage |= ImageUsageFlags.SampledBit;
+            }
+            if (data.info.usage.HasFlag(TextureUsage.Storage))
+            {
+                usage |= ImageUsageFlags.StorageBit;
+            }
+            if (data.info.usage.HasFlag(TextureUsage.ColorFramebuffer))
+            {
+                usage |= ImageUsageFlags.ColorAttachmentBit;
             }
 
             MemoryPropertyFlags memUsage = data.info.memoryUsage switch
@@ -815,14 +801,14 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             }
         }
         
-        public unsafe void SetTextureToDescriptorSet(VkDescriptor descriptor, int binding)
+        public unsafe void SetTextureToDescriptorSet(VkDescriptor descriptor, int binding, DescriptorType type, ImageLayout layout)
         {
             if(!descriptorLookUp.TryAdd(descriptor.descriptorDef, true))
                 return;
 
             DescriptorImageInfo imageInfo = new()
             {
-                ImageLayout = ImageLayout.ShaderReadOnlyOptimal,
+                ImageLayout = layout,
                 ImageView = imageView,
                 Sampler = sampler
             };
@@ -834,7 +820,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 //SdlGpu has the binding as i and the array element as 0 look into why
                 DstBinding = 0,
                 DstArrayElement = (uint)binding,
-                DescriptorType = DescriptorType.CombinedImageSampler,
+                DescriptorType = type,
                 DescriptorCount = 1,
                 PImageInfo = &imageInfo
             };

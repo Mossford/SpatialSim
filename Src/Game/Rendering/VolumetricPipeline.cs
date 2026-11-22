@@ -12,9 +12,9 @@ namespace SpatialSim.Game.Rendering
             this.name = name;
         }
 
-        public override void SetDrawData(in CommandBuffer commandBuffer, in MeshRenderer meshRenderer, int uniformBinding)
+        public override void SetData(in CommandBuffer commandBuffer, in MeshRenderer meshRenderer, int uniformBinding)
         {
-            Shader fragmentShader = ShaderManager.RetrieveShader(shaders[1]);
+            Shader fragmentShader = ShaderManager.RetrieveShader(shaderNames[1]);
             fragmentShader.AddData(uniformBinding, meshRenderer.cameraRef.proj);
             fragmentShader.AddData(uniformBinding, meshRenderer.cameraRef.view);
             fragmentShader.AddData(uniformBinding, meshRenderer.cameraRef.transformRef.position);
@@ -28,7 +28,7 @@ namespace SpatialSim.Game.Rendering
             fragmentShader.AddData(uniformBinding, textureIndex);
             fragmentShader.AddData(uniformBinding, normalIndex, true);
             UpdateUniforms(fragmentShader, uniformBinding);
-            commandBuffer.BindFragmentUniforms(this, uniformBinding);
+            commandBuffer.BindUniforms(this, uniformBinding, ShaderType.Fragment);
             commandBuffer.BindSamplers(
                 this,
                 [TextureManager.RetrieveTexture(textureIndex),

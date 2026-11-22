@@ -24,7 +24,10 @@ namespace SpatialSim.Engine.Rendering
             return textureLocToIndex.ContainsKey(texture);
         }
 
-        public static bool LoadTexture(string texture, TextureFormat format)
+        /// <summary>
+        /// Loads a texture to the string given in a specific chosen format
+        /// </summary>
+        public static bool LoadTexture(string texture, TextureFormat format, bool threaded = false)
         {
             if (!File.Exists(Resources.ImagePath + texture) && texture.Length != 0)
             {
@@ -35,20 +38,57 @@ namespace SpatialSim.Engine.Rendering
             if (!textureLocToIndex.ContainsKey(texture))
             {
                 textures.Add(new Texture());
-                if (!textures[^1].LoadTexture(texture, format))
+                if (threaded)
                 {
-                    textures.RemoveAt(textures.Count - 1);
-                    return false;
+                    int index = textures.Count - 1;
+                
+                    //will be set to the missing texture while the texture loads, and the load texture function will set it back
+                    textureLocToIndex.Add(texture, 0);
+                    ThreadPool.QueueUserWorkItem(state => LoadTextureThr(texture, format, index));
                 }
-
-                textureLocToIndex.Add(texture, textures.Count - 1);
+                else
+                {
+                    textureLocToIndex.Add(texture, textures.Count - 1);
+                    if (!textures[^1].LoadTexture(texture, format))
+                    {
+                        textures.RemoveAt(textures.Count - 1);
+                        return false;
+                    }
+                }
+                
                 return true;
             }
 
             Debug.Warning($"Could not add texture {texture} possible duplicate");
             return false;
         }
+
+        static bool LoadTextureThr(string texture, TextureFormat format, int textureIndex)
+        {
+            bool loaded = textures[textureIndex].LoadTextureThr(texture, format);
+
+            if (!loaded)
+            {
+                lock (textures)
+                {
+                    textures.RemoveAt(textureIndex);
+                }
+                Debug.Warning($"Could not add texture {texture} possible duplicate");
+                return false;
+            }
+            
+            //reset back to the texture that was loaded
+            lock (textureLocToIndex)
+            {
+                textureLocToIndex[texture] = textureIndex;
+            }
+
+            return true;
+        }
         
+        /// <summary>
+        /// Adds a texture object to the texture manager under the textureRef name
+        /// </summary>
         public static bool LoadTexture(string textureRef, Texture texture)
         {
             if (!textureLocToIndex.ContainsKey(textureRef))

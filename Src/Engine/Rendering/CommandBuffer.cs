@@ -80,19 +80,19 @@ namespace SpatialSim.Engine.Rendering
             commandBuffer?.EndRendering();
         }
         
-        public void BindVertexUniforms(Pipeline pipeline, int binding)
+        public void BindUniforms(Pipeline pipeline, int binding, ShaderType shaderType)
         {
-            commandBuffer?.BindVertexUniforms(pipeline, binding);
-        }
-
-        public void BindFragmentUniforms(Pipeline pipeline, int binding)
-        {
-            commandBuffer?.BindFragmentUniforms(pipeline, binding);
+            commandBuffer?.BindUniforms(pipeline, binding, shaderType);
         }
 
         public void BindSamplers(Pipeline pipeline, Texture[] textures, int[] bindings, ShaderType shaderType)
         {
             commandBuffer?.BindSamplers(pipeline, textures, bindings, shaderType);
+        }
+
+        public void BindImageStorage(Pipeline pipeline, Texture texture, int binding, ShaderType shaderType)
+        {
+            commandBuffer?.BindImageStorage(pipeline, texture, binding, shaderType);
         }
 
         public void BindBufferStorage<T>(Pipeline pipeline, Buffer<T>[] buffers, int[] bindings, ShaderType shaderType) where T : unmanaged
@@ -116,6 +116,11 @@ namespace SpatialSim.Engine.Rendering
         public void Draw(int indexCount)
         {
             commandBuffer?.Draw(indexCount);
+        }
+
+        public void DispatchCompute(int sizeX, int sizeY, int sizeZ)
+        {
+            commandBuffer?.DispatchCompute(sizeX, sizeY, sizeZ);
         }
 
         public void ResetPipeLine(Pipeline pipeline)

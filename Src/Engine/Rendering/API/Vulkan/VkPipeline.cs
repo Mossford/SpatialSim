@@ -16,9 +16,9 @@ namespace SpatialSim.Engine.Rendering.Vulkan
         public Dictionary<ShaderDescriptorDef, DescriptorSetLayout> descriptorSetLayouts;
         public Dictionary<ShaderDescriptorDef, VkDescriptor> descriptorSets;
         
-        public unsafe void Create(in Shader vertex, in Shader fragment, in PipelineSettings settings)
+        public unsafe void CreateRaster(in Shader vertex, in Shader fragment, in PipelineSettings settings)
         {
-            CreateDescriptors(vertex, fragment);
+            CreateDescriptorsRaster(vertex, fragment);
             
             PipelineLayoutCreateInfo pipelineLayoutInfo;
             DescriptorSetLayout[] layouts = descriptorSetLayouts.Values.ToArray();
@@ -37,8 +37,8 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 .CreatePipelineLayout(VkDevices.device, in pipelineLayoutInfo, null, out pipelineLayout);
             if (result != Result.Success)
             {
-                Debug.Error($"Failed to create pipeline layout {result}");
-                throw new Exception($"Failed to create pipeline layout {result}");
+                Debug.Error($"Failed to create raster pipeline layout {result}");
+                throw new Exception($"Failed to create raster pipeline layout {result}");
             }
             
             PipelineShaderStageCreateInfo vertShaderStageInfo = new()
@@ -243,7 +243,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                 BasePipelineHandle = default,
             };
 
-             result = AppState.appContext.GetContext<VkContext>().vk
+            result = AppState.appContext.GetContext<VkContext>().vk
                 .CreateGraphicsPipelines(VkDevices.device, default, 1, in pipelineInfo, null, out pipeline);
             if (result != Result.Success)
             {
@@ -254,16 +254,68 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             SilkMarshal.Free((nint)vertShaderStageInfo.PName);
             SilkMarshal.Free((nint)fragShaderStageInfo.PName);
             
-            Debug.LogInfo("Successful pipeline creation");
+            Debug.LogInfo("Successful raster pipeline creation");
+        }
+
+        public unsafe void CreateCompute(in Shader compute, in PipelineSettings settings)
+        {
+            CreateDescriptorsCompute(compute);
+            
+            PipelineLayoutCreateInfo pipelineLayoutInfo;
+            DescriptorSetLayout[] layouts = descriptorSetLayouts.Values.ToArray();
+            fixed (DescriptorSetLayout* layoutPtr = layouts)
+            {
+                pipelineLayoutInfo = new()
+                {
+                    SType = StructureType.PipelineLayoutCreateInfo,
+                    SetLayoutCount = (uint)layouts.Length,
+                    PushConstantRangeCount = 0,
+                    PSetLayouts = layoutPtr
+                };
+            }
+
+            Result result = AppState.appContext.GetContext<VkContext>().vk
+                .CreatePipelineLayout(VkDevices.device, in pipelineLayoutInfo, null, out pipelineLayout);
+            if (result != Result.Success)
+            {
+                Debug.Error($"Failed to create raster pipeline layout {result}");
+                throw new Exception($"Failed to create raster pipeline layout {result}");
+            }
+
+            PipelineShaderStageCreateInfo stage = new()
+            {
+                SType = StructureType.PipelineShaderStageCreateInfo,
+                Stage = ShaderStageFlags.ComputeBit,
+                Module = ((VkShader)compute.shader!).program,
+                PName = (byte*)SilkMarshal.StringToPtr("main")
+            };
+            
+            ComputePipelineCreateInfo pipelineInfo = new()
+            {
+                SType = StructureType.ComputePipelineCreateInfo,
+                Layout = pipelineLayout,
+                Stage = stage,
+            };
+            
+            result = AppState.appContext.GetContext<VkContext>().vk
+                .CreateComputePipelines(VkDevices.device, default, 1, in pipelineInfo, null, out pipeline);
+            if (result != Result.Success)
+            {
+                Debug.Error($"Failed to create compute pipeline {result}");
+                throw new Exception($"Failed to create compute pipeline {result}");
+            }
+            
         }
 
         public void UpdateUniforms(in Shader shader, int binding)
         {
-            int set = RendererSettings.VertexUniformSet;
-            if (shader.settings.type == ShaderType.Fragment)
+            int set = shader.settings.type switch
             {
-                set = RendererSettings.FragmentUniformSet;
-            }
+                ShaderType.Fragment => RendererSettings.FragmentUniformSet,
+                ShaderType.Compute => RendererSettings.ComputeUniformSet,
+                ShaderType.Vertex => RendererSettings.VertexUniformSet,
+                _ => RendererSettings.VertexUniformSet
+            };
             
             ShaderDescriptorDef def = new ShaderDescriptorDef(set, [binding], ShaderDescriptorUsage.Uniform, shader.settings.type);
             
@@ -340,7 +392,7 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             return layout;
         }
 
-        unsafe void CreateDescriptors(in Shader vertex, in Shader fragment)
+        void CreateDescriptorsRaster(in Shader vertex, in Shader fragment)
         {
             descriptorSetLayouts = new Dictionary<ShaderDescriptorDef, DescriptorSetLayout>();
             descriptorSets = new Dictionary<ShaderDescriptorDef, VkDescriptor>();
@@ -352,6 +404,20 @@ namespace SpatialSim.Engine.Rendering.Vulkan
             uniformManager.Init(
                 this,
                 [ShaderType.Vertex, ShaderType.Fragment],
+                uniformDefs.ToArray());
+        }
+        
+        void CreateDescriptorsCompute(in Shader compute)
+        {
+            descriptorSetLayouts = new Dictionary<ShaderDescriptorDef, DescriptorSetLayout>();
+            descriptorSets = new Dictionary<ShaderDescriptorDef, VkDescriptor>();
+            List<ShaderDescriptorDef> uniformDefs = new();
+            CreateShaderDescriptors(compute, uniformDefs);
+
+            uniformManager = new VkUniformManager();
+            uniformManager.Init(
+                this,
+                [ShaderType.Compute],
                 uniformDefs.ToArray());
         }
 
@@ -366,11 +432,20 @@ namespace SpatialSim.Engine.Rendering.Vulkan
                     ShaderDescriptorUsage.Uniform => DescriptorType.UniformBufferDynamic,
                     ShaderDescriptorUsage.Sampler => DescriptorType.CombinedImageSampler,
                     ShaderDescriptorUsage.Storage => DescriptorType.StorageBuffer,
+                    ShaderDescriptorUsage.ImageStorage => DescriptorType.StorageImage,
                     _ => DescriptorType.UniformBufferDynamic
                 };
 
+                ShaderStageFlags stage = def.type switch
+                {
+                    ShaderType.Vertex => ShaderStageFlags.VertexBit,
+                    ShaderType.Fragment => ShaderStageFlags.FragmentBit,
+                    ShaderType.Compute => ShaderStageFlags.ComputeBit,
+                    _ => ShaderStageFlags.VertexBit | ShaderStageFlags.FragmentBit
+                };
+
                 DescriptorSetLayout layout = CreateDescriptorSetLayout(
-                    ShaderStageFlags.VertexBit | ShaderStageFlags.FragmentBit,
+                    stage,
                     type,
                     def.bindings
                 );
